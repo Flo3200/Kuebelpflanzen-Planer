@@ -1,7 +1,9 @@
 // Routes of the feature pages, kept apart from App.tsx so phases can add pages without touching the shell.
 import { Route } from "react-router-dom";
 import { AdminAIPage, TenantAIPage } from "./pages/admin/AI";
+import { FormulasPage } from "./pages/common/Formulas";
 import { SpeciesPage } from "./pages/common/Species";
+import { PricingPage } from "./pages/tenant/Pricing";
 import { DraftReviewPage, InboxPage } from "./pages/tenant/Inbox";
 import { CustomerDetailPage, CustomersPage, OrderDetailPage, OrdersPage } from "./pages/tenant/Orders";
 import { AvailabilityPage, EquipmentPage, StaffPage, StoragePage, TeamsPage, VehiclesPage } from "./pages/tenant/Resources";
@@ -23,6 +25,8 @@ export function tenantRoutes() {
     <Route key="species" path="pflanzenarten" element={<SpeciesPage />} />,
     <Route key="storage" path="lager" element={<StoragePage />} />,
     <Route key="ai" path="ki" element={<TenantAIPage />} />,
+    <Route key="pricing" path="preise" element={<PricingPage />} />,
+    <Route key="formulas" path="formeln" element={<FormulasPage />} />,
     ...extraTenantRoutes(),
   ];
 }
@@ -31,6 +35,7 @@ export function adminRoutes() {
   return [
     <Route key="ai" path="ki" element={<AdminAIPage />} />,
     <Route key="species" path="pflanzenarten" element={<SpeciesPage admin />} />,
+    <Route key="formulas" path="formeln" element={<FormulasPage />} />,
     ...extraAdminRoutes(),
   ];
 }

@@ -40,6 +40,7 @@ def load_handlers() -> None:
     for mod in (
         "app.jobs.builtin",
         "app.ai.jobs",
+        "app.timemodel.jobs",
         "app.planning.jobs",
         "app.learning.jobs",
         "app.billing.jobs",

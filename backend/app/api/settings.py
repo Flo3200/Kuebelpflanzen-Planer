@@ -122,6 +122,7 @@ def put_value(data: SetIn, actor: CurrentActor, db: DB) -> dict[str, Any]:
     entry = set_value(
         db, actor, scope=data.scope, key=data.key, value=data.value, tenant_id=tid, object_id=data.object_id
     )
+    _after_change(db, [data.key], tid)
     return {"ok": True, "key": data.key, "value": entry.new_value["value"], "audit_id": entry.id}
 
 
@@ -141,4 +142,21 @@ def post_reset(data: ResetIn, actor: CurrentActor, db: DB) -> dict[str, Any]:
         group=data.group,
         all_scopes=data.all_scopes,
     )
+    _after_change(db, [data.key] if data.key else None, tid, data.group)
     return {"ok": True, "batch_id": batch_id, "count": count}
+
+
+def _after_change(
+    db: Session, keys: list[str] | None, tenant_id: uuid.UUID | None, group: str | None = None
+) -> None:
+    """Settings that influence estimates trigger a recomputation of the affected tenant(s)."""
+    from app.settings.registry import REGISTRY
+    from app.timemodel.service import ESTIMATE_GROUPS, schedule_refresh
+
+    groups = (
+        {REGISTRY[k].group for k in keys if k in REGISTRY}
+        if keys
+        else ({group} if group else set(ESTIMATE_GROUPS))
+    )
+    if groups & ESTIMATE_GROUPS:
+        schedule_refresh(db, tenant_id)

@@ -343,7 +343,11 @@ def order_detail(db: Session, actor: Actor, order: PickupOrder) -> dict[str, Any
 @router.get("/api/orders/{order_id}", tags=["order"])
 def get_order_detail(order_id: uuid.UUID, actor: CurrentActor, db: DB) -> dict[str, Any]:
     actor.require("orders.read")
-    return order_detail(db, actor, get_order(db, actor, order_id))
+    order = get_order(db, actor, order_id)
+    if order.status not in ("cancelled", "returned"):
+        # recompute live so changed formulas and settings show immediately
+        _after_order_change(db, actor, order, {})
+    return order_detail(db, actor, order)
 
 
 @router.patch("/api/orders/{order_id}", tags=["order"])

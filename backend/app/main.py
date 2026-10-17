@@ -71,6 +71,9 @@ def bootstrap_admin() -> None:
 
         seed_ai(db)
         seed_species(db)
+        from app.formula.defaults import seed_formulas
+
+        seed_formulas(db)
 
 
 @asynccontextmanager

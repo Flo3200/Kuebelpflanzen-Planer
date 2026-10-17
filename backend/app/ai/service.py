@@ -219,7 +219,7 @@ def call(
         key, key_mode = api_key_for(db, tenant_id, resolver, resolved.provider)
         request.effort = resolved.model.effort
         options = {"fallbacks": resolved.model.use_fallbacks}
-        for attempt in range(attempts):
+        for _attempt in range(attempts):
             try:
                 resp = provider.complete(resolved.model.model_name, request, key, options)
             except ProviderError as exc:

@@ -5,6 +5,7 @@ import importlib
 for _mod in (
     "app.demo.masterdata",
     "app.demo.orders",
+    "app.demo.estimates",
     "app.demo.measurements",
 ):
     try:

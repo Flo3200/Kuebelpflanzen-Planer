@@ -139,12 +139,13 @@ SETTINGS: tuple[SettingDef, ...] = (
     _s("team.max_size", "int", 4, "team", levels=PT, unit="Pers.", min=1, max=8, important=True),
     _s("team.min_size_per_stop", "int", 1, "team", levels=(*PT, "customer"), unit="Pers.", min=1, max=6),
     # --- time model --------------------------------------------------------------
-    _s("time.walk_speed_m_min", "float", 50.0, "time", unit="m/min", min=5, max=150),
+    _s("time.walk_speed_m_min", "float", 25.0, "time", unit="m/min", min=5, max=150),
     _s("time.narrow_clearance_cm", "float", 10.0, "time", unit="cm", min=0, max=100),
     _s("time.narrow_factor", "float", 1.5, "time", unit="×", min=1, max=5),
     _s("time.planning_quantile", "float", 0.8, "time", unit="", min=0.5, max=0.99, important=True),
     _s("time.default_path_length_m", "float", 15.0, "time", unit="m", min=0, max=500),
     _s("time.formula_tier", "int", 1, "time", unit="", min=1, max=9),
+    _s("time.error_sigma", "float", 0.25, "time", unit="", min=0.0, max=2.0),
     # --- weight estimation ---------------------------------------------------------
     _s("weight.pot_fill", "float", 0.88, "weight", unit="", min=0.3, max=1.0),
     _s("weight.pot_taper", "float", 0.85, "weight", unit="", min=0.5, max=1.0),
@@ -177,6 +178,7 @@ SETTINGS: tuple[SettingDef, ...] = (
     _s("learning.staff_factor_prior_n", "int", 20, "learning", unit="", min=1, max=500),
     _s("learning.experiment_share", "float", 0.0, "learning", unit="", min=0, max=0.5),
     # --- driving ------------------------------------------------------------------
+    _s("drive.provider", "enum", "offline", "drive", levels=P, choices=("offline", "osrm", "ors", "google")),
     _s("drive.detour_factor", "float", 1.35, "drive", unit="×", min=1.0, max=3.0),
     _s("drive.avg_speed_kmh", "float", 45.0, "drive", unit="km/h", min=10, max=120),
     _s(
@@ -290,6 +292,7 @@ SETTINGS: tuple[SettingDef, ...] = (
     _s("pricing.rounding", "float", 1.0, "pricing", unit="€", min=0, max=50),
     _s("pricing.prices_include_vat", "bool", True, "pricing"),
     _s("pricing.typical_tour_stops", "int", 8, "pricing", unit="", min=1, max=50),
+    _s("pricing.local_detour_km", "float", 4.0, "pricing", unit="km", min=0, max=100),
     # --- planning -------------------------------------------------------------------
     _s("planning.day_start", "time", "07:00", "planning", levels=(*PT, "staff", "vehicle"), important=True),
     _s("planning.day_end", "time", "17:30", "planning", levels=(*PT, "staff", "vehicle"), important=True),

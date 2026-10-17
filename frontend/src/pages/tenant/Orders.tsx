@@ -7,6 +7,7 @@ import { SettingsEditor } from "../../components/SettingsEditor";
 import { Badge, Card, Confidence, ConfirmButton, Empty, ErrorBox, Modal, PageHeader, Spinner, Tabs, useToast } from "../../components/ui";
 import { fmtMinutes, fmtMoney, fmtNumber, t } from "../../i18n";
 import { JobStatus, useJob } from "../common/Jobs";
+import { EstimateDetails } from "./Estimate";
 import { PhotoGallery } from "./Photos";
 
 const STATUS_TONE: Record<string, "green" | "amber" | "red" | "blue" | "terra" | undefined> = {
@@ -406,17 +407,6 @@ function EstimateTab({ orderId, estimate, onChange }: { orderId: string; estimat
     return <Empty title={t("estimate.pending")} text={t("estimate.pending_text")} />;
   }
   return <EstimateDetails orderId={orderId} estimate={estimate} onChange={onChange} />;
-}
-
-// Rendered in detail by the time model (phase 3); kept here so the tab exists from the start.
-function EstimateDetails({ estimate }: { orderId: string; estimate: any; onChange: () => void }) {
-  return (
-    <Card>
-      <pre className="mono small" style={{ whiteSpace: "pre-wrap" }}>
-        {JSON.stringify(estimate, null, 2)}
-      </pre>
-    </Card>
-  );
 }
 
 function PlantsTab({ orderId, plants, paths, onChange }: { orderId: string; plants: any[]; paths: any[]; onChange: () => void }) {

@@ -121,6 +121,9 @@ def generate(options: DemoOptions | None = None, reset: bool = True) -> dict[str
 
         seed_ai(db)
         seed_species(db)
+        from app.formula.defaults import seed_formulas
+
+        seed_formulas(db)
         if reset:
             report["removed"] = remove_demo_tenants(db)
         created = [create_tenant(db, spec) for spec in options.tenants]

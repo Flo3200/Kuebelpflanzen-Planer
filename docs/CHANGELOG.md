@@ -78,3 +78,25 @@ Mandantentrennung neuer Tabellen inkl. Fremdschlüssel-Prüfung.
 **Hinweise:** Echte KI-Modelle sind eingerichtet, aber ohne API-Schlüssel nicht getestet;
 Standardmodell ist das Testmodell. Geokodierung ist standardmäßig offline (Koordinaten manuell
 oder aus Demodaten); `KP_GEOCODER=nominatim` schaltet OpenStreetMap ein.
+
+## Phase 3 – Zeit- und Kostenmodell (abgeschlossen 2026-10-17)
+
+**Umgesetzt**
+- Sicherer Ausdrucks-Parser (eigener Tokenizer + Parser, kein eval): Grundrechenarten, Potenz,
+  Vergleiche, and/or/not, if(), min/max/log/exp/…, Summen/Maxima über die Pflanzen eines Stopps,
+  Fehler mit Position, Grenzen für Länge/Komplexität.
+- Formeln mit Versionen und Stufen (Startformel Stufe 1, erweiterte Stufe 2, Kundenpreis),
+  global und je Betrieb überschreibbar (mit Zurücksetzen), Parameter fest/lernbar mit Grenzen,
+  Prüfung unbekannter Namen, Testlauf an einem echten Auftrag, Variablenverzeichnis mit Erklärungen.
+- Teamgrößenregeln (Gewicht mit Tragefaktor, Greifbarkeit, Treppe, Steigung, Engstelle,
+  Hilfsmittel, Höchstgröße, manuelle Überschreibung).
+- Schätzung je Auftrag: Dauer und Arbeitszeit getrennt, Dauer je Teamgröße, Planungspuffer
+  (Quantil), Kosten (Arbeit, Fahrtanteil, Fahrzeug, Hilfsmittel, Gemeinkosten, Marge), Preis nach
+  Formel mit Entfernungszuschlag (aus/Entfernung/Zonen/Umweg), Rundung, MwSt., Kostendeckung.
+- RoutingProvider (offline, OSRM, OpenRouteService, Google) mit Zwischenspeicher.
+- Angebots-PDF (reportlab) mit Nummernkreis; Gewichtskalibrierung aus gewogenen Pflanzen.
+- Formel- oder Einstellungsänderungen wirken sofort (Detailansicht rechnet live, Listen per Job).
+- Oberflächen: Formeleditor (Admin und Betrieb), Preise & Angebote, Schätzungsdetails im Auftrag.
+
+**Tests:** 47 Backend-Tests grün. **Abnahme:** erfüllt (`test_changed_formula_takes_effect_immediately`,
+`test_start_formula_numbers`, `test_price_rules`).

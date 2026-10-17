@@ -178,7 +178,7 @@
     },
     "time.walk_speed_m_min": {
       "label": "Gehgeschwindigkeit beim Tragen",
-      "help": "Durchschnittliche Gehgeschwindigkeit mit Last in Metern pro Minute. Wird in der Startformel als walk_speed verwendet."
+      "help": "Durchschnittliche Geschwindigkeit beim Tragen einschließlich Rangieren, in Metern pro Minute. Wird in der Startformel als walk_speed verwendet."
     },
     "time.narrow_clearance_cm": {
       "label": "Spielraum an Engstellen",
@@ -653,6 +653,24 @@
     "ai.usd_to_eur": {
       "label": "Umrechnungskurs Dollar → Euro",
       "help": "Für KI-Preise, die in US-Dollar angegeben sind."
+    },
+    "time.error_sigma": {
+      "label": "Streuung der Vorhersage (Startwert)",
+      "help": "Logarithmische Standardabweichung der Abweichung zwischen geplanter und tatsächlicher Dauer. Bestimmt den Planungspuffer, bis die Modellanpassung einen gemessenen Wert liefert."
+    },
+    "drive.provider": {
+      "label": "Routing-Dienst",
+      "help": "Offline: Luftlinie × Umwegfaktor ohne Internet. OSRM, OpenRouteService oder Google liefern echte Straßenentfernungen (Schlüssel in der .env).",
+      "choices": {
+        "offline": "Offline-Schätzung",
+        "osrm": "OSRM",
+        "ors": "OpenRouteService",
+        "google": "Google"
+      }
+    },
+    "pricing.local_detour_km": {
+      "label": "Ortsumweg pro Stopp",
+      "help": "Zusätzliche Kilometer pro Stopp innerhalb einer Tour, für den geschätzten Fahranteil in Angeboten vor der Tourenplanung."
     }
   },
   "fields": {
@@ -1387,5 +1405,155 @@
     "pickup_proof": "Abholnachweis",
     "damage": "Schaden",
     "other": "Sonstiges"
+  },
+  "formula_vars": {
+    "weight": {
+      "label": "Gewicht",
+      "help": "Gewicht der Pflanze mit Kübel (gewogen, sonst geschätzt)."
+    },
+    "pot_diameter": {
+      "label": "Topfdurchmesser",
+      "help": "bei eckigen Töpfen die größere Seite"
+    },
+    "pot_height": {
+      "label": "Topfhöhe",
+      "help": ""
+    },
+    "height": {
+      "label": "Gesamthöhe",
+      "help": ""
+    },
+    "crown_width": {
+      "label": "Kronenbreite",
+      "help": ""
+    },
+    "passage_width": {
+      "label": "Durchgangsbreite",
+      "help": "Breite, die die Pflanze beim Tragen braucht (Topf oder zusammengedrückte Krone)."
+    },
+    "volume": {
+      "label": "Hüllvolumen",
+      "help": "umschließender Quader"
+    },
+    "crew": {
+      "label": "Benötigte Teamgröße",
+      "help": "nach den Teamgrößenregeln"
+    },
+    "can_tilt": {
+      "label": "Kippbar",
+      "help": "1 = darf gekippt werden"
+    },
+    "sensitive": {
+      "label": "Empfindlich",
+      "help": "1 = empfindlich"
+    },
+    "narrow_factor": {
+      "label": "Engstellenfaktor",
+      "help": "1 oder der eingestellte Faktor, wenn der Weg schmaler ist als Pflanze plus Spielraum"
+    },
+    "equipment_factor": {
+      "label": "Hilfsmittelfaktor",
+      "help": "Zeitfaktor des besten nutzbaren Hilfsmittels, sonst 1"
+    },
+    "path_length": {
+      "label": "Weglänge",
+      "help": "Weg vom Stellplatz zum Fahrzeug"
+    },
+    "height_meters": {
+      "label": "Höhenmeter",
+      "help": "zu tragender Höhenunterschied (ohne Aufzug)"
+    },
+    "steps": {
+      "label": "Stufen",
+      "help": ""
+    },
+    "min_width": {
+      "label": "Schmalste Stelle",
+      "help": ""
+    },
+    "doors": {
+      "label": "Türen",
+      "help": ""
+    },
+    "slope": {
+      "label": "Größte Steigung",
+      "help": ""
+    },
+    "has_stairs": {
+      "label": "Treppe vorhanden",
+      "help": "1 oder 0"
+    },
+    "elevator": {
+      "label": "Aufzug vorhanden",
+      "help": "1 oder 0"
+    },
+    "rough_surface": {
+      "label": "Unebener Untergrund",
+      "help": "Kies, Rasen oder Erde"
+    },
+    "team": {
+      "label": "Teamgröße am Stopp",
+      "help": "m in der Startformel"
+    },
+    "speed": {
+      "label": "Geschwindigkeit des Teams",
+      "help": "mittlerer Geschwindigkeitsfaktor der Teammitglieder (1 = durchschnittlich)"
+    },
+    "n_plants": {
+      "label": "Anzahl Pflanzen",
+      "help": ""
+    },
+    "total_weight": {
+      "label": "Gesamtgewicht",
+      "help": ""
+    },
+    "walk_speed": {
+      "label": "Gehgeschwindigkeit",
+      "help": "Einstellung „Gehgeschwindigkeit beim Tragen“"
+    },
+    "max_crew": {
+      "label": "Größte benötigte Teamgröße",
+      "help": ""
+    },
+    "labour_min": {
+      "label": "Arbeitszeit",
+      "help": "Dauer × Teamgröße"
+    },
+    "duration_min": {
+      "label": "Dauer vor Ort",
+      "help": ""
+    },
+    "distance_km": {
+      "label": "Entfernung zum Betrieb",
+      "help": "Straßenkilometer einfache Strecke"
+    },
+    "drive_share_km": {
+      "label": "Fahranteil",
+      "help": "geschätzte Kilometer in einer typischen Tour"
+    },
+    "distance_surcharge": {
+      "label": "Entfernungszuschlag",
+      "help": "nach der Einstellung „Entfernungszuschlag“"
+    },
+    "base_price": {
+      "label": "Grundpreis",
+      "help": ""
+    },
+    "rate_per_labour_minute": {
+      "label": "Preis pro Arbeitsminute",
+      "help": ""
+    },
+    "per_plant_fee": {
+      "label": "Preis pro Pflanze",
+      "help": ""
+    },
+    "minimum_price": {
+      "label": "Mindestpreis",
+      "help": ""
+    },
+    "self_cost": {
+      "label": "Selbstkosten",
+      "help": "geschätzte Selbstkosten mit Gemeinkostenzuschlag"
+    }
   }
 }
