@@ -1,0 +1,207 @@
+/* Design tokens. Every colour, radius and spacing value of the UI comes from here. */
+
+:root {
+  /* brand palette */
+  --forest-900: #142a1e;
+  --forest-800: #1b3727;
+  --forest-700: #1f3d2b;
+  --forest-600: #2b5139;
+  --forest-500: #3b6a4c;
+  --sage-500: #7f9a80;
+  --sage-400: #9db29c;
+  --sage-200: #d3dfd0;
+  --sage-100: #e6ede3;
+  --sand-50: #faf7f1;
+  --sand-100: #f4eee3;
+  --sand-200: #ebe2d2;
+  --sand-300: #dccfb8;
+  --terra-600: #a8542d;
+  --terra-500: #c2693e;
+  --terra-100: #f6e2d6;
+  --red-600: #b3261e;
+  --red-100: #f9dedc;
+  --amber-600: #9a6a00;
+  --amber-100: #fbefd0;
+  --blue-600: #2f5f8a;
+  --blue-100: #dde9f3;
+
+  /* semantic (light) */
+  --bg: var(--sand-50);
+  --surface: #ffffff;
+  --surface-2: var(--sand-100);
+  --surface-3: var(--sand-200);
+  --border: #e4dccd;
+  --border-strong: var(--sand-300);
+  --text: #1d2a21;
+  --text-muted: #5d6b61;
+  --text-faint: #8a958c;
+  --primary: var(--forest-700);
+  --primary-hover: var(--forest-600);
+  --primary-contrast: #f7f4ec;
+  --secondary: var(--sage-100);
+  --secondary-text: var(--forest-700);
+  --accent: var(--terra-500);
+  --accent-soft: var(--terra-100);
+  --danger: var(--red-600);
+  --danger-soft: var(--red-100);
+  --warning: var(--amber-600);
+  --warning-soft: var(--amber-100);
+  --info: var(--blue-600);
+  --info-soft: var(--blue-100);
+  --success: var(--forest-500);
+  --success-soft: var(--sage-100);
+  --focus: #3b82c4;
+  --botanical-ink: var(--forest-700);
+  --botanical-opacity: 0.07;
+  --glow-1: color-mix(in srgb, var(--sage-200) 55%, transparent);
+  --glow-2: color-mix(in srgb, var(--sand-200) 80%, transparent);
+  --shadow-sm: 0 1px 2px rgba(31, 61, 43, 0.06), 0 1px 1px rgba(31, 61, 43, 0.04);
+  --shadow-md: 0 6px 20px rgba(31, 61, 43, 0.08), 0 2px 6px rgba(31, 61, 43, 0.05);
+  --shadow-lg: 0 18px 50px rgba(20, 42, 30, 0.16);
+
+  /* stop colours (tours, load plans) */
+  --stop-1: #2b5139;
+  --stop-2: #c2693e;
+  --stop-3: #2f5f8a;
+  --stop-4: #8a6d1d;
+  --stop-5: #7b4b8a;
+  --stop-6: #3d8a85;
+  --stop-7: #a33b4f;
+  --stop-8: #5c7a2e;
+
+  /* type */
+  --font-display: "Fraunces Variable", "Iowan Old Style", Georgia, serif;
+  --font-body: "Inter Variable", -apple-system, "Segoe UI", Roboto, sans-serif;
+  --fs-xs: 0.75rem;
+  --fs-sm: 0.8125rem;
+  --fs-md: 0.9375rem;
+  --fs-lg: 1.0625rem;
+  --fs-xl: 1.375rem;
+  --fs-2xl: 1.75rem;
+  --fs-3xl: 2.25rem;
+
+  /* shape and space */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-pill: 999px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --sidebar-width: 248px;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1712;
+    --surface: #16211a;
+    --surface-2: #1b2820;
+    --surface-3: #233227;
+    --border: #2a3a2f;
+    --border-strong: #35493b;
+    --text: #e9e6dc;
+    --text-muted: #a9b3a8;
+    --text-faint: #7d887e;
+    --primary: #8fb996;
+    --primary-hover: #a7cdac;
+    --primary-contrast: #0f1712;
+    --secondary: #223328;
+    --secondary-text: #cfe0cc;
+    --accent: #e08a5c;
+    --accent-soft: #3a2519;
+    --danger: #f2827a;
+    --danger-soft: #3b1a18;
+    --warning: #e8c065;
+    --warning-soft: #352a10;
+    --info: #8db8de;
+    --info-soft: #172634;
+    --success: #8fb996;
+    --success-soft: #1d2e22;
+    --botanical-ink: #b8d1b6;
+    --botanical-opacity: 0.05;
+    --glow-1: rgba(143, 185, 150, 0.1);
+    --glow-2: rgba(194, 105, 62, 0.06);
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.35);
+    --shadow-lg: 0 18px 50px rgba(0, 0, 0, 0.5);
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #0f1712;
+  --surface: #16211a;
+  --surface-2: #1b2820;
+  --surface-3: #233227;
+  --border: #2a3a2f;
+  --border-strong: #35493b;
+  --text: #e9e6dc;
+  --text-muted: #a9b3a8;
+  --text-faint: #7d887e;
+  --primary: #8fb996;
+  --primary-hover: #a7cdac;
+  --primary-contrast: #0f1712;
+  --secondary: #223328;
+  --secondary-text: #cfe0cc;
+  --accent: #e08a5c;
+  --accent-soft: #3a2519;
+  --danger: #f2827a;
+  --danger-soft: #3b1a18;
+  --warning: #e8c065;
+  --warning-soft: #352a10;
+  --info: #8db8de;
+  --info-soft: #172634;
+  --success: #8fb996;
+  --success-soft: #1d2e22;
+  --botanical-ink: #b8d1b6;
+  --botanical-opacity: 0.05;
+  --glow-1: rgba(143, 185, 150, 0.1);
+  --glow-2: rgba(194, 105, 62, 0.06);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 18px 50px rgba(0, 0, 0, 0.5);
+  color-scheme: dark;
+}
+
+/* Driver app: its own high-contrast style, large touch targets, works with gloves. */
+.driver-theme {
+  --bg: #0b0f0c;
+  --surface: #151c17;
+  --surface-2: #1d2620;
+  --surface-3: #263129;
+  --border: #33433a;
+  --text: #ffffff;
+  --text-muted: #c5d0c7;
+  --primary: #9be2a6;
+  --primary-hover: #b6f0be;
+  --primary-contrast: #06120a;
+  --accent: #ffb27a;
+  --danger: #ff8a80;
+  --warning: #ffd66b;
+  --fs-md: 1.0625rem;
+  --fs-lg: 1.25rem;
+  --radius-md: 16px;
+  color-scheme: dark;
+}
+
+.driver-theme[data-contrast="light"] {
+  --bg: #ffffff;
+  --surface: #f2f5f2;
+  --surface-2: #e5ebe5;
+  --surface-3: #d6dfd6;
+  --border: #3a4a3e;
+  --text: #000000;
+  --text-muted: #26332a;
+  --primary: #0f5223;
+  --primary-hover: #0b3f1a;
+  --primary-contrast: #ffffff;
+  --accent: #9a3d00;
+  --danger: #a1120a;
+  --warning: #6b4b00;
+  color-scheme: light;
+}

@@ -1,0 +1,53 @@
+# Start everything with:  docker compose up
+# Configuration via .env (see .env.example). Data lives in the volumes "pgdata" and "files".
+services:
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: kp_super
+      POSTGRES_PASSWORD: ${KP_SUPER_PASSWORD:-change-me-super}
+      KP_OWNER_PASSWORD: ${KP_OWNER_PASSWORD:-change-me-owner}
+      KP_APP_PASSWORD: ${KP_APP_PASSWORD:-change-me-app}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/init-db.sh:/docker-entrypoint-initdb.d/10-init.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kp_super -d postgres"]
+      interval: 5s
+      retries: 20
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      KP_DATABASE_URL: postgresql+psycopg://kp_app:${KP_APP_PASSWORD:-change-me-app}@db:5432/kuebelplaner
+      KP_DATABASE_OWNER_URL: postgresql+psycopg://kp_owner:${KP_OWNER_PASSWORD:-change-me-owner}@db:5432/kuebelplaner
+      KP_FILES_DIR: /data/files
+    volumes:
+      - files:/data/files
+    ports:
+      - "8000:8000"
+
+  worker:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_started
+    env_file: .env
+    environment:
+      ROLE: worker
+      KP_DATABASE_URL: postgresql+psycopg://kp_app:${KP_APP_PASSWORD:-change-me-app}@db:5432/kuebelplaner
+      KP_DATABASE_OWNER_URL: postgresql+psycopg://kp_owner:${KP_OWNER_PASSWORD:-change-me-owner}@db:5432/kuebelplaner
+      KP_FILES_DIR: /data/files
+    volumes:
+      - files:/data/files
+
+volumes:
+  pgdata:
+  files:

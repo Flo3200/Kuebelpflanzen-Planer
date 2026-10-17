@@ -1,0 +1,717 @@
+{
+  "errors": {
+    "not_found": "Nicht gefunden.",
+    "forbidden": "Keine Berechtigung.",
+    "unauthorized": "Bitte melden Sie sich an.",
+    "missing_permission": "Dafür fehlt die Berechtigung „{permission}“.",
+    "tenant_required": "Diese Aktion ist nur innerhalb eines Betriebs möglich.",
+    "login_failed": "E-Mail oder Passwort ist falsch.",
+    "login_rate_limited": "Zu viele Anmeldeversuche. Bitte warten Sie einige Minuten.",
+    "mfa_required": "Bitte geben Sie den Code aus Ihrer Authenticator-App ein.",
+    "mfa_invalid": "Der Code ist ungültig.",
+    "mfa_setup_required": "Für dieses Konto ist die Zwei-Faktor-Anmeldung Pflicht. Bitte richten Sie sie ein.",
+    "csrf": "Sicherheitsprüfung fehlgeschlagen. Bitte laden Sie die Seite neu.",
+    "account_inactive": "Dieses Konto ist deaktiviert.",
+    "code_invalid": "Der Link oder Code ist ungültig oder abgelaufen.",
+    "validation": "Die Eingaben sind unvollständig oder ungültig.",
+    "setting_type": "Der Wert für „{key}“ hat nicht den erwarteten Typ.",
+    "setting_min": "Der Wert für „{key}“ muss mindestens {min} sein.",
+    "setting_max": "Der Wert für „{key}“ darf höchstens {max} sein.",
+    "setting_choice": "Erlaubte Werte für „{key}“: {choices}.",
+    "setting_time": "Bitte eine Uhrzeit im Format HH:MM angeben.",
+    "setting_too_long": "Der Text ist zu lang.",
+    "setting_level": "„{key}“ kann auf der Ebene „{level}“ nicht eingestellt werden.",
+    "setting_admin_only": "„{key}“ kann nur der Plattformbetreiber ändern.",
+    "unknown_group": "Unbekannte Gruppe „{group}“.",
+    "object_required": "Für diese Ebene muss ein Objekt angegeben werden.",
+    "not_undoable": "Diese Änderung kann nicht rückgängig gemacht werden.",
+    "undo_conflict": "„{key}“ wurde inzwischen erneut geändert. Bitte zuerst die neuere Änderung rückgängig machen.",
+    "slug_taken": "Diese Kennung ist bereits vergeben.",
+    "email_taken": "Diese E-Mail-Adresse wird bereits verwendet.",
+    "formula_syntax": "Formelfehler an Position {pos}: {detail}",
+    "formula_unknown_name": "Unbekannter Name „{name}“ in der Formel.",
+    "formula_eval": "Die Formel konnte nicht berechnet werden: {detail}",
+    "needs_confirmation": "Diese Aktion muss von einem Menschen in der Oberfläche bestätigt werden.",
+    "production_mode_block": "Im Produktivbetrieb dürfen Admin-Agenten keine Aufgaben für Betriebe ausführen.",
+    "agent_scope": "Das Token erlaubt diese Aktion nicht (benötigter Bereich: {scope}).",
+    "rate_limited": "Zu viele Anfragen. Bitte kurz warten.",
+    "ai_limit": "Das KI-Ausgabenlimit dieses Monats ist erreicht.",
+    "ai_not_configured": "Für diese Funktion ist kein KI-Modell eingestellt.",
+    "ai_failed": "Die KI-Anfrage ist fehlgeschlagen: {detail}",
+    "ai_invalid_output": "Die KI hat keine gültige Antwort geliefert.",
+    "file_too_large": "Die Datei ist zu groß.",
+    "file_type": "Dieser Dateityp wird nicht unterstützt.",
+    "draft_not_pending": "Dieser Entwurf wurde bereits bearbeitet.",
+    "in_use": "Der Datensatz wird noch verwendet und kann nicht gelöscht werden.",
+    "job_failed": "Der Hintergrundauftrag ist fehlgeschlagen.",
+    "no_resources": "Für diesen Zeitraum sind kein Personal oder keine Fahrzeuge verfügbar.",
+    "plan_not_found": "Der Plan wurde nicht gefunden.",
+    "pin_taken": "Diese PIN ist im Betrieb bereits vergeben.",
+    "consent_missing": "Für Fotos fehlt die Einwilligung des Kunden.",
+    "invoice_locked": "Ausgestellte Rechnungen können nicht mehr geändert werden."
+  },
+  "origins": {
+    "default": "Systemstandard",
+    "platform": "geerbt vom Admin",
+    "tenant": "vom Betrieb festgelegt",
+    "staff": "für diese Person festgelegt",
+    "vehicle": "für dieses Fahrzeug festgelegt",
+    "equipment": "für dieses Hilfsmittel festgelegt",
+    "species": "für diese Pflanzenart festgelegt",
+    "plant": "für diese Pflanze festgelegt",
+    "customer": "für diesen Kunden festgelegt",
+    "tour": "für diese Tour festgelegt"
+  },
+  "setting_groups": {
+    "general": "Allgemein",
+    "security": "Sicherheit",
+    "platform": "Plattform",
+    "staff": "Personal: Tragen, Fahren, Arbeitszeit",
+    "team": "Teamgröße",
+    "time": "Zeitmodell",
+    "learning": "Lernen aus Messungen",
+    "drive": "Fahrzeiten",
+    "costs": "Kosten",
+    "pricing": "Kundenpreis",
+    "planning": "Tourenplanung",
+    "packing": "Ladeplanung",
+    "photos": "Fotos",
+    "privacy": "Datenschutz",
+    "ai": "Künstliche Intelligenz",
+    "driver": "Fahrer-App",
+    "billing": "Plattform-Abrechnung",
+    "agents": "Agenten-Zugänge"
+  },
+  "settings": {
+    "general.season_start_month": {
+      "label": "Beginn der Saison (Monat)",
+      "help": "Ab diesem Monat zählt ein Auftrag zur neuen Überwinterungssaison."
+    },
+    "general.currency": {
+      "label": "Währung",
+      "help": "Währung für Preise, Angebote und Rechnungen."
+    },
+    "general.timezone": {
+      "label": "Zeitzone",
+      "help": "Zeitzone des Betriebs, z. B. Europe/Berlin. Alle Uhrzeiten der Planung beziehen sich darauf."
+    },
+    "general.storage_warn_pct": {
+      "label": "Warnung bei Lagerauslastung ab",
+      "help": "Bei der Annahme neuer Aufträge wird gewarnt, wenn die Lagerfläche zu diesem Anteil belegt ist."
+    },
+    "security.admin_require_2fa": {
+      "label": "Zwei-Faktor-Anmeldung für Admins verpflichtend",
+      "help": "Wenn aktiv, können sich Admin-Konten nur mit einem Code aus einer Authenticator-App anmelden."
+    },
+    "security.owner_require_2fa": {
+      "label": "Zwei-Faktor-Anmeldung für Unternehmer verpflichtend",
+      "help": "Wenn aktiv, müssen Unternehmer- und Disponenten-Konten des Betriebs die Zwei-Faktor-Anmeldung nutzen."
+    },
+    "platform.mode": {
+      "label": "Betriebsmodus der Plattform",
+      "help": "Testphase: Admin-Agenten dürfen alles, was das Admin-Konto darf. Produktivbetrieb: Admin-Agenten sind auf Admin-Unterstützung beschränkt und dürfen nichts für Betriebe tun.",
+      "choices": {
+        "test": "Testphase",
+        "production": "Produktivbetrieb"
+      }
+    },
+    "staff.solo_carry_kg": {
+      "label": "Maximales Alleintragegewicht",
+      "help": "Bis zu diesem Gewicht trägt eine Person eine Pflanze allein. Schwerere Pflanzen brauchen ein Team."
+    },
+    "staff.team_carry_factor": {
+      "label": "Tragefaktor im Team",
+      "help": "Ein Team trägt nicht die volle Summe der Einzelgewichte. Teamtragfähigkeit = Tragefaktor × Summe der Alleintragegewichte. 0,8 bedeutet 80 %."
+    },
+    "staff.carry_speed_factor": {
+      "label": "Geschwindigkeitsfaktor beim Tragen",
+      "help": "1,0 = durchschnittlich. 1,2 = 20 % schneller. Wird aus Messungen gelernt, sobald genug Daten vorliegen."
+    },
+    "staff.drive_speed_factor": {
+      "label": "Geschwindigkeitsfaktor beim Fahren",
+      "help": "Multipliziert die berechnete Fahrgeschwindigkeit. Unter 1,0 = vorsichtiger bzw. langsamer."
+    },
+    "staff.max_work_hours_day": {
+      "label": "Maximale Arbeitszeit pro Tag",
+      "help": "Obergrenze für die geplante Arbeitszeit einschließlich Fahrten, ohne Pausen. Nach Arbeitszeitgesetz höchstens 10 Stunden."
+    },
+    "staff.hourly_wage": {
+      "label": "Stundenlohn (brutto)",
+      "help": "Bruttostundenlohn ohne Arbeitgeberanteil."
+    },
+    "staff.employer_share_pct": {
+      "label": "Arbeitgeberanteil",
+      "help": "Aufschlag auf den Bruttolohn für Sozialabgaben des Arbeitgebers."
+    },
+    "team.grip_diameter_cm": {
+      "label": "Ab diesem Durchmesser nicht allein greifbar",
+      "help": "Kübel oder Kronen ab diesem Durchmesser trägt mindestens ein Zweierteam, unabhängig vom Gewicht."
+    },
+    "team.grip_height_cm": {
+      "label": "Ab dieser Höhe nicht allein greifbar",
+      "help": "Pflanzen ab dieser Gesamthöhe trägt mindestens ein Zweierteam."
+    },
+    "team.stairs_weight_kg": {
+      "label": "Treppen: zusätzliche Person ab Gewicht",
+      "help": "Hat der Weg Stufen und ist die Pflanze schwerer als dieser Wert, wird die Teamgröße erhöht."
+    },
+    "team.stairs_extra_persons": {
+      "label": "Treppen: zusätzliche Personen",
+      "help": "So viele Personen kommen auf Treppen bei schweren Pflanzen hinzu."
+    },
+    "team.steep_slope_pct": {
+      "label": "Steiler Weg ab Steigung",
+      "help": "Ab dieser Steigung gilt ein Wegabschnitt als steil; schwere Pflanzen brauchen dann eine Person mehr."
+    },
+    "team.narrow_extra_persons": {
+      "label": "Engstellen: zusätzliche Personen",
+      "help": "Zusätzliche Personen, wenn die Pflanze durch eine Engstelle muss (z. B. zum Kippen und Führen)."
+    },
+    "team.max_size": {
+      "label": "Größtes Team",
+      "help": "Mehr Personen als hier angegeben werden nie für eine Pflanze eingeplant. Pflanzen, die mehr bräuchten, werden markiert."
+    },
+    "team.min_size_per_stop": {
+      "label": "Mindestteamgröße pro Stopp",
+      "help": "So viele Personen fahren mindestens zu einem Stopp."
+    },
+    "time.walk_speed_m_min": {
+      "label": "Gehgeschwindigkeit beim Tragen",
+      "help": "Durchschnittliche Gehgeschwindigkeit mit Last in Metern pro Minute. Wird in der Startformel als walk_speed verwendet."
+    },
+    "time.narrow_clearance_cm": {
+      "label": "Spielraum an Engstellen",
+      "help": "Ist die schmalste Stelle des Wegs schmaler als Pflanzenbreite plus dieser Spielraum, gilt sie als Engstelle."
+    },
+    "time.narrow_factor": {
+      "label": "Zeitfaktor an Engstellen",
+      "help": "Multipliziert die Tragezeit einer Pflanze, wenn sie durch eine Engstelle muss."
+    },
+    "time.planning_quantile": {
+      "label": "Planungspuffer (Quantil)",
+      "help": "Geplant wird mit diesem Quantil der Vorhersage. 0,8 heißt: In 80 % der Fälle reicht die geplante Zeit. Wird aus der Streuung der bisherigen Fehler geschätzt."
+    },
+    "time.default_path_length_m": {
+      "label": "Standard-Weglänge",
+      "help": "Wird verwendet, wenn für einen Weg keine Länge erfasst ist."
+    },
+    "time.formula_tier": {
+      "label": "Aktive Formelstufe",
+      "help": "Welche Stufe der Zeitformel gilt. Die Validierung zeigt, welche Stufe am besten abschneidet."
+    },
+    "learning.loss": {
+      "label": "Fehlerfunktion",
+      "help": "Linear: klassische kleinste Quadrate. Huber: Ausreißer zählen weniger stark.",
+      "choices": {
+        "linear": "Kleinste Quadrate",
+        "huber": "Robust (Huber)"
+      }
+    },
+    "learning.huber_delta_min": {
+      "label": "Huber-Schwelle",
+      "help": "Abweichungen über diesem Wert (Minuten) werden nur noch linear gewichtet."
+    },
+    "learning.lambda": {
+      "label": "Regularisierung (λ)",
+      "help": "Wie stark Parameter zum Standardwert hingezogen werden. Größer = vorsichtigeres Lernen."
+    },
+    "learning.cv_folds": {
+      "label": "Kreuzvalidierung: Anzahl Teile (k)",
+      "help": "Die Messungen werden in k Teile geteilt, um den Fehler auf ungesehenen Daten zu schätzen."
+    },
+    "learning.min_measurements_per_param": {
+      "label": "Mindestanzahl Messungen pro Parameter",
+      "help": "Erst ab so vielen Messungen pro lernbarem Parameter wird eine Anpassung vorgeschlagen."
+    },
+    "learning.schedule": {
+      "label": "Automatische Modellanpassung",
+      "help": "Wie oft die Modellanpassung automatisch läuft. Ergebnisse müssen trotzdem übernommen werden.",
+      "choices": {
+        "off": "aus",
+        "weekly": "wöchentlich",
+        "monthly": "monatlich"
+      }
+    },
+    "learning.staff_factor_prior_n": {
+      "label": "Personenfaktoren: Datenmenge bis zur vollen Gewichtung",
+      "help": "Geschwindigkeitsfaktoren pro Person bleiben nahe 1,0, bis etwa so viele Messungen der Person vorliegen."
+    },
+    "learning.experiment_share": {
+      "label": "Experimentmodus: Anteil der Stopps",
+      "help": "Bei diesem Anteil der Stopps wird bewusst eine andere zulässige Teamgröße eingeplant, damit das Modell den Effekt lernen kann. Nie unter der benötigten Teamgröße. 0 = aus."
+    },
+    "drive.detour_factor": {
+      "label": "Umwegfaktor (Offline-Routing)",
+      "help": "Luftlinie × Umwegfaktor ergibt die geschätzte Straßenentfernung, wenn kein Routing-Dienst genutzt wird."
+    },
+    "drive.avg_speed_kmh": {
+      "label": "Durchschnittsgeschwindigkeit (Offline-Routing)",
+      "help": "Für die Schätzung der Fahrzeit ohne Routing-Dienst."
+    },
+    "drive.trailer_speed_factor": {
+      "label": "Zeitfaktor mit Anhänger",
+      "help": "Fahrten mit Anhänger dauern länger (in Deutschland meist Tempo 80). 0,88 bedeutet 12 % langsamer."
+    },
+    "drive.trailer_max_kmh": {
+      "label": "Höchstgeschwindigkeit mit Anhänger",
+      "help": "Obergrenze für die Durchschnittsgeschwindigkeit mit Anhänger."
+    },
+    "drive.parking_min": {
+      "label": "Fixzeit für Parken",
+      "help": "Zeit für Parkplatzsuche und Abstellen pro Stopp."
+    },
+    "drive.vehicle_speed_factor": {
+      "label": "Geschwindigkeitsfaktor des Fahrzeugs",
+      "help": "Große Fahrzeuge fahren langsamer. 0,9 = 10 % langsamer als ein Pkw."
+    },
+    "costs.overtime_surcharge_pct": {
+      "label": "Überstundenzuschlag",
+      "help": "Zuschlag auf den Lohn für Arbeitszeit über der regulären Tagesarbeitszeit."
+    },
+    "costs.vehicle_per_km": {
+      "label": "Fahrzeugkosten pro km (ohne Kraftstoff)",
+      "help": "Verschleiß, Wartung, Reifen pro gefahrenem Kilometer."
+    },
+    "costs.vehicle_per_hour": {
+      "label": "Fahrzeugkosten pro Stunde",
+      "help": "Zeitabhängige Kosten (Miete, Versicherung, Abschreibung) pro Einsatzstunde."
+    },
+    "costs.fuel_price": {
+      "label": "Kraftstoffpreis",
+      "help": "Preis pro Liter."
+    },
+    "costs.fuel_l_per_100km": {
+      "label": "Verbrauch",
+      "help": "Kraftstoffverbrauch in Litern pro 100 km."
+    },
+    "costs.equipment_per_use": {
+      "label": "Kosten pro Einsatz",
+      "help": "Kosten für Hilfsmittel pro Stopp, an dem es eingesetzt wird."
+    },
+    "costs.overhead_pct": {
+      "label": "Gemeinkostenzuschlag",
+      "help": "Zuschlag auf die direkten Kosten für Verwaltung, Lager und Sonstiges."
+    },
+    "costs.margin_pct": {
+      "label": "Marge",
+      "help": "Angestrebter Gewinnaufschlag auf die Selbstkosten. Wird in der Kostendeckung angezeigt."
+    },
+    "costs.vat_pct": {
+      "label": "Mehrwertsteuersatz (Kunden)",
+      "help": "Steuersatz für Angebote und Rechnungen an Kunden."
+    },
+    "pricing.base_price": {
+      "label": "Grundpreis pro Auftrag",
+      "help": "Fester Betrag pro Abholung (Anfahrt, Verwaltung)."
+    },
+    "pricing.rate_per_labour_min": {
+      "label": "Preis pro Arbeitsminute",
+      "help": "Wird mit der vorhergesagten Arbeitszeit (Dauer × Teamgröße) multipliziert."
+    },
+    "pricing.per_plant_fee": {
+      "label": "Preis pro Pflanze",
+      "help": "Fester Betrag pro Pflanze."
+    },
+    "pricing.minimum_price": {
+      "label": "Mindestpreis",
+      "help": "Ein Auftrag kostet mindestens diesen Betrag."
+    },
+    "pricing.distance_mode": {
+      "label": "Entfernungszuschlag",
+      "help": "Wie der Entfernungszuschlag berechnet wird.",
+      "choices": {
+        "off": "aus",
+        "distance": "Entfernung zum Betrieb",
+        "zones": "Zonen (Radius)",
+        "detour": "geschätzter Umweg in einer typischen Tour"
+      }
+    },
+    "pricing.distance_rate_km": {
+      "label": "Zuschlag pro km",
+      "help": "Bei „Entfernung zum Betrieb“: Betrag pro Kilometer über der freien Entfernung. Bei „Umweg“: Betrag pro Umweg-Kilometer."
+    },
+    "pricing.distance_free_km": {
+      "label": "Freie Entfernung",
+      "help": "Bis zu dieser Entfernung fällt kein Entfernungszuschlag an."
+    },
+    "pricing.zones": {
+      "label": "Zonen",
+      "help": "Liste von Zonen mit Radius (max_km) und Zuschlag in Euro, aufsteigend sortiert."
+    },
+    "pricing.rounding": {
+      "label": "Rundung",
+      "help": "Preise werden auf ein Vielfaches dieses Betrags gerundet. 0 = keine Rundung."
+    },
+    "pricing.prices_include_vat": {
+      "label": "Preisformel ergibt Bruttopreise",
+      "help": "Wenn aktiv, enthält das Ergebnis der Preisformel bereits die Mehrwertsteuer."
+    },
+    "pricing.typical_tour_stops": {
+      "label": "Typische Stopps pro Tour",
+      "help": "Für den Umweg-Zuschlag und den geschätzten Fahranteil in Angeboten vor der Tourenplanung."
+    },
+    "planning.day_start": {
+      "label": "Arbeitsbeginn",
+      "help": "Frühester Start einer Tour am Betrieb."
+    },
+    "planning.day_end": {
+      "label": "Arbeitsende",
+      "help": "Späteste Rückkehr zum Betrieb ohne Überstunden."
+    },
+    "planning.unload_min": {
+      "label": "Abladezeit am Betrieb",
+      "help": "Zeit zum Ausladen, wenn ein Fahrzeug zwischendurch zum Betrieb zurückkehrt."
+    },
+    "planning.break_after_6h_min": {
+      "label": "Pause ab 6 Stunden",
+      "help": "Nach Arbeitszeitgesetz mindestens 30 Minuten bei mehr als 6 Stunden Arbeit."
+    },
+    "planning.break_after_9h_min": {
+      "label": "Pause ab 9 Stunden",
+      "help": "Nach Arbeitszeitgesetz mindestens 45 Minuten bei mehr als 9 Stunden Arbeit."
+    },
+    "planning.max_trips_per_day": {
+      "label": "Fahrten pro Tag und Fahrzeug",
+      "help": "Wie oft ein Fahrzeug am Tag zum Betrieb zurückkehren und erneut losfahren darf."
+    },
+    "planning.time_windows": {
+      "label": "Kundenzeitfenster",
+      "help": "Aus: werden ignoriert. Weich: Abweichung kostet Strafe. Hart: müssen eingehalten werden.",
+      "choices": {
+        "off": "aus",
+        "soft": "weich (mit Strafe)",
+        "hard": "hart"
+      }
+    },
+    "planning.time_window_penalty_min": {
+      "label": "Strafe pro Minute Zeitfensterverletzung",
+      "help": "Nur bei weichen Zeitfenstern."
+    },
+    "planning.skip_penalty": {
+      "label": "Strafe für nicht eingeplanten Stopp",
+      "help": "Je höher, desto stärker versucht die Planung, alle Stopps einzuplanen."
+    },
+    "planning.overtime_penalty_min": {
+      "label": "Strafe pro Überstundenminute",
+      "help": "Zusätzlich zum Überstundenzuschlag, um Überstunden zu vermeiden."
+    },
+    "planning.objective": {
+      "label": "Ziel der Planung",
+      "help": "Kosten minimieren oder Gewinn maximieren (Preis minus Kosten; unrentable Stopps dürfen dann ausgelassen werden).",
+      "choices": {
+        "cost": "Kosten minimieren",
+        "profit": "Gewinn maximieren"
+      }
+    },
+    "planning.weight_vehicle_cost": {
+      "label": "Gewicht der Fahrzeugkosten",
+      "help": "Gewichtung in der Zielfunktion."
+    },
+    "planning.weight_labour_cost": {
+      "label": "Gewicht der Arbeitskosten",
+      "help": "Gewichtung in der Zielfunktion."
+    },
+    "planning.first_solution": {
+      "label": "Startlösung",
+      "help": "Verfahren, mit dem die erste Lösung gebaut wird."
+    },
+    "planning.metaheuristic": {
+      "label": "Verbesserungsverfahren",
+      "help": "Verfahren, mit dem die Startlösung verbessert wird."
+    },
+    "planning.time_limit_s": {
+      "label": "Zeitlimit der Optimierung",
+      "help": "Maximale Rechenzeit pro Planungslauf (pro Gruppe bei großen Betrieben)."
+    },
+    "planning.cluster_max_stops": {
+      "label": "Gruppengröße bei großen Betrieben",
+      "help": "Ab dieser Anzahl Stopps werden Stopps nach Region und Tag gruppiert und je Gruppe optimiert."
+    },
+    "planning.pack_retry_limit": {
+      "label": "Wiederholungen bei Ladeproblemen",
+      "help": "Wie oft neu geplant wird, wenn eine Tour nicht ins Fahrzeug passt."
+    },
+    "planning.capacity_shrink": {
+      "label": "Kapazitätsreduktion bei Ladeproblemen",
+      "help": "Passt eine Tour nicht, wird die nutzbare Kapazität dieser Kombination mit diesem Faktor verringert."
+    },
+    "planning.form_teams": {
+      "label": "Teambildung",
+      "help": "Automatisch: das System bildet Teams aus verfügbarem Personal. Fest: nur vorgegebene Teams.",
+      "choices": {
+        "auto": "automatisch",
+        "fixed": "nur feste Teams"
+      }
+    },
+    "planning.horizon_days": {
+      "label": "Planungszeitraum",
+      "help": "So viele Arbeitstage ab dem Startdatum werden standardmäßig geplant."
+    },
+    "packing.time_limit_s": {
+      "label": "Zeitlimit Ladeplanung",
+      "help": "Rechenzeit für die Verbesserung eines Ladeplans."
+    },
+    "packing.sort_rule": {
+      "label": "Ladereihenfolge der Startlösung",
+      "help": "Nach welcher Regel die Pflanzen für die erste Platzierung sortiert werden.",
+      "choices": {
+        "tour_then_size": "Tourreihenfolge, dann groß zuerst",
+        "size": "groß zuerst",
+        "weight": "schwer zuerst",
+        "tour": "nur Tourreihenfolge"
+      }
+    },
+    "packing.crown_overlap": {
+      "label": "Zulässige Kronenüberlappung",
+      "help": "Anteil des Kronenradius, um den sich Nachbarkronen überlappen dürfen. Hängt von Dichte und Stauchbarkeit ab."
+    },
+    "packing.tilt_angle_deg": {
+      "label": "Maximaler Kippwinkel",
+      "help": "Pflanzen, die gekippt werden dürfen, werden höchstens um diesen Winkel geneigt geladen. 90° = liegend."
+    },
+    "packing.clearance_cm": {
+      "label": "Abstand zwischen Kübeln",
+      "help": "Mindestabstand zwischen starren Teilen."
+    },
+    "packing.heavy_kg": {
+      "label": "Schwere Pflanze ab",
+      "help": "Empfindliche Pflanzen werden nicht hinter Pflanzen ab diesem Gewicht geladen."
+    },
+    "packing.cog_tolerance": {
+      "label": "Toleranz Schwerpunkt",
+      "help": "Erlaubte seitliche Abweichung des Ladungsschwerpunkts von der Mitte (Anteil der Laderaumbreite)."
+    },
+    "packing.tall_ratio": {
+      "label": "Kippgefahr ab Verhältnis Höhe/Breite",
+      "help": "Stehende Pflanzen mit größerem Verhältnis von Höhe zu Kübelbreite müssen an der Wand oder gesichert stehen."
+    },
+    "photos.plant_set": {
+      "label": "Foto-Set pro Pflanze",
+      "help": "Welche Fotos für jede Pflanze angefordert werden."
+    },
+    "photos.path_set": {
+      "label": "Foto-Set pro Weg",
+      "help": "Welche Fotos für den Weg angefordert werden."
+    },
+    "photos.min_confidence": {
+      "label": "Prüfschwelle für KI-Werte",
+      "help": "Werte mit geringerer Sicherheit werden zur Prüfung markiert."
+    },
+    "privacy.consent_text": {
+      "label": "Einwilligungstext für Fotos",
+      "help": "Dieser Text wird Kunden angezeigt; die Einwilligung wird gespeichert."
+    },
+    "privacy.photo_retention_days": {
+      "label": "Fotos löschen nach",
+      "help": "Fotos werden so viele Tage nach Abschluss des Auftrags automatisch gelöscht."
+    },
+    "privacy.customer_retention_days": {
+      "label": "Kundendaten löschen nach",
+      "help": "Kunden ohne Aufträge in diesem Zeitraum werden gelöscht. Rechnungsdaten bleiben wegen der Aufbewahrungspflicht erhalten."
+    },
+    "privacy.invoice_retention_years": {
+      "label": "Aufbewahrung von Rechnungen",
+      "help": "Gesetzliche Aufbewahrungsfrist für Rechnungen."
+    },
+    "ai.model.completeness_check": {
+      "label": "Modell: Foto-Vollständigkeitsprüfung",
+      "help": "KI-Modell, das prüft, ob alle Fotos vorhanden und brauchbar sind."
+    },
+    "ai.model.photo_analysis": {
+      "label": "Modell: Foto-Auswertung",
+      "help": "KI-Modell, das Maße, Pflanzenart und Weg aus Fotos ableitet."
+    },
+    "ai.model.message_intake": {
+      "label": "Modell: Nachrichtenerfassung",
+      "help": "KI-Modell, das aus weitergeleiteten Nachrichten Entwürfe erzeugt."
+    },
+    "ai.model.settings_assistant": {
+      "label": "Modell: Einstellungs-KI",
+      "help": "KI-Modell des Einstellungs-Chats."
+    },
+    "ai.model.support_agent": {
+      "label": "Modell: Unterstützungs-Agent",
+      "help": "KI-Modell für Hilfe und Support."
+    },
+    "ai.fallback_model": {
+      "label": "Ersatzmodell",
+      "help": "Wird verwendet, wenn das eingestellte Modell nicht erreichbar ist."
+    },
+    "ai.key_mode": {
+      "label": "API-Schlüssel",
+      "help": "Plattform: Aufrufe laufen über den Schlüssel des Betreibers und werden abgerechnet. Eigener Schlüssel: der Betrieb hinterlegt eigene Schlüssel.",
+      "choices": {
+        "platform": "Plattform-Schlüssel",
+        "byok": "eigener Schlüssel"
+      }
+    },
+    "ai.monthly_limit_eur": {
+      "label": "KI-Ausgabenlimit pro Monat",
+      "help": "Bei Erreichen werden KI-Funktionen für den Betrieb gesperrt."
+    },
+    "ai.warn_pct": {
+      "label": "Warnung ab Anteil des Limits",
+      "help": "Ab diesem Anteil des Monatslimits wird gewarnt."
+    },
+    "ai.max_retries": {
+      "label": "Wiederholungen bei ungültiger Antwort",
+      "help": "Wie oft eine KI-Anfrage wiederholt wird, wenn die Antwort nicht dem Schema entspricht."
+    },
+    "driver.per_plant_events": {
+      "label": "Zeit pro Pflanze erfassen",
+      "help": "Zeigt in der Fahrer-App die Schaltfläche „Pflanze fertig“."
+    },
+    "driver.require_pickup_photo": {
+      "label": "Pflichtfoto beim Einladen",
+      "help": "Ohne Foto kann ein Stopp nicht als eingeladen gemeldet werden."
+    },
+    "driver.qr_module": {
+      "label": "QR-Code-Modul",
+      "help": "Etiketten mit QR-Code drucken und beim Einladen scannen."
+    },
+    "billing.subscription_eur": {
+      "label": "Abo-Betrag",
+      "help": "Netto-Betrag des Abos pro Abrechnungszeitraum. 0 = kein Abo."
+    },
+    "billing.subscription_period": {
+      "label": "Abo-Zeitraum",
+      "help": "Monatlich oder jährlich.",
+      "choices": {
+        "monthly": "monatlich",
+        "yearly": "jährlich"
+      }
+    },
+    "billing.per_plant_eur": {
+      "label": "Preis pro abgeholter Pflanze",
+      "help": "Netto-Betrag, den der Betrieb pro abgeholter Pflanze an die Plattform zahlt. 0 = aus."
+    },
+    "billing.ai_markup_pct": {
+      "label": "Aufschlag auf KI-Kosten",
+      "help": "Prozentualer Aufschlag auf die Token-Kosten. Entfällt bei eigenem Schlüssel."
+    },
+    "billing.ai_enabled": {
+      "label": "KI-Verbrauch abrechnen",
+      "help": "Ob KI-Verbrauch auf der Rechnung erscheint."
+    },
+    "billing.vat_pct": {
+      "label": "Mehrwertsteuer der Plattform-Rechnungen",
+      "help": "Steuersatz auf Plattform-Rechnungen."
+    },
+    "billing.small_business": {
+      "label": "Kleinunternehmerregelung",
+      "help": "Wenn aktiv, wird keine Umsatzsteuer ausgewiesen (§ 19 UStG)."
+    },
+    "billing.issuer": {
+      "label": "Rechnungssteller",
+      "help": "Name, Anschrift, Steuernummer bzw. USt-IdNr. und Bankverbindung des Plattformbetreibers."
+    },
+    "billing.payment_days": {
+      "label": "Zahlungsziel",
+      "help": "Tage bis zur Fälligkeit."
+    },
+    "agents.token_days": {
+      "label": "Gültigkeit von Agenten-Tokens",
+      "help": "Nach so vielen Tagen läuft ein Agenten-Token ab."
+    },
+    "agents.rate_per_min": {
+      "label": "Anfragen pro Minute je Agent",
+      "help": "Ratenbegrenzung für Agenten-Tokens."
+    }
+  },
+  "fields": {
+    "_common": {
+      "name": "Name",
+      "notes": "Notizen",
+      "created_at": "Angelegt",
+      "updated_at": "Geändert",
+      "id": "ID",
+      "email": "E-Mail",
+      "phone": "Telefon",
+      "street": "Straße und Hausnummer",
+      "postal_code": "PLZ",
+      "city": "Ort",
+      "country": "Land",
+      "lat": "Breitengrad",
+      "lon": "Längengrad",
+      "active": "Aktiv"
+    },
+    "tenant": {
+      "name": {
+        "label": "Name des Betriebs"
+      },
+      "slug": {
+        "label": "Betriebskennung",
+        "help": "Kurze Kennung, z. B. für die PIN-Anmeldung der Fahrer. Wird automatisch erzeugt."
+      },
+      "legal_name": {
+        "label": "Firmierung",
+        "help": "Vollständiger Name für Rechnungen und Angebote."
+      },
+      "depot_lat": {
+        "label": "Breitengrad des Betriebs",
+        "help": "Standort, an dem alle Touren beginnen und enden."
+      },
+      "depot_lon": {
+        "label": "Längengrad des Betriebs"
+      },
+      "vat_id": {
+        "label": "USt-IdNr."
+      },
+      "tax_number": {
+        "label": "Steuernummer"
+      },
+      "iban": {
+        "label": "IBAN"
+      },
+      "status": {
+        "label": "Status"
+      },
+      "is_demo": {
+        "label": "Demo-Betrieb"
+      },
+      "current_season": {
+        "label": "Aktuelle Saison (Jahr)"
+      }
+    }
+  },
+  "enums": {
+    "active": "aktiv",
+    "suspended": "gesperrt"
+  },
+  "permissions": {
+    "platform.tenants": "Betriebe verwalten",
+    "platform.settings": "Globale Einstellungen",
+    "platform.formulas": "Globale Formeln",
+    "platform.species": "Pflanzenarten-Katalog",
+    "platform.ai": "KI-Anbieter und Prompts",
+    "platform.billing": "Plattform-Abrechnung",
+    "platform.agents": "Admin-Agenten",
+    "platform.system": "Systemzustand",
+    "tenant.view": "Betrieb ansehen",
+    "tenant.profile": "Betriebsdaten ändern",
+    "tenant.users": "Benutzer verwalten",
+    "tenant.settings": "Einstellungen ändern",
+    "tenant.billing": "Rechnungen und Verbrauch",
+    "tenant.agents": "Agenten-Zugänge",
+    "staff.read": "Personal ansehen",
+    "staff.write": "Personal bearbeiten",
+    "fleet.read": "Fahrzeuge und Hilfsmittel ansehen",
+    "fleet.write": "Fahrzeuge und Hilfsmittel bearbeiten",
+    "customers.read": "Kunden ansehen",
+    "customers.write": "Kunden bearbeiten",
+    "orders.read": "Aufträge ansehen",
+    "orders.write": "Aufträge und Pflanzen bearbeiten",
+    "drafts.write": "Entwürfe anlegen und bestätigen",
+    "species.write": "Pflanzenarten anpassen",
+    "formulas.write": "Formeln anpassen",
+    "pricing.write": "Preise und Angebote",
+    "planning.read": "Planung ansehen",
+    "planning.write": "Touren planen",
+    "scenarios.run": "Szenarien rechnen",
+    "model.fit": "Modellanpassung",
+    "ai.use": "KI-Funktionen nutzen",
+    "audit.read": "Änderungsprotokoll ansehen",
+    "driver.app": "Fahrer-App",
+    "customer.portal": "Kundenzugang"
+  }
+}

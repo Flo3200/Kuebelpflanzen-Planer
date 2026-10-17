@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "kuebelplaner",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["scripts/dev.sh"],
+      "port": 8000
+    },
+    {
+      "name": "frontend-dev",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "source scripts/dev-env.sh && cd frontend && npm run dev"],
+      "port": 5173
+    }
+  ]
+}
