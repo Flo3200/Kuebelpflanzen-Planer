@@ -141,7 +141,10 @@ def solve(
     db=None,
     cap_scale: dict[str, float] | None = None,
     forbidden_pairs: set[tuple[str, str]] | None = None,
+    forbidden_assign: set[tuple[str, str]] | None = None,
 ) -> SolveResult:
+    """forbidden_assign: (stop id, unit key) combinations excluded after failed load plans."""
+    forbidden_assign = forbidden_assign or set()
     started = _time.monotonic()
     cache = ServiceCache(inp)
     result = SolveResult()
@@ -156,6 +159,9 @@ def solve(
                 reasons["no_day"] += 1
                 continue
             if s.pinned_unit and u.key != s.pinned_unit:
+                continue
+            if (s.id, u.key) in forbidden_assign:
+                reasons["load_plan"] += 1
                 continue
             info = cache.get(s, u)
             if not info.feasible:

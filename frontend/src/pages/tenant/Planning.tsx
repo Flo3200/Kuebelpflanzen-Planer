@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CircleMarker, MapContainer, Polyline, TileLayer, Tooltip, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { api } from "../../api/client";
+import { LoadStatusBadge } from "../../components/loadplan/LoadPlanView";
 import { Badge, Card, ConfirmButton, Empty, ErrorBox, Kpi, Modal, PageHeader, Progress, Spinner, Tabs, useToast } from "../../components/ui";
 import { fmtDate, fmtMinutes, fmtMoney, fmtNumber, t, tMaybe } from "../../i18n";
 
@@ -371,7 +372,11 @@ function Timeline({ plan, onChange }: { plan: any; onChange: () => void }) {
                   <div className="row" style={{ gap: 4 }}>
                     {tr.fixed && <Badge tone="blue">{t("planning.fixed")}</Badge>}
                     {tr.warnings.length > 0 && <Badge tone="red">{tr.warnings.length} ⚠</Badge>}
-                    {tr.load_status === "failed" && <Badge tone="red">{t("planning.load_failed")}</Badge>}
+                    {tr.load_status === "failed" && (
+                      <Link to={`/betrieb/planung/touren/${tr.id}/ladeplan`} title={tr.load_message ?? ""}>
+                        <Badge tone="red">{t("planning.load_failed")}</Badge>
+                      </Link>
+                    )}
                   </div>
                 </div>
                 <div style={{ position: "relative", flex: 1, height: 44, background: "var(--surface-2)", borderRadius: 8 }}>
@@ -429,6 +434,9 @@ function ToursList({ plan, onChange }: { plan: any; onChange: () => void }) {
               <span className="num">
                 {hm(tr.start_min)}–{hm(tr.end_min)} · {tr.stops.length} {t("planning.stops")} · {fmtNumber(tr.distance_km)} km · {fmtNumber(tr.load.weight)}/{fmtNumber(tr.load.cap_weight)} kg · {fmtMoney(tr.costs.self_cost)}
               </span>
+              <Link className="btn ghost small" to={`/betrieb/planung/touren/${tr.id}/ladeplan`} onClick={(e) => e.stopPropagation()} title={tr.load_message ?? ""}>
+                {t("loadplan.open")} <LoadStatusBadge status={tr.load_status} />
+              </Link>
               <label className="checkbox" onClick={(e) => e.stopPropagation()}>
                 <input type="checkbox" checked={tr.fixed} onChange={(e) => fix(`/api/tours/${tr.id}`, e.target.checked)} />
                 {t("planning.fix")}

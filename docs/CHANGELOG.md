@@ -136,3 +136,36 @@ harte Zeitfenster, Leistungstest 500 Stopps/10 Teams (60 s Zeitlimit, gesamt 76 
 
 **Hinweise:** Die Python-Bindung von `SetAllowedVehiclesForIndex` ist in OR-Tools 9.15 defekt;
 zulässige Fahrzeuge werden über den Wertebereich der Fahrzeugvariable gesetzt (D14).
+
+## Phase 5 – 3D-Ladeplanung (abgeschlossen 2026-10-18)
+
+**Umgesetzt**
+- Geometrie: Laderäume mit Radkästen, Regalen (Tragkraft, lichte Höhe, „sperrt den Boden“),
+  Tür, Achsen und Anhängerkupplung; Pflanzen mit starrem Kübel (rund/eckig) und weicher Krone
+  (Kugel, Kegel, Säule, Zylinder, frei), Kippen und Liegen nach Einstellung.
+- Packer: Extreme-Point-Heuristik mit Kronen-Berührpunkten und Raster-Rückfall, Ladegassen für
+  liegende Pflanzen, Ladereihenfolge nach Tour (Abholung: zuerst geladen = ganz hinten,
+  Rücklieferung umgekehrt), Simulated Annealing für Schwerpunkt, Achs- und Stützlast,
+  empfindliche Pflanzen und Reihenfolge; Ladeanweisungen auf Deutsch (Sprachdatei).
+- Kopplung mit der Tourenplanung (D15): Neuplanung mit kleinerer Kapazität bzw. ohne die nicht
+  passende Kombination aus Stopp und Fahrzeug; Zwischenspeicher für gleiche Fahrten.
+- Begründungen: jede nicht ladbare Pflanze mit Namen und Grund (kein Platz, Nutzlast, Tür zu
+  schmal, zu hoch und nicht kippbar), Achs-/Stützlastverletzungen benannt.
+- API: Ladeplan einer Tour lesen (mit Stopps und Kunden) und neu berechnen (protokolliert),
+  alle Ladepläne eines Plans als Hintergrundjob.
+- Oberfläche: Ladeplan-Seite mit Draufsicht (SVG), 3D-Ansicht (three.js, nachgeladen, drehbar,
+  Pflanze anklicken) und „Schritt für Schritt“ mit hervorgehobener Pflanze; Kennzahlen
+  (Gewicht, Achslasten, Stützlast, Schwerpunkt, genutzte Länge); Link aus Tourenliste und
+  Zeitachse. Die Ansicht ist für die Fahrer-App wiederverwendbar (kompakter Modus).
+
+**Tests:** 17 neue Tests (unabhängige Geometrieprüfung: keine Kübelüberlappung, im Laderaum,
+unter dem Dach, Nutzlast, kein Kübel auf Radkasten, Regale; Ladereihenfolge ohne Blockade;
+freie Gasse für liegende Pflanzen; deutsche Gründe; Anhänger-Stützlast; Determinismus;
+Plan-Abnahme mit Ladeplänen über die API; Mandantentrennung).
+
+**Abnahme:** erfüllt – jede Tour hat einen gültigen Ladeplan oder eine Begründung. Demo-Betrieb
+„Grünfink“ (10 Tage): 17 von 18 Touren passen, die übrige nennt die Pflanze, die nicht passt.
+
+**Hinweise:** Eine Planung mit Ladeprüfung dauert im Demo-Betrieb etwa zwei Minuten
+(Hintergrundjob mit Fortschritt). Die Ladeplanung prüft keine Seitentür; wer über eine Schiebetür
+lädt, kann den Plan in der Oberfläche neu berechnen oder Stopps verschieben.

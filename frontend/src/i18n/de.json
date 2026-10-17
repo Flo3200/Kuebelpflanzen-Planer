@@ -912,7 +912,8 @@
       "outside_horizon": "Termin außerhalb des Zeitraums",
       "no_units": "kein Personal/Fahrzeug verfügbar",
       "pinned_unit_unavailable": "fixiertes Team nicht verfügbar",
-      "manual": "von Hand herausgenommen"
+      "manual": "von Hand herausgenommen",
+      "load_plan": "passt laut Ladeplan in kein Fahrzeug"
     },
     "reason_help": {
       "no_capacity": "Mehr Tage, Personal oder Fahrzeuge einplanen, oder Szenarien vergleichen.",
@@ -967,5 +968,71 @@
     "cost_per_day_saved": "{c} je eingespartem Tag",
     "cost_per_day_added": "{c} je zusätzlichem Tag",
     "cost_per_extra_stop": "{c} je zusätzlich eingeplantem Stopp"
+  },
+  "loadplan": {
+    "eyebrow": "Ladeplanung",
+    "title": "Ladeplan",
+    "back": "Zur Planung",
+    "none": "Für diese Tour wurde noch kein Ladeplan berechnet.",
+    "recompute": "Ladeplan neu berechnen",
+    "computing": "Wird berechnet …",
+    "recomputed_ok": "Ladeplan berechnet – alles passt.",
+    "recomputed_failed": "Ladeplan berechnet – nicht alles passt. Begründung siehe oben.",
+    "open": "Ladeplan",
+    "view_top": "Draufsicht",
+    "view_3d": "3D-Ansicht",
+    "view_steps": "Schritt für Schritt",
+    "prev": "Zurück",
+    "next": "Weiter",
+    "show_all": "Alles zeigen",
+    "step_of": "Schritt {n} von {total}",
+    "steps_total": "{n} Pflanzen – Schritt wählen oder Pflanze anklicken",
+    "from_stop": "Stopp {n} ({number})",
+    "secure": "mit Gurt sichern",
+    "metrics": "Kennzahlen",
+    "problems": "Hinweise",
+    "hint_3d": "Ziehen zum Drehen, Mausrad zum Zoomen, Pflanze anklicken für den Ladeschritt.",
+    "no_webgl": "Die 3D-Ansicht braucht WebGL. Die Draufsicht funktioniert trotzdem.",
+    "door": "Tür",
+    "front_wall": "Stirnwand",
+    "obstacle": "Radkasten / Hindernis, {h} cm hoch",
+    "shelf": "Regal „{name}“ in {z} cm Höhe",
+    "m_weight": "Gewicht",
+    "m_axles": "Achslast vorne / hinten (Zuladung)",
+    "m_tongue": "Stützlast",
+    "m_lateral": "Schwerpunkt seitlich versetzt",
+    "m_length": "genutzte Länge",
+    "m_floor": "Bodenfläche durch Töpfe belegt",
+    "status": {
+      "ok": "Ladeplan passt",
+      "failed": "Ladeplan passt nicht",
+      "unknown": "Ladeplan offen"
+    },
+    "direction": {
+      "pickup": "Abholung: was zuerst eingeladen wird, steht ganz hinten.",
+      "return": "Rücklieferung: was zuerst ausgeliefert wird, steht an der Tür."
+    },
+    "orientation": {
+      "upright": "stehend",
+      "lying_x": "liegend längs",
+      "lying_y": "liegend quer",
+      "tilted_x": "schräg"
+    },
+    "reasons": {
+      "space": "kein Platz mehr frei",
+      "payload": "Nutzlast erreicht",
+      "door_width": "Topf breiter als Tür oder Laderaum",
+      "height": "zu hoch und nicht kippbar",
+      "no_space": "kein Laderaum vorhanden"
+    },
+    "violations": {
+      "axle_front": "Vorderachse überlastet",
+      "axle_rear": "Hinterachse überlastet",
+      "tongue_high": "Stützlast zu hoch",
+      "tongue_low": "Stützlast zu niedrig",
+      "lateral_cog": "Schwerpunkt seitlich zu weit außen",
+      "sensitive_behind_heavy": "empfindliche Pflanze direkt vor schwerem Topf",
+      "order_blocked": "Ladereihenfolge: Pflanze steht im Weg"
+    }
   }
 }

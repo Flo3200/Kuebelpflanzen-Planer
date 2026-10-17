@@ -42,6 +42,7 @@ def load_handlers() -> None:
         "app.ai.jobs",
         "app.timemodel.jobs",
         "app.planning.jobs",
+        "app.api.loading",
         "app.learning.jobs",
         "app.billing.jobs",
         "app.pdf.jobs",

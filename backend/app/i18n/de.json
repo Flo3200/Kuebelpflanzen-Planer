@@ -1571,5 +1571,41 @@
       "label": "Selbstkosten",
       "help": "geschätzte Selbstkosten mit Gemeinkostenzuschlag"
     }
+  },
+  "packing": {
+    "ok": "Ladeplan in Ordnung",
+    "not_placed": "{count} Pflanze(n) passen nicht: {items}",
+    "axle": "Achs- oder Stützlast überschritten: {items}",
+    "reasons": {
+      "space": "kein Platz mehr frei",
+      "payload": "Nutzlast erreicht",
+      "door_width": "Topf breiter als Tür oder Laderaum",
+      "height": "zu hoch und nicht kippbar",
+      "no_space": "kein Laderaum vorhanden"
+    },
+    "violations": {
+      "axle_front": "Vorderachse überlastet",
+      "axle_rear": "Hinterachse überlastet",
+      "tongue_high": "Stützlast zu hoch",
+      "tongue_low": "Stützlast zu niedrig"
+    },
+    "instr": {
+      "front_wall": "ganz hinten an der Stirnwand",
+      "back": "hinten",
+      "middle": "in der Mitte",
+      "door": "vorne an der Tür",
+      "left": "links",
+      "right": "rechts",
+      "center": "mittig",
+      "floor": "auf den Boden",
+      "shelf": "auf das Regal „{name}“",
+      "crown_to_wall": "Krone zur Wand",
+      "lying_x": "liegend, Topf zur Stirnwand, Krone zur Tür",
+      "lying_y": "liegend quer, Topf {side}",
+      "tilted": "schräg gekippt (ca. {angle}°), Krone zur Tür",
+      "sensitive": "empfindlich – nicht drücken",
+      "secure": "mit Gurt sichern"
+    },
+    "plant": "Pflanze"
   }
 }

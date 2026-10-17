@@ -109,13 +109,18 @@ def run_plan(
     )
     cap_scale: dict[str, float] = {}
     forbidden: set[tuple[str, str]] = set()
+    forbidden_assign: set[tuple[str, str]] = set()
+    pack_strikes: dict[tuple[str, str], int] = {}
+    pack_cache: dict[tuple[Any, ...], tuple[bool, str, dict[str, Any]]] = {}
+    final_done = False
     plant_to_order = {str(p.id): s.id for s in inp.stops for p in s.plants}
     attempts = 0
     pack_failures: dict[str, str] = {}
     pack_results: dict[tuple[str, int], dict[str, Any]] = {}
     while True:
         progress(0.15 + 0.6 * min(attempts, 4) / 5, "Touren werden optimiert …")
-        res = solve(inp, db, cap_scale, forbidden)
+        last_round = attempts >= inp.settings["pack_retry_limit"]
+        res = solve(inp, db, cap_scale, forbidden, forbidden_assign)
         # incompatible plants on the same unit -> forbid the pair and solve again
         violations = set()
         by_unit: dict[str, set[str]] = defaultdict(set)
@@ -130,17 +135,43 @@ def run_plan(
         failed_units: set[str] = set()
         if pack_check is not None and not new_pairs:
             progress(0.8, "Ladepläne werden geprüft …")
+            pack_failures.clear()
             for trip in res.trips:
-                ok, message, payload = pack_check(db, inp, trip)
+                # identical trips (same vehicles, same stops in the same order) are not packed twice
+                ck = (
+                    trip.unit.vehicle.id,
+                    trip.unit.trailer.id if trip.unit.trailer else None,
+                    tuple(st.stop.id for st in trip.stops),
+                )
+                if ck not in pack_cache:
+                    pack_cache[ck] = pack_check(db, inp, trip)
+                ok, message, payload = pack_cache[ck]
                 pack_results[(trip.unit.key, trip.trip_no)] = {"ok": ok, "message": message, **payload}
                 if not ok:
                     failed_units.add(trip.unit.key)
                     pack_failures[trip.unit.key] = message
+                    # Stops whose plants could not be placed: never again on this unit if the vehicle
+                    # cannot take them at all (door, height); after a second crowding failure as well.
+                    bad = {u["plant_id"]: u["reason"] for u in payload.get("unplaced", [])}
+                    for st in trip.stops:
+                        reasons = [bad[str(p.id)] for p in st.stop.plants if str(p.id) in bad]
+                        if not reasons:
+                            continue
+                        combo = (st.stop.id, trip.unit.key)
+                        pack_strikes[combo] = pack_strikes.get(combo, 0) + 1
+                        if (
+                            any(r not in ("space", "payload") for r in reasons)
+                            or pack_strikes[combo] >= 2
+                            or last_round
+                        ):
+                            forbidden_assign.add(combo)
         attempts += 1
         if new_pairs and attempts <= 3:
             forbidden |= new_pairs
             continue
-        if failed_units and attempts <= inp.settings["pack_retry_limit"]:
+        if failed_units and not final_done and attempts <= inp.settings["pack_retry_limit"] + 1:
+            # in the last round every stop that did not fit is kept off that unit for good
+            final_done = last_round
             for key in failed_units:
                 cap_scale[key] = cap_scale.get(key, 1.0) * inp.settings["capacity_shrink"]
             pack_results.clear()
@@ -154,6 +185,7 @@ def run_plan(
         "capacity_scale": cap_scale,
         "pack_failures": pack_failures,
         "forbidden_pairs": len(forbidden),
+        "forbidden_assignments": len(forbidden_assign),
     }
     plan.status = "ready"
     plan.computed_at = datetime.now(UTC)

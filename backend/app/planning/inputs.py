@@ -508,6 +508,18 @@ def build_input(
     if order_ids is not None:
         q = q.where(PickupOrder.id.in_(order_ids))
     orders = list(db.scalars(q.order_by(PickupOrder.number)))
+    heights = [
+        v.cargo_height_cm
+        for v in db.scalars(
+            select(Vehicle).where(
+                Vehicle.tenant_id == tenant_id,
+                Vehicle.deleted_at.is_(None),
+                Vehicle.active.is_(True),
+                Vehicle.kind != "trailer",
+            )
+        )
+    ]
+    lowest_cargo = min(heights) if heights else 180.0
     stops: list[StopIn] = []
     unplannable: list[dict[str, Any]] = []
     tw_mode = r.get("planning.time_windows")
@@ -529,7 +541,13 @@ def build_input(
         overlap_area = 0.0
         for p in plants:
             ov = float(r.get("packing.crown_overlap", *est.plant_chain(p)))
-            overlap_area += footprint_m2(p, ov)
+            g = geometry(p)
+            if g.total_h > lowest_cargo and p.can_tilt:
+                # too tall to stand in the lowest vehicle: it travels lying (length × width)
+                width = max(g.pot_d, g.crown_w * (1 - (p.compressibility or 0.3) * 0.5))
+                overlap_area += g.total_h * width / 10000
+            else:
+                overlap_area += footprint_m2(p, ov)
         if order.fixed_date:
             allowed: set[date] | None = {order.fixed_date}
         else:

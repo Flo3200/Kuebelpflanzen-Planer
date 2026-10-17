@@ -94,3 +94,21 @@ und Wege der Abholung verwendet. Die Tourenplanung behandelt sie später als eig
   markiert (Einstellung `team.plan_over_limit`).
 - Große Betriebe: Stopps nach Winkel um den Betrieb in Regionen geteilt, Einheiten anteilig nach
   Arbeitsmenge verteilt, jede Region mit anteiligem Zeitlimit gelöst.
+
+## D15 – Ladeplanungsmodell
+- Kübel sind starr (Kreis oder Rechteck, nie überlappend), Kronen weich: sie dürfen sich um einen
+  Anteil überlappen, der aus `packing.crown_overlap`, Dichte und Komprimierbarkeit folgt, und über
+  fremde Kübel nur oberhalb des Kübelrands ragen. Nichts wird auf Pflanzen gestapelt.
+- Zu hohe, kippbare Pflanzen liegen längs (Topf zur Stirnwand) oder quer. Liegende Pflanzen dürfen
+  mit der Krone über niedrige Hindernisse (Radkasten) ragen, der Topf nie.
+- Ladegasse: Für jede liegende Pflanze, die später eingeladen wird, bleibt ein Streifen entlang der
+  linken Wand **über die ganze Länge bis zur Tür** frei, weil sie von der Tür aus hineingeschoben
+  wird. Andere Pflanzen nutzen den Streifen nur, wenn sie sonst nirgends Platz finden.
+- Kandidatenpunkte: Ecken der Nachbarn (mit Abstand), Berührpunkte der Kronen und als Rückfall ein
+  10-cm-Raster. Danach Simulated Annealing über Reihenfolge und Lage innerhalb eines Stopps
+  (Lastverteilung, Achs-/Stützlast, Ladereihenfolge, empfindliche Pflanzen).
+- Kopplung mit der Tourenplanung: Passt eine Tour nicht, wird die Kapazität der Einheit verringert
+  und neu geplant. Ein Stopp, dessen Pflanzen gar nicht in das Fahrzeug passen (Tür, Höhe), kommt
+  nie wieder auf diese Einheit; bei Platzmangel nach dem zweiten Fehlschlag und in der letzten Runde
+  immer. Gleiche Fahrten werden nicht zweimal gepackt. Bleibt eine Tour danach unpassend, behält sie
+  ihren Ladeplan mit deutscher Begründung (welche Pflanze, warum) und wird in der Planung markiert.
