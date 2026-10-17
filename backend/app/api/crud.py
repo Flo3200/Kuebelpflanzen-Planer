@@ -7,8 +7,6 @@ Column metadata (``info``) understood here:
   unit, group, enum, fk (target entity), help, widget, min, max
 """
 
-from __future__ import annotations
-
 import datetime as dt
 import enum
 import uuid
@@ -28,7 +26,7 @@ from app.core.context import Actor
 from app.core.errors import AppError, NotFound
 from app.i18n import catalog
 
-ENTITIES: dict[str, EntitySpec] = {}
+ENTITIES: dict[str, "EntitySpec"] = {}
 
 
 class EntitySpec:
@@ -147,6 +145,29 @@ def _jsonable_diff(spec: EntitySpec, row: Any, names: list[str]) -> dict[str, An
     return {n: getattr(row, n) for n in names}
 
 
+def _model_for_table(name: str) -> Any:
+    from app.models.base import Base
+
+    for mapper in Base.registry.mappers:
+        if getattr(mapper.class_, "__tablename__", None) == name:
+            return mapper.class_
+    return None
+
+
+def check_foreign_keys(db: Session, spec: EntitySpec, values: dict[str, Any]) -> None:
+    """Referenced rows must be visible to the current tenant (FK constraints ignore RLS)."""
+    for col in spec.writable():
+        value = values.get(col.name)
+        if value is None or not col.foreign_keys:
+            continue
+        target = _model_for_table(next(iter(col.foreign_keys)).column.table.name)
+        if target is None:
+            continue
+        ref = db.get(target, value)
+        if ref is None or getattr(ref, "deleted_at", None) is not None:
+            raise AppError("errors.validation")
+
+
 def get_row(db: Session, spec: EntitySpec, actor: Actor, row_id: uuid.UUID) -> Any:
     row = db.get(spec.model, row_id)
     if row is None or getattr(row, "deleted_at", None) is not None:
@@ -227,7 +248,9 @@ def crud_router(
         row = model()
         if hasattr(model, "tenant_id"):
             row.tenant_id = actor.require_tenant()
-        apply_values(spec, row, data.model_dump())  # type: ignore[attr-defined]
+        values = data.model_dump()  # type: ignore[attr-defined]
+        check_foreign_keys(db, spec, values)
+        apply_values(spec, row, values)
         if before_save:
             before_save(db, actor, row, True)
         db.add(row)
@@ -251,7 +274,9 @@ def crud_router(
     def update(row_id: uuid.UUID, data: Update, actor: CurrentActor, db: DB) -> Any:  # type: ignore[valid-type]
         actor.require(spec.write_perm)
         row = get_row(db, spec, actor, row_id)
-        changes = apply_values(spec, row, data.model_dump(exclude_unset=True))  # type: ignore[attr-defined]
+        values = data.model_dump(exclude_unset=True)  # type: ignore[attr-defined]
+        check_foreign_keys(db, spec, values)
+        changes = apply_values(spec, row, values)
         if before_save:
             before_save(db, actor, row, False)
         if changes:
@@ -350,6 +375,7 @@ def field_meta(spec: EntitySpec, lang: str = "de") -> list[dict[str, Any]]:
                     for v in (col.info.get("enum") or [])
                 },
                 "fk": col.info.get("fk"),
+                "options": col.info.get("enum_values"),
                 "min": col.info.get("min"),
                 "max": col.info.get("max"),
                 "list": col.info.get("list", False),

@@ -68,6 +68,7 @@ SETTINGS: tuple[SettingDef, ...] = (
     _s("general.currency", "enum", "EUR", "general", choices=("EUR", "CHF")),
     _s("general.timezone", "str", "Europe/Berlin", "general"),
     _s("general.storage_warn_pct", "float", 90.0, "general", unit="%", min=10, max=100, important=True),
+    _s("general.storage_space_factor", "float", 1.25, "general", unit="×", min=1.0, max=3.0),
     # --- security / platform -------------------------------------------------
     _s("security.admin_require_2fa", "bool", False, "security", levels=P),
     _s("security.owner_require_2fa", "bool", False, "security"),
@@ -144,6 +145,28 @@ SETTINGS: tuple[SettingDef, ...] = (
     _s("time.planning_quantile", "float", 0.8, "time", unit="", min=0.5, max=0.99, important=True),
     _s("time.default_path_length_m", "float", 15.0, "time", unit="m", min=0, max=500),
     _s("time.formula_tier", "int", 1, "time", unit="", min=1, max=9),
+    # --- weight estimation ---------------------------------------------------------
+    _s("weight.pot_fill", "float", 0.88, "weight", unit="", min=0.3, max=1.0),
+    _s("weight.pot_taper", "float", 0.85, "weight", unit="", min=0.5, max=1.0),
+    _s(
+        "weight.pot_material_kg_per_l",
+        "json",
+        {
+            "plastic": 0.03,
+            "fiberglass": 0.06,
+            "wood": 0.15,
+            "metal": 0.12,
+            "terracotta": 0.25,
+            "glazed": 0.3,
+            "stone": 0.6,
+            "concrete": 0.7,
+        },
+        "weight",
+    ),
+    _s("weight.uncertainty_pct", "float", 25.0, "weight", unit="%", min=0, max=200),
+    _s("weight.calibration_factor", "float", 1.0, "weight", unit="×", min=0.3, max=3.0, important=True),
+    _s("weight.default_pot_diameter_cm", "float", 45.0, "weight", unit="cm", min=10, max=300),
+    _s("weight.default_crown_ratio", "float", 1.6, "weight", unit="×", min=0.3, max=6),
     # --- learning ------------------------------------------------------------------
     _s("learning.loss", "enum", "huber", "learning", choices=("linear", "huber")),
     _s("learning.huber_delta_min", "float", 6.0, "learning", unit="min", min=0.5, max=60),
@@ -337,6 +360,7 @@ SETTINGS: tuple[SettingDef, ...] = (
     _s("ai.monthly_limit_eur", "float", 50.0, "ai", unit="€", min=0, max=100000, admin_only=True),
     _s("ai.warn_pct", "float", 80.0, "ai", unit="%", min=1, max=100),
     _s("ai.max_retries", "int", 2, "ai", unit="", min=0, max=5),
+    _s("ai.usd_to_eur", "float", 0.92, "ai", levels=P, unit="€/$", min=0.1, max=10),
     # --- driver app ----------------------------------------------------------------
     _s("driver.per_plant_events", "bool", False, "driver", important=True),
     _s("driver.require_pickup_photo", "bool", True, "driver"),

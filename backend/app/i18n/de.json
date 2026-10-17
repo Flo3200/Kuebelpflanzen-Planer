@@ -80,7 +80,8 @@
     "ai": "Künstliche Intelligenz",
     "driver": "Fahrer-App",
     "billing": "Plattform-Abrechnung",
-    "agents": "Agenten-Zugänge"
+    "agents": "Agenten-Zugänge",
+    "weight": "Gewichtsschätzung"
   },
   "settings": {
     "general.season_start_month": {
@@ -616,6 +617,42 @@
     "agents.rate_per_min": {
       "label": "Anfragen pro Minute je Agent",
       "help": "Ratenbegrenzung für Agenten-Tokens."
+    },
+    "general.storage_space_factor": {
+      "label": "Platzzuschlag im Lager",
+      "help": "Grundfläche der Pflanzen × Faktor = belegte Lagerfläche (Wege, Abstände)."
+    },
+    "weight.pot_fill": {
+      "label": "Füllgrad des Kübels",
+      "help": "Anteil des Kübelvolumens, der mit Erde gefüllt ist."
+    },
+    "weight.pot_taper": {
+      "label": "Formfaktor des Kübels",
+      "help": "Kübel verjüngen sich meist nach unten. 0,85 = 15 % weniger Volumen als ein gerader Zylinder."
+    },
+    "weight.pot_material_kg_per_l": {
+      "label": "Eigengewicht des Kübels je Material",
+      "help": "Kilogramm Kübel pro Liter Kübelvolumen, je Material."
+    },
+    "weight.uncertainty_pct": {
+      "label": "Unsicherheit der Gewichtsschätzung",
+      "help": "Sicherheitszuschlag bzw. Unsicherheit der geschätzten Gewichte. Größer, wenn Maße selbst geschätzt sind."
+    },
+    "weight.calibration_factor": {
+      "label": "Kalibrierfaktor Gewicht",
+      "help": "Multipliziert alle geschätzten Gewichte. Wird aus echten Wiegungen berechnet (Pflanzen mit gemessenem Gewicht)."
+    },
+    "weight.default_pot_diameter_cm": {
+      "label": "Standard-Kübeldurchmesser",
+      "help": "Wird angenommen, wenn kein Kübelmaß bekannt ist."
+    },
+    "weight.default_crown_ratio": {
+      "label": "Kronenbreite im Verhältnis zum Kübel",
+      "help": "Geschätzte Kronenbreite = Kübeldurchmesser × Faktor, wenn keine Kronenbreite bekannt ist."
+    },
+    "ai.usd_to_eur": {
+      "label": "Umrechnungskurs Dollar → Euro",
+      "help": "Für KI-Preise, die in US-Dollar angegeben sind."
     }
   },
   "fields": {
@@ -633,7 +670,16 @@
       "country": "Land",
       "lat": "Breitengrad",
       "lon": "Längengrad",
-      "active": "Aktiv"
+      "active": "Aktiv",
+      "label": "Bezeichnung",
+      "kind": "Art",
+      "color": "Farbe",
+      "short_name": "Kürzel",
+      "count": "Anzahl",
+      "status": "Status",
+      "number": "Nummer",
+      "vehicle_id": "Fahrzeug",
+      "plate": "Kennzeichen"
     },
     "tenant": {
       "name": {
@@ -672,11 +718,627 @@
       "current_season": {
         "label": "Aktuelle Saison (Jahr)"
       }
+    },
+    "staff": {
+      "name": {
+        "label": "Name"
+      },
+      "licences": {
+        "label": "Führerscheinklassen",
+        "help": "z. B. B, BE, C1, C1E"
+      },
+      "qualifications": {
+        "label": "Qualifikationen",
+        "help": "z. B. Treppensteiger, Baumpflege, Ersthelfer"
+      },
+      "active": {
+        "label": "Aktiv"
+      },
+      "color": {
+        "label": "Farbe in der Planung"
+      }
+    },
+    "team": {
+      "name": {
+        "label": "Teamname"
+      },
+      "member_ids": {
+        "label": "Mitglieder"
+      },
+      "vehicle_id": {
+        "label": "Bevorzugtes Fahrzeug"
+      }
+    },
+    "vehicle": {
+      "name": {
+        "label": "Bezeichnung"
+      },
+      "plate": {
+        "label": "Kennzeichen"
+      },
+      "kind": {
+        "label": "Art"
+      },
+      "required_licence": {
+        "label": "Benötigte Führerscheinklasse"
+      },
+      "seats": {
+        "label": "Sitzplätze"
+      },
+      "cargo_length_cm": {
+        "label": "Laderaum Länge",
+        "help": "Von der Stirnwand bis zur Tür."
+      },
+      "cargo_width_cm": {
+        "label": "Laderaum Breite"
+      },
+      "cargo_height_cm": {
+        "label": "Laderaum Höhe"
+      },
+      "payload_kg": {
+        "label": "Nutzlast"
+      },
+      "door_width_cm": {
+        "label": "Türbreite"
+      },
+      "door_height_cm": {
+        "label": "Türhöhe"
+      },
+      "door_position": {
+        "label": "Lage der Ladetür"
+      },
+      "loading_edge_cm": {
+        "label": "Ladekantenhöhe"
+      },
+      "has_ramp": {
+        "label": "Rampe vorhanden"
+      },
+      "has_lift": {
+        "label": "Ladebordwand vorhanden"
+      },
+      "wheel_arch_x_cm": {
+        "label": "Radkasten: Abstand von der Stirnwand"
+      },
+      "wheel_arch_length_cm": {
+        "label": "Radkasten: Länge"
+      },
+      "wheel_arch_width_cm": {
+        "label": "Radkasten: Breite (je Seite)"
+      },
+      "wheel_arch_height_cm": {
+        "label": "Radkasten: Höhe"
+      },
+      "front_axle_x_cm": {
+        "label": "Vorderachse: Lage",
+        "help": "Abstand von der Stirnwand des Laderaums, negativ = davor."
+      },
+      "rear_axle_x_cm": {
+        "label": "Hinterachse: Lage",
+        "help": "Abstand von der Stirnwand des Laderaums."
+      },
+      "max_front_axle_extra_kg": {
+        "label": "Zulässige Zusatzlast Vorderachse",
+        "help": "Wie viel Ladung die Vorderachse zusätzlich zum Leergewicht tragen darf."
+      },
+      "max_rear_axle_extra_kg": {
+        "label": "Zulässige Zusatzlast Hinterachse"
+      },
+      "max_tongue_load_kg": {
+        "label": "Maximale Stützlast",
+        "help": "Nur Anhänger."
+      },
+      "min_tongue_load_kg": {
+        "label": "Mindeststützlast",
+        "help": "Nur Anhänger; zu wenig Stützlast macht das Gespann instabil."
+      },
+      "hitch_x_cm": {
+        "label": "Kupplung: Abstand von der Stirnwand"
+      },
+      "can_tow": {
+        "label": "Kann Anhänger ziehen"
+      },
+      "max_trailer_kg": {
+        "label": "Zulässige Anhängelast"
+      },
+      "default_trailer_id": {
+        "label": "Standard-Anhänger"
+      },
+      "notes": {
+        "label": "Notizen"
+      }
+    },
+    "shelf": {
+      "name": {
+        "label": "Bezeichnung"
+      },
+      "x_cm": {
+        "label": "Abstand von der Stirnwand"
+      },
+      "y_cm": {
+        "label": "Abstand von der linken Wand"
+      },
+      "length_cm": {
+        "label": "Länge"
+      },
+      "depth_cm": {
+        "label": "Tiefe"
+      },
+      "height_cm": {
+        "label": "Höhe über Boden"
+      },
+      "clearance_cm": {
+        "label": "Freie Höhe über dem Regal"
+      },
+      "max_load_kg": {
+        "label": "Traglast"
+      },
+      "blocks_floor": {
+        "label": "Boden darunter nicht nutzbar"
+      }
+    },
+    "equipment": {
+      "name": {
+        "label": "Bezeichnung"
+      },
+      "kind": {
+        "label": "Art"
+      },
+      "count": {
+        "label": "Anzahl"
+      },
+      "capacity_kg": {
+        "label": "Tragfähigkeit"
+      },
+      "carry_time_factor": {
+        "label": "Zeitfaktor beim Tragen",
+        "help": "0,8 = 20 % schneller als ohne Hilfsmittel."
+      },
+      "solo_limit_kg": {
+        "label": "Alleintragegrenze mit Hilfsmittel",
+        "help": "Bis zu diesem Gewicht schafft eine Person die Pflanze mit diesem Hilfsmittel allein."
+      },
+      "usable_on_stairs": {
+        "label": "Auf Treppen nutzbar"
+      },
+      "surfaces": {
+        "label": "Geeignete Untergründe",
+        "help": "z. B. paved, tiles, gravel"
+      },
+      "min_path_width_cm": {
+        "label": "Benötigte Wegbreite"
+      },
+      "vehicle_id": {
+        "label": "Gehört zu Fahrzeug"
+      },
+      "notes": {
+        "label": "Notizen"
+      }
+    },
+    "storage_area": {
+      "name": {
+        "label": "Bezeichnung"
+      },
+      "kind": {
+        "label": "Art"
+      },
+      "area_m2": {
+        "label": "Fläche"
+      },
+      "height_cm": {
+        "label": "Höhe"
+      },
+      "min_temp_c": {
+        "label": "Mindesttemperatur"
+      },
+      "for_frost_sensitive": {
+        "label": "Für frostempfindliche Pflanzen geeignet"
+      }
+    },
+    "availability": {
+      "resource_type": {
+        "label": "Ressource"
+      },
+      "kind": {
+        "label": "Art"
+      },
+      "date_from": {
+        "label": "Von"
+      },
+      "date_to": {
+        "label": "Bis"
+      },
+      "weekdays": {
+        "label": "Wochentage"
+      },
+      "start_time": {
+        "label": "Beginn"
+      },
+      "end_time": {
+        "label": "Ende"
+      },
+      "note": {
+        "label": "Notiz"
+      }
+    },
+    "species": {
+      "name": {
+        "label": "Name"
+      },
+      "botanical_name": {
+        "label": "Botanischer Name"
+      },
+      "aliases": {
+        "label": "Andere Namen"
+      },
+      "crown_shape": {
+        "label": "Typische Kronenform"
+      },
+      "crown_density": {
+        "label": "Kronendichte",
+        "help": "0 = sehr licht, 1 = sehr dicht."
+      },
+      "compressibility": {
+        "label": "Stauchbarkeit",
+        "help": "Wie stark sich die Krone beim Laden zusammendrücken lässt (0 bis 1)."
+      },
+      "soil_kg_per_l": {
+        "label": "Gewicht der Erde pro Liter"
+      },
+      "plant_kg_per_l": {
+        "label": "Pflanzengewicht pro Liter Krone"
+      },
+      "trunk_kg_per_m": {
+        "label": "Stammgewicht pro Meter"
+      },
+      "tip_tendency": {
+        "label": "Kippneigung"
+      },
+      "frost_sensitivity": {
+        "label": "Frostempfindlichkeit"
+      },
+      "can_tilt": {
+        "label": "Darf gekippt werden"
+      },
+      "sensitive": {
+        "label": "Empfindlich"
+      },
+      "typical_height_cm": {
+        "label": "Typische Höhe"
+      }
+    },
+    "customer": {
+      "name": {
+        "label": "Name"
+      },
+      "company": {
+        "label": "Firma"
+      },
+      "email": {
+        "label": "E-Mail"
+      },
+      "phone": {
+        "label": "Telefon"
+      },
+      "preferred_contact": {
+        "label": "Bevorzugter Kontaktweg"
+      },
+      "consent_photos": {
+        "label": "Einwilligung Fotos"
+      },
+      "consent_at": {
+        "label": "Einwilligung am"
+      },
+      "notes": {
+        "label": "Notizen"
+      }
+    },
+    "address": {
+      "customer_id": {
+        "label": "Kunde"
+      },
+      "label": {
+        "label": "Bezeichnung",
+        "help": "z. B. Wohnung, Ferienhaus"
+      },
+      "street": {
+        "label": "Straße und Hausnummer"
+      },
+      "postal_code": {
+        "label": "PLZ"
+      },
+      "city": {
+        "label": "Ort"
+      },
+      "lat": {
+        "label": "Breitengrad"
+      },
+      "lon": {
+        "label": "Längengrad"
+      },
+      "parking_notes": {
+        "label": "Hinweise zum Parken"
+      },
+      "bell_notes": {
+        "label": "Klingel"
+      },
+      "access_notes": {
+        "label": "Zugang"
+      }
+    },
+    "order": {
+      "number": {
+        "label": "Auftrag"
+      },
+      "customer_id": {
+        "label": "Kunde"
+      },
+      "address_id": {
+        "label": "Adresse"
+      },
+      "season": {
+        "label": "Saison"
+      },
+      "direction": {
+        "label": "Richtung"
+      },
+      "status": {
+        "label": "Status"
+      },
+      "earliest_date": {
+        "label": "Frühestens am"
+      },
+      "latest_date": {
+        "label": "Spätestens am"
+      },
+      "time_windows": {
+        "label": "Zeitfenster"
+      },
+      "fixed_date": {
+        "label": "Fester Termin"
+      },
+      "priority": {
+        "label": "Priorität"
+      },
+      "notes": {
+        "label": "Notizen"
+      },
+      "price_quoted": {
+        "label": "Angebotspreis"
+      },
+      "price_final": {
+        "label": "Endpreis"
+      }
+    },
+    "plant": {
+      "number": {
+        "label": "Nr."
+      },
+      "label": {
+        "label": "Bezeichnung",
+        "help": "z. B. „Olive links neben der Tür“"
+      },
+      "species_id": {
+        "label": "Pflanzenart"
+      },
+      "pot_shape": {
+        "label": "Topfform"
+      },
+      "pot_diameter_cm": {
+        "label": "Topfdurchmesser"
+      },
+      "pot_length_cm": {
+        "label": "Topf Länge"
+      },
+      "pot_width_cm": {
+        "label": "Topf Breite"
+      },
+      "pot_height_cm": {
+        "label": "Topfhöhe"
+      },
+      "pot_material": {
+        "label": "Material"
+      },
+      "crown_shape": {
+        "label": "Kronenform"
+      },
+      "crown_height_cm": {
+        "label": "Kronenhöhe"
+      },
+      "crown_width_cm": {
+        "label": "Kronenbreite"
+      },
+      "crown_start_cm": {
+        "label": "Stammhöhe bis zur Krone",
+        "help": "Abstand vom Topfrand bis zum Kronenansatz."
+      },
+      "crown_density": {
+        "label": "Kronendichte"
+      },
+      "compressibility": {
+        "label": "Stauchbarkeit"
+      },
+      "total_height_cm": {
+        "label": "Gesamthöhe"
+      },
+      "weight_kg": {
+        "label": "Gewicht"
+      },
+      "weight_uncertainty_kg": {
+        "label": "Unsicherheit Gewicht"
+      },
+      "weight_measured_kg": {
+        "label": "Gewogenes Gewicht",
+        "help": "Echte Wiegung; dient zur Kalibrierung der Gewichtsschätzung."
+      },
+      "can_tilt": {
+        "label": "Darf gekippt werden"
+      },
+      "must_secure": {
+        "label": "Muss gesichert werden"
+      },
+      "sensitive": {
+        "label": "Empfindlich"
+      },
+      "frost_sensitive": {
+        "label": "Frostempfindlich"
+      },
+      "not_stackable": {
+        "label": "Nicht stapelbar"
+      },
+      "team_size_override": {
+        "label": "Teamgröße (manuell)",
+        "help": "Überschreibt die berechnete Teamgröße."
+      },
+      "required_equipment": {
+        "label": "Benötigte Hilfsmittel"
+      },
+      "status": {
+        "label": "Status"
+      },
+      "storage_area_id": {
+        "label": "Lagerbereich"
+      },
+      "notes": {
+        "label": "Notizen"
+      }
+    },
+    "segment": {
+      "kind": {
+        "label": "Art"
+      },
+      "length_m": {
+        "label": "Länge"
+      },
+      "steps": {
+        "label": "Stufen"
+      },
+      "height_diff_m": {
+        "label": "Höhenunterschied"
+      },
+      "min_width_cm": {
+        "label": "Schmalste Stelle"
+      },
+      "doors": {
+        "label": "Türen"
+      },
+      "surface": {
+        "label": "Untergrund"
+      },
+      "slope_pct": {
+        "label": "Steigung"
+      },
+      "elevator": {
+        "label": "Aufzug"
+      },
+      "notes": {
+        "label": "Notiz"
+      }
+    },
+    "access_path": {
+      "name": {
+        "label": "Bezeichnung"
+      },
+      "length_confirmed_m": {
+        "label": "Weglänge (bestätigt)",
+        "help": "Vom Kunden bestätigte ungefähre Weglänge; hat Vorrang vor der Summe der Abschnitte."
+      },
+      "notes": {
+        "label": "Notizen"
+      }
+    },
+    "groups": {
+      "master": "Stammdaten",
+      "address": "Anschrift",
+      "contact": "Kontakt",
+      "billing": "Abrechnung",
+      "skills": "Fähigkeiten",
+      "cargo": "Laderaum",
+      "axles": "Achsen",
+      "trailer": "Anhänger",
+      "effect": "Wirkung",
+      "shape": "Form",
+      "weight": "Gewicht",
+      "handling": "Umgang",
+      "privacy": "Datenschutz",
+      "geo": "Koordinaten",
+      "hints": "Hinweise",
+      "order": "Auftrag",
+      "timing": "Termin",
+      "pot": "Topf",
+      "crown": "Krone"
     }
   },
   "enums": {
     "active": "aktiv",
-    "suspended": "gesperrt"
+    "suspended": "gesperrt",
+    "van": "Transporter",
+    "truck": "LKW",
+    "trailer": "Anhänger",
+    "car": "PKW",
+    "rear": "hinten",
+    "side": "seitlich",
+    "hand_truck": "Sackkarre",
+    "stair_climber": "Treppensteiger",
+    "pallet_jack": "Hubwagen",
+    "plant_roller": "Pflanzenroller",
+    "straps": "Spanngurte",
+    "blanket": "Decken",
+    "ramp": "Rampe",
+    "other": "Sonstiges",
+    "available": "verfügbar",
+    "unavailable": "nicht verfügbar",
+    "vacation": "Urlaub",
+    "sick": "krank",
+    "maintenance": "Wartung",
+    "staff": "Person",
+    "vehicle": "Fahrzeug",
+    "greenhouse_warm": "Gewächshaus warm",
+    "greenhouse_cold": "Gewächshaus kalt",
+    "hall": "Halle",
+    "outdoor_covered": "überdacht im Freien",
+    "hardy": "winterhart",
+    "half_hardy": "bedingt winterhart",
+    "tender": "frostempfindlich",
+    "cylinder": "Zylinder",
+    "cone": "Kegel",
+    "sphere": "Kugel",
+    "column": "Säule",
+    "free": "frei",
+    "phone": "Telefon",
+    "email": "E-Mail",
+    "sms": "SMS",
+    "whatsapp": "WhatsApp",
+    "pickup": "Abholung",
+    "return": "Rücklieferung",
+    "draft": "Entwurf",
+    "confirmed": "bestätigt",
+    "planned": "geplant",
+    "picked_up": "abgeholt",
+    "stored": "eingelagert",
+    "returned": "zurückgeliefert",
+    "cancelled": "storniert",
+    "round": "rund",
+    "square": "eckig",
+    "plastic": "Kunststoff",
+    "terracotta": "Terrakotta",
+    "glazed": "glasiert",
+    "wood": "Holz",
+    "metal": "Metall",
+    "stone": "Stein",
+    "fiberglass": "Fiberglas",
+    "concrete": "Beton",
+    "registered": "erfasst",
+    "missing": "fehlt",
+    "flat": "eben",
+    "stairs": "Treppe",
+    "door": "Tür",
+    "elevator": "Aufzug",
+    "narrow": "Engstelle",
+    "paved": "gepflastert",
+    "tiles": "Fliesen",
+    "gravel": "Kies",
+    "lawn": "Rasen",
+    "soil": "Erde"
   },
   "permissions": {
     "platform.tenants": "Betriebe verwalten",
@@ -713,5 +1375,17 @@
     "audit.read": "Änderungsprotokoll ansehen",
     "driver.app": "Fahrer-App",
     "customer.portal": "Kundenzugang"
+  },
+  "photo_kinds": {
+    "plant_front": "Pflanze frontal mit A4-Blatt",
+    "plant_side": "Pflanze seitlich mit A4-Blatt",
+    "plant_top": "Pflanze schräg von oben",
+    "pot": "Topf aus der Nähe mit A4-Blatt",
+    "path_start": "Weg: Start (Stellplatz)",
+    "path_segment": "Weg: Abschnitt (Tür, Treppe, Engstelle)",
+    "path_end": "Weg: Ende (Fahrzeug)",
+    "pickup_proof": "Abholnachweis",
+    "damage": "Schaden",
+    "other": "Sonstiges"
   }
 }

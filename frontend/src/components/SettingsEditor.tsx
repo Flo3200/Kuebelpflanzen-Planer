@@ -256,6 +256,8 @@ function SettingRow(props: {
         <span>{current ? t("common.yes") : t("common.no")}</span>
       </label>
     );
+  } else if (v.choices_source === "ai_models") {
+    input = <AIModelSelect id={id} value={current} disabled={props.readOnly} onChange={(value) => props.onSave(value)} />;
   } else if (v.type === "enum" && v.choices) {
     input = (
       <select id={id} className="input" value={current} disabled={props.readOnly} onChange={(e) => props.onSave(e.target.value)}>
@@ -340,5 +342,19 @@ function SettingRow(props: {
         )}
       </div>
     </div>
+  );
+}
+
+function AIModelSelect(props: { id: string; value: string; disabled: boolean; onChange: (v: string) => void }) {
+  const q = useQuery({ queryKey: ["ai-models"], queryFn: () => api.get<any[]>("/api/ai/models"), staleTime: 60_000 });
+  return (
+    <select id={props.id} className="input" value={props.value ?? ""} disabled={props.disabled} onChange={(e) => props.onChange(e.target.value)}>
+      <option value="">{t("settings.ai_default_model")}</option>
+      {(q.data ?? []).map((m) => (
+        <option key={m.id} value={m.id}>
+          {m.label} ({m.provider_name})
+        </option>
+      ))}
+    </select>
   );
 }

@@ -116,6 +116,11 @@ def generate(options: DemoOptions | None = None, reset: bool = True) -> dict[str
     rng = random.Random(options.seed)
     report: dict[str, Any] = {"tenants": []}
     with system_session() as db:
+        from app.ai.bootstrap import seed_ai
+        from app.demo.species_catalog import seed_species
+
+        seed_ai(db)
+        seed_species(db)
         if reset:
             report["removed"] = remove_demo_tenants(db)
         created = [create_tenant(db, spec) for spec in options.tenants]

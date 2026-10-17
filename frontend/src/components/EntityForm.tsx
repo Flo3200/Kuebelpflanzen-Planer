@@ -16,6 +16,7 @@ export type FieldMeta = {
   enum: string[] | null;
   enum_labels: Record<string, string>;
   fk: string | null;
+  options: string[] | null;
   min: number | null;
   max: number | null;
   list: boolean;
@@ -62,6 +63,52 @@ function FkSelect(props: { entity: string; value: string | null; onChange: (v: s
   );
 }
 
+function StaffMulti(props: { id: string; value: string[] | null; onChange: (v: string[]) => void }) {
+  const q = useQuery({ queryKey: ["fk", "staff"], queryFn: () => api.get<any[]>("/api/staff") });
+  const current = props.value ?? [];
+  return (
+    <div className="chip-list" id={props.id} role="group">
+      {(q.data ?? []).map((s) => (
+        <label key={s.id} className="checkbox" style={{ marginRight: 12 }}>
+          <input
+            type="checkbox"
+            checked={current.includes(s.id)}
+            onChange={(e) => props.onChange(e.target.checked ? [...current, s.id] : current.filter((x) => x !== s.id))}
+          />
+          <span>{s.name}</span>
+        </label>
+      ))}
+    </div>
+  );
+}
+
+function WindowsInput(props: { id: string; value: { from: string; to: string; date?: string }[] | null; onChange: (v: any[]) => void }) {
+  const list = props.value ?? [];
+  return (
+    <div className="stack" id={props.id} style={{ gap: 6 }}>
+      {list.map((w, i) => (
+        <div className="row" key={i}>
+          <input type="date" className="input" style={{ width: 160 }} value={w.date ?? ""} aria-label={t("common.date")}
+            onChange={(e) => props.onChange(list.map((x, j) => (j === i ? { ...x, date: e.target.value || undefined } : x)))} />
+          <input type="time" className="input" style={{ width: 120 }} value={w.from} aria-label={t("common.from")}
+            onChange={(e) => props.onChange(list.map((x, j) => (j === i ? { ...x, from: e.target.value } : x)))} />
+          <span>–</span>
+          <input type="time" className="input" style={{ width: 120 }} value={w.to} aria-label={t("common.to")}
+            onChange={(e) => props.onChange(list.map((x, j) => (j === i ? { ...x, to: e.target.value } : x)))} />
+          <button type="button" className="btn small ghost" onClick={() => props.onChange(list.filter((_, j) => j !== i))}>
+            {t("common.remove")}
+          </button>
+        </div>
+      ))}
+      <div>
+        <button type="button" className="btn small secondary" onClick={() => props.onChange([...list, { from: "08:00", to: "12:00" }])}>
+          {t("form.add_window")}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function FieldInput(props: { f: FieldMeta; value: any; onChange: (v: any) => void; id: string }) {
   const { f, value, onChange, id } = props;
   if (f.type === "bool")
@@ -83,6 +130,25 @@ export function FieldInput(props: { f: FieldMeta; value: any; onChange: (v: any)
       </select>
     );
   if (f.fk) return <FkSelect entity={f.fk} value={value} onChange={onChange} id={id} required={f.required} />;
+  if (f.type === "tags" && f.options) {
+    const current: string[] = Array.isArray(value) ? value : [];
+    return (
+      <div className="row" id={id} role="group" style={{ gap: 12 }}>
+        {f.options.map((o) => (
+          <label key={o} className="checkbox">
+            <input
+              type="checkbox"
+              checked={current.includes(o)}
+              onChange={(e) => onChange(e.target.checked ? [...current, o] : current.filter((x) => x !== o))}
+            />
+            <span>{o}</span>
+          </label>
+        ))}
+      </div>
+    );
+  }
+  if (f.type === "staff_multi") return <StaffMulti id={id} value={value} onChange={onChange} />;
+  if (f.type === "windows") return <WindowsInput id={id} value={value} onChange={onChange} />;
   if (f.type === "text")
     return <textarea id={id} className="input" value={value ?? ""} onChange={(e) => onChange(e.target.value || null)} />;
   if (f.type === "json" || f.type === "tags") {

@@ -59,3 +59,24 @@ einer kleinen Schnittstelle, damit WeasyPrint/Typst später ergänzt werden kön
 ## D9 – Schriften lokal
 Fraunces und Inter werden über `@fontsource` mit ausgeliefert – keine Anfragen an Google Fonts
 (Datenschutz, Offline-Fähigkeit der Fahrer-App).
+
+## D10 – Kennzahlen von Objekten sind Einstellungen
+Lohn, Arbeitgeberanteil, Alleintragegewicht, Tragefaktor, Geschwindigkeitsfaktoren, Fahrzeugkosten,
+Verbrauch, Hilfsmittelkosten usw. sind keine Tabellenspalten, sondern Einstellungen mit
+Objekt-Ebene. So gilt für alle dieselbe Hierarchie Admin → Betrieb → Objekt mit Herkunftsanzeige,
+Zurücksetzen und Protokoll. Stammdatenformulare zeigen sie im Reiter „Einstellungen“.
+
+## D11 – KI ohne Schlüssel nutzbar
+Ein Test-Anbieter („Testmodell“) ist Standard. Er wertet deutsche Nachrichten regelbasiert aus
+und liefert ehrliche Sicherheitswerte. So funktionieren Erfassung, Tests und Demo ohne Kosten.
+Echte Modelle (Anthropic, OpenAI) werden in der Oberfläche aktiviert; Modellnamen sind Daten.
+Für Anthropic: offizielles SDK, JSON-Schema über `output_config.format`, kein erzwungener
+Tool-Aufruf (auf neuen Modellen nicht erlaubt), optional serverseitiges Ausweichen bei Ablehnung.
+
+## D12 – Werte mit Sicherheit
+KI-Ergebnisse speichern jeden Wert als `{value, confidence}`. Unter `photos.min_confidence`
+wird ein Feld zur Prüfung markiert. Vom Menschen geänderte Werte erhalten Sicherheit 1.
+
+## D13 – Rücklieferung
+Eine Rücklieferung ist ein eigener Auftrag (`direction = return`, `return_of_id`), der Pflanzen
+und Wege der Abholung verwendet. Die Tourenplanung behandelt sie später als eigenen Modus.

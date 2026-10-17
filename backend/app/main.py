@@ -33,6 +33,7 @@ API_ROUTER_MODULES = (
     "app.api.masterdata",
     "app.api.orders",
     "app.api.files",
+    "app.api.storage",
     "app.api.ai",
     "app.api.drafts",
     "app.api.formulas",
@@ -65,6 +66,11 @@ def bootstrap_admin() -> None:
                 )
             )
             log.info("initial admin %s created", cfg.initial_admin_email)
+        from app.ai.bootstrap import seed_ai
+        from app.demo.species_catalog import seed_species
+
+        seed_ai(db)
+        seed_species(db)
 
 
 @asynccontextmanager

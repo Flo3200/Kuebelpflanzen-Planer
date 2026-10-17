@@ -35,3 +35,46 @@ Jobs). Frontend: TypeScript und ESLint ohne Fehler.
 
 **Offen/Hinweise:** Docker Compose ist geschrieben, auf diesem Rechner aber nicht getestet
 (kein Docker installiert).
+
+## Phase 2 – Stammdaten und Erfassung (abgeschlossen 2026-10-17)
+
+**Umgesetzt**
+- Personal (Führerscheinklassen, Qualifikationen; Lohn, Alleintragegewicht, Tragefaktor,
+  Geschwindigkeiten als Objekt-Einstellungen), Teams, Fahrzeuge (Laderaum, Türen, Radkästen,
+  Achsen, Anhänger-Stützlast, Regale mit eigenem Editor), Hilfsmittel (Tragfähigkeit,
+  Zeitfaktor, Alleintragegrenze, Treppe/Untergrund), Lagerbereiche mit Auslastung und Warnung.
+- Verfügbarkeit: Muster (Wochentage), Abwesenheiten ganz- und teiltägig, Kalenderansicht.
+- Kunden, Adressen (Geokodierung über Schnittstelle, offline oder Nominatim), Aufträge mit
+  Nummernkreis, Saison, Richtung (Rücklieferung übernimmt Pflanzen und Wege), Status, Storno.
+- Pflanzen mit Kübel-, Kronen- und Umgangsdaten; fehlende Werte aus Pflanzenart und
+  Einstellungen ergänzt und als „geschätzt“ markiert; Gewichtsschätzung aus Topfvolumen,
+  Material und Pflanzenart mit Unsicherheit und Kalibrierfaktor (gewogene Pflanzen).
+- Wege als Abschnittsliste mit Zusammenfassung (Länge, Stufen, Höhe, schmalste Stelle).
+- Fotos: EXIF/GPS entfernt, lokale Prüfung (Schärfe, Belichtung, A4-Erkennung mit Maßstab),
+  Einwilligung erforderlich und gespeichert, Dateien hinter `StorageBackend`.
+- Pflanzenarten-Katalog (27 Arten global, Überschreibung je Betrieb, Objekt-Einstellungen).
+- KI-Schicht: Anthropic (offizielles SDK, strukturierte Ausgaben, serverseitiges Ausweichen bei
+  Ablehnungen), OpenAI, Test-Anbieter ohne KI (regelbasiert, deutsch). Modell pro Funktion,
+  Ersatzmodell, Plattform- oder eigener Schlüssel (verschlüsselt), Ausgabenlimit mit Warnung
+  und Sperre, Verbrauch je Aufruf, Prompts versioniert (global und je Betrieb), Validierung
+  mit Wiederholung.
+- Nachrichtenerfassung → Entwurfs-Posteingang mit Sicherheitswerten, hervorgehobenen Feldern,
+  Rückfrage-Vorschlag → Bestätigung legt Kunde (oder findet ihn wieder), Adresse, Auftrag,
+  Pflanzen, Weg an und ordnet Fotos zu. Vollständigkeitsprüfung und Foto-Auswertung für Aufträge.
+- Bewertungswerkzeug: Testsätze mit gemessenen Maßen, Modellvergleich (mittlerer Fehler,
+  Kosten je Auswertung).
+- Oberflächen: Posteingang, Entwurfsprüfung, Kunden, Aufträge, Auftragsdetail (Pflanzen,
+  Weg-Editor, Fotos), Personal, Teams, Fahrzeuge, Hilfsmittel, Kalender, Pflanzenarten, Lager,
+  KI-Administration, KI-Nutzung des Betriebs.
+- Demodaten: 2 Betriebe mit je 10 Personen, 4 Fahrzeugen, Hilfsmitteln, Lager, 100 Aufträgen
+  (~330 Pflanzen, realistische Wege und Größen, 12 % gewogen) und 3 Nachrichten im Posteingang.
+
+**Tests:** 25 Backend-Tests grün, u. a. Abnahmetest (Nachricht + Fotos → Entwurf mit
+Sicherheitswerten → Kunde, Auftrag, Pflanzen), EXIF-Entfernung, Ausgabenlimit, Einwilligung,
+Mandantentrennung neuer Tabellen inkl. Fremdschlüssel-Prüfung.
+
+**Abnahme:** erfüllt (`test_message_with_photos_becomes_draft_and_records`).
+
+**Hinweise:** Echte KI-Modelle sind eingerichtet, aber ohne API-Schlüssel nicht getestet;
+Standardmodell ist das Testmodell. Geokodierung ist standardmäßig offline (Koordinaten manuell
+oder aus Demodaten); `KP_GEOCODER=nominatim` schaltet OpenStreetMap ein.
