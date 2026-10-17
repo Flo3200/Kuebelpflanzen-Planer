@@ -387,7 +387,7 @@ def customers_and_orders(
         count = _weighted(rng, [(1, 30), (2, 25), (3, 17), (rng.randint(4, 6), 20), (rng.randint(7, 15), 8)])
         for _ in range(count):
             sp = _weighted(rng, species_items)
-            d = max(20.0, min(90.0, rng.lognormvariate(math.log(42), 0.3)))
+            d = max(20.0, min(75.0, rng.lognormvariate(math.log(36), 0.28)))
             shape = "square" if rng.random() < 0.2 else "round"
             height = max(40.0, (sp.typical_height_cm or 140) * rng.lognormvariate(0, 0.3))
             plant = Plant(

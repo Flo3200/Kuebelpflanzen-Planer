@@ -16,7 +16,7 @@ def refresh_order_estimate(
     db: Session, order: PickupOrder, estimator: Estimator | None = None
 ) -> dict[str, Any]:
     est = (estimator or Estimator(db, order.tenant_id)).order_estimate(order)
-    keep = {k: v for k, v in (order.estimate or {}).items() if k in ("photo_check",)}
+    keep = {k: v for k, v in (order.estimate or {}).items() if k in ("photo_check", "plan_costs")}
     order.estimate = {**est, **keep}
     price = est.get("price") or {}
     if "gross" in price:

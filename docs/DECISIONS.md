@@ -80,3 +80,17 @@ wird ein Feld zur Prüfung markiert. Vom Menschen geänderte Werte erhalten Sich
 ## D13 – Rücklieferung
 Eine Rücklieferung ist ein eigener Auftrag (`direction = return`, `return_of_id`), der Pflanzen
 und Wege der Abholung verwendet. Die Tourenplanung behandelt sie später als eigenen Modus.
+
+## D14 – Planungsmodell
+- Solver-„Fahrzeug“ = Einheit aus Tag × Fahrzeug (+ Anhänger) × Team. Personal ist pro Tag nur
+  in einer Einheit; die Teams werden vor dem Lösen gebildet (feste Teams, sonst automatisch).
+- Mehrfachfahrten: optionale Abladeknoten am Betrieb pro Einheit (Kapazität setzt sich über Slack
+  zurück). Pausen: OR-Tools-Pausenintervall zwischen 3 und 6 Stunden nach Arbeitsbeginn.
+- Zulässige Einheiten über `VehicleVar(i).SetValues([-1, …])`, weil `SetAllowedVehiclesForIndex`
+  aus Python nicht nutzbar ist.
+- Kosten: Strecke über Kantenkosten, Arbeits- und Fahrzeugzeit über Span-Kosten der Zeitdimension,
+  Fixkosten je Einheit plus Vorrang früher Tage.
+- Pflanzen über der Höchst-Teamgröße werden standardmäßig mit dem größten Team eingeplant und
+  markiert (Einstellung `team.plan_over_limit`).
+- Große Betriebe: Stopps nach Winkel um den Betrieb in Regionen geteilt, Einheiten anteilig nach
+  Arbeitsmenge verteilt, jede Region mit anteiligem Zeitlimit gelöst.

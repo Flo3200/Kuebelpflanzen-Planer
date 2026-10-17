@@ -98,7 +98,16 @@ router.include_router(crud_router(VEHICLE, "/api/vehicles"))
 router.include_router(crud_router(SHELF, "/api/shelves"))
 router.include_router(crud_router(EQUIPMENT, "/api/equipment"))
 router.include_router(crud_router(STORAGE, "/api/storage-areas"))
-router.include_router(crud_router(AVAIL, "/api/availability"))
+
+
+def _availability_changed(db: Session, actor: Actor, row: Availability, created: bool) -> None:
+    if row.kind != "available":
+        from app.api.planning import mark_needs_replan
+
+        mark_needs_replan(db, actor.require_tenant(), f"absence:{row.resource_type}:{row.date_from}")
+
+
+router.include_router(crud_router(AVAIL, "/api/availability", after_save=_availability_changed))
 
 
 @router.get("/api/availability-calendar", tags=["availability"])

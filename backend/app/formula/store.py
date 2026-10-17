@@ -136,6 +136,16 @@ def find_formula(db: Session, tenant_id: uuid.UUID | None, key: str, tier: int) 
             select(Formula).where(Formula.tenant_id.is_(None), Formula.key == key).order_by(Formula.tier)
         )
     if glob is None:
+        # fresh database without seed (e.g. worker started before the API): create the defaults
+        from app.core.db import system_session
+        from app.formula.defaults import seed_formulas
+
+        with system_session() as sdb:
+            seed_formulas(sdb)
+        glob = db.scalar(
+            select(Formula).where(Formula.tenant_id.is_(None), Formula.key == key).order_by(Formula.tier)
+        )
+    if glob is None:
         raise NotFound("errors.not_found")
     return glob
 

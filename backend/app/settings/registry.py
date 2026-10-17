@@ -137,6 +137,7 @@ SETTINGS: tuple[SettingDef, ...] = (
     _s("team.steep_slope_pct", "float", 12.0, "team", levels=PT, unit="%", min=0, max=50),
     _s("team.narrow_extra_persons", "int", 0, "team", levels=PT, unit="Pers.", min=0, max=2),
     _s("team.max_size", "int", 4, "team", levels=PT, unit="Pers.", min=1, max=8, important=True),
+    _s("team.plan_over_limit", "bool", True, "team"),
     _s("team.min_size_per_stop", "int", 1, "team", levels=(*PT, "customer"), unit="Pers.", min=1, max=6),
     # --- time model --------------------------------------------------------------
     _s("time.walk_speed_m_min", "float", 25.0, "time", unit="m/min", min=5, max=150),
@@ -314,6 +315,9 @@ SETTINGS: tuple[SettingDef, ...] = (
     _s("planning.pack_retry_limit", "int", 4, "planning", unit="", min=0, max=20),
     _s("planning.capacity_shrink", "float", 0.9, "planning", unit="×", min=0.5, max=0.99),
     _s("planning.form_teams", "enum", "auto", "planning", choices=("auto", "fixed")),
+    _s("planning.team_size_default", "int", 2, "planning", unit="Pers.", min=1, max=8),
+    _s("planning.day_preference_eur", "float", 3.0, "planning", unit="€/Tag", min=0, max=1000),
+    _s("planning.unit_fixed_eur", "float", 15.0, "planning", unit="€", min=0, max=10000),
     _s("planning.horizon_days", "int", 10, "planning", unit="Tage", min=1, max=90),
     # --- packing --------------------------------------------------------------------
     _s("packing.time_limit_s", "float", 3.0, "packing", unit="s", min=0.2, max=120),

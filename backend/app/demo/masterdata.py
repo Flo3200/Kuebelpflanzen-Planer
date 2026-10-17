@@ -136,12 +136,12 @@ def staff_and_fleet(
 
     sprinter = Vehicle(
         tenant_id=tenant.id,
-        name="Sprinter Hochdach",
+        name="Sprinter Doppelkabine",
         plate=f"S-{tenant.slug[:2].upper()} 101",
         kind="van",
         required_licence="B",
-        seats=3,
-        cargo_length_cm=430,
+        seats=6,
+        cargo_length_cm=330,
         cargo_width_cm=178,
         cargo_height_cm=194,
         payload_kg=1150,

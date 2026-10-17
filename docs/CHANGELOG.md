@@ -100,3 +100,39 @@ oder aus Demodaten); `KP_GEOCODER=nominatim` schaltet OpenStreetMap ein.
 
 **Tests:** 47 Backend-Tests grün. **Abnahme:** erfüllt (`test_changed_formula_takes_effect_immediately`,
 `test_start_formula_numbers`, `test_price_rules`).
+
+## Phase 4 – Tourenplanung und Szenarien (abgeschlossen 2026-10-17)
+
+**Umgesetzt**
+- Einsatz-Einheiten je Tag aus Fahrzeug (+ Anhänger) und Team: feste Teams, automatische
+  Teambildung (großes Team für schwere Stopps, Sitzplätze, Fahrer mit passender Führerscheinklasse
+  inkl. BE/C1E bei Anhängern), Verfügbarkeitsfenster von Personal und Fahrzeugen.
+- OR-Tools-Modell: Zeitdimension mit teamabhängiger Servicezeit (Zeitmodell, Planungspuffer,
+  Parken), Fahrzeug-/Fahrer-/Anhängerfaktoren, Kapazitäten Gewicht/Grundfläche/Volumen,
+  Mehrfachfahrten über Abladeknoten, Pausen nach Arbeitszeitgesetz als Pausen-Intervalle,
+  Höchstarbeitszeit, Überstunden mit Strafkosten, Kundenzeitfenster hart oder weich,
+  zulässige Teams pro Stopp (Teamgröße, Tragfähigkeit, Hilfsmittel, Geometrie, Datum),
+  Auslassen mit Strafe (bzw. Erlös beim Gewinnziel), Unverträglichkeiten mit Neulösen,
+  Fixieren von Touren und Stopps, Vorrang früher Tage, Regionen-Gruppen bei großen Betrieben,
+  einstellbare Suchverfahren und Zeitlimit; Matrizen über RegisterTransitMatrix (C++).
+- Kopplung mit der Ladeplanung vorbereitet (Kapazität einer Einheit wird verringert und neu
+  geplant, wenn eine Tour nicht passt).
+- Ergebnis: Touren, Stopps, Pausen, Kosten je Tour und je Stopp, Kennzahlen (Tage bis fertig,
+  Kosten, Kosten pro Pflanze, Auslastung, Überstunden), nicht eingeplante Stopps mit Grund,
+  Kostendeckung je Auftrag nach Planung, aktiver Plan setzt Auftragsstatus.
+- Manuelles Verschieben mit sofortiger Neuberechnung und Warnungen, Stornierung entfernt den
+  Stopp und markiert die Tour, Hinweis „Neu planen“ bei neuen/geänderten Aufträgen und Ausfällen,
+  Neuplanung ab Datum unter Erhalt fixierter und vergangener Teile.
+- Szenarien (±Person, ±Fahrzeug, ±Tag, Teamgröße, frei kombinierbar) als Hintergrundjobs,
+  Vergleich mit Differenzen und Grenzkosten.
+- Oberflächen: Tourenplanung (Zeitachse mit Ziehen-und-Ablegen, Karte mit OpenStreetMap,
+  Tourenliste mit Fixieren, nicht eingeplante Stopps), Szenarien mit Tabelle und Diagramm.
+
+**Tests:** 54 Backend-Tests, u. a. unabhängige Prüfung aller Nebenbedingungen für 100 Demo-
+Aufträge, Szenario „+1 Person“, Verschieben, Fixieren/Stornieren/Neuplanen, Unverträglichkeit,
+harte Zeitfenster, Leistungstest 500 Stopps/10 Teams (60 s Zeitlimit, gesamt 76 s inkl. Datenaufbau).
+
+**Abnahme:** erfüllt.
+
+**Hinweise:** Die Python-Bindung von `SetAllowedVehiclesForIndex` ist in OR-Tools 9.15 defekt;
+zulässige Fahrzeuge werden über den Wertebereich der Fahrzeugvariable gesetzt (D14).

@@ -360,6 +360,21 @@ def update_order(order_id: uuid.UUID, data: OrderUpdate, actor: CurrentActor, db
     changes = apply_values(ORDER, order, values)
     if order.status == "cancelled" and old_status != "cancelled":
         order.cancelled_at = datetime.now(UTC)
+        from app.api.planning import cancel_stops_of_order, mark_needs_replan
+
+        cancel_stops_of_order(db, order)
+        mark_needs_replan(db, order.tenant_id, f"cancelled:{order.number}", order.direction)
+    elif order.status == "confirmed" and old_status == "draft":
+        from app.api.planning import mark_needs_replan
+
+        mark_needs_replan(db, order.tenant_id, f"new_order:{order.number}", order.direction)
+    elif {"earliest_date", "latest_date", "fixed_date", "time_windows"} & set(changes) and order.status in (
+        "confirmed",
+        "planned",
+    ):
+        from app.api.planning import mark_needs_replan
+
+        mark_needs_replan(db, order.tenant_id, f"changed:{order.number}", order.direction)
     if changes:
         audit.record(
             db,

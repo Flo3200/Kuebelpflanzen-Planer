@@ -671,6 +671,22 @@
     "pricing.local_detour_km": {
       "label": "Ortsumweg pro Stopp",
       "help": "Zusätzliche Kilometer pro Stopp innerhalb einer Tour, für den geschätzten Fahranteil in Angeboten vor der Tourenplanung."
+    },
+    "planning.team_size_default": {
+      "label": "Standard-Teamgröße",
+      "help": "Bei automatischer Teambildung: so viele Personen pro Fahrzeug. Für schwere Pflanzen bildet die Planung zusätzlich ein größeres Team."
+    },
+    "planning.day_preference_eur": {
+      "label": "Vorrang früher Tage",
+      "help": "Kosten pro Tag Abstand zum Planungsbeginn je eingesetztem Fahrzeug. Größer = alles möglichst früh abholen."
+    },
+    "planning.unit_fixed_eur": {
+      "label": "Fixkosten pro eingesetztem Team und Tag",
+      "help": "Damit nicht unnötig viele Fahrzeuge und Teams gleichzeitig eingeplant werden."
+    },
+    "team.plan_over_limit": {
+      "label": "Pflanzen über der Höchstgröße trotzdem einplanen",
+      "help": "Wenn aktiv, werden Stopps mit Pflanzen, die mehr Personen als das größte Team bräuchten, mit dem größten Team eingeplant und deutlich markiert (z. B. für Sonderausrüstung). Wenn aus, bleiben sie ungeplant."
     }
   },
   "fields": {
