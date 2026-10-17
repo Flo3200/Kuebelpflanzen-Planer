@@ -617,7 +617,7 @@ def build_input(
     members_base = {m.id: m for _, m in member_rows}
     for sid in scenario.get("remove_staff_ids", []):
         members_base.pop(str(sid), None)
-    for n in range(int(scenario.get("remove_staff", 0))):
+    for _ in range(int(scenario.get("remove_staff", 0))):
         # remove the person with the fewest licences and lowest carry weight (least versatile)
         if members_base:
             victim = min(members_base.values(), key=lambda m: (len(m.licences), m.solo_kg))

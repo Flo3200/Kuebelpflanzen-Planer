@@ -262,7 +262,7 @@ def _solve_group(
     time_cb: dict[tuple, int] = {}
     service_of: list[list[float]] = []
     vehicle_time_cb: list[int] = []
-    for k, u in enumerate(units):
+    for u in units:
         # service depends only on the team profile, so units with equal teams share one matrix;
         # reload nodes of other units are never visited by this unit (allowed vehicles)
         svc = [0.0] * N
