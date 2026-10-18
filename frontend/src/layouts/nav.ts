@@ -29,6 +29,7 @@ export const TENANT_NAV: NavSection[] = [
     items: [
       { to: "/betrieb/planung", label: "nav.planning", perm: "planning.read" },
       { to: "/betrieb/szenarien", label: "nav.scenarios", perm: "scenarios.run" },
+      { to: "/betrieb/meldungen", label: "nav.deviations", perm: "orders.read" },
     ],
   },
   {

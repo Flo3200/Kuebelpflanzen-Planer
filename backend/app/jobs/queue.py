@@ -15,6 +15,8 @@ from sqlalchemy.orm import Session
 
 from app.core.context import Actor, system_actor
 from app.core.db import SYSTEM, RlsContext, session_scope, system_session
+from app.core.errors import AppError
+from app.i18n import t
 from app.models.core import Job
 
 log = logging.getLogger("kp.jobs")
@@ -125,6 +127,11 @@ def run_job(job_id: uuid.UUID) -> None:
             result = fn(ctx) or {}
     except JobCancelled:
         status = "cancelled"
+    except AppError as exc:
+        # expected, explained failure (e.g. too few measurements): German text, no retry
+        log.info("job %s (%s) stopped: %s", job_id, kind, exc.code)
+        error = t(exc.code, **exc.params)
+        status = "failed"
     except Exception as exc:  # noqa: BLE001 - every failure is stored on the job
         log.exception("job %s (%s) failed", job_id, kind)
         error = f"{type(exc).__name__}: {exc}\n{traceback.format_exc(limit=8)}"

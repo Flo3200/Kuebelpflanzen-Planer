@@ -48,7 +48,18 @@
     "plan_not_found": "Der Plan wurde nicht gefunden.",
     "pin_taken": "Diese PIN ist im Betrieb bereits vergeben.",
     "consent_missing": "Für Fotos fehlt die Einwilligung des Kunden.",
-    "invoice_locked": "Ausgestellte Rechnungen können nicht mehr geändert werden."
+    "invoice_locked": "Ausgestellte Rechnungen können nicht mehr geändert werden.",
+    "event_client_id": "Ereignis ohne Kennung.",
+    "event_kind": "Unbekannte Art von Ereignis.",
+    "event_time": "Der Zeitpunkt des Ereignisses ist ungültig.",
+    "event_stop": "Der Stopp gehört nicht zu dieser Tour.",
+    "event_plant": "Pflanze fehlt oder ist ungültig.",
+    "event_photo_required": "Beim Einladen ist ein Foto als Abholnachweis Pflicht.",
+    "already_decided": "Diese Meldung wurde bereits bearbeitet.",
+    "fit_too_few": "Zu wenige Messungen für eine Anpassung (mindestens {min}).",
+    "fit_failed": "Die Modellanpassung ist fehlgeschlagen: {detail}",
+    "demo_only": "Nur in Demo-Betrieben möglich.",
+    "module_off": "Dieses Modul ist für den Betrieb nicht eingeschaltet."
   },
   "origins": {
     "default": "Systemstandard",

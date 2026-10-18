@@ -3,7 +3,9 @@ import { Route } from "react-router-dom";
 import { AdminAIPage, TenantAIPage } from "./pages/admin/AI";
 import { FormulasPage } from "./pages/common/Formulas";
 import { SpeciesPage } from "./pages/common/Species";
+import { DeviationsPage } from "./pages/tenant/Deviations";
 import { LoadPlanPage } from "./pages/tenant/LoadPlan";
+import { ModelPage } from "./pages/tenant/Model";
 import { PlanningPage } from "./pages/tenant/Planning";
 import { PricingPage } from "./pages/tenant/Pricing";
 import { ScenariosPage } from "./pages/tenant/Scenarios";
@@ -33,6 +35,8 @@ export function tenantRoutes() {
     <Route key="planning" path="planung" element={<PlanningPage />} />,
     <Route key="loadplan" path="planung/touren/:id/ladeplan" element={<LoadPlanPage />} />,
     <Route key="scenarios" path="szenarien" element={<ScenariosPage />} />,
+    <Route key="deviations" path="meldungen" element={<DeviationsPage />} />,
+    <Route key="model" path="modell" element={<ModelPage />} />,
     ...extraTenantRoutes(),
   ];
 }

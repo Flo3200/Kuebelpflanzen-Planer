@@ -16,6 +16,7 @@ from app.models.orders import Address, Customer, PickupOrder
 from app.models.planning import Plan, Tour, TourStop
 from app.packing.service import pack_tour
 from app.packing.store import load_plan_dict
+from app.settings.service import SettingsResolver
 
 router = APIRouter(tags=["loading"])
 
@@ -49,6 +50,7 @@ def _tour_head(db, tour: Tour) -> dict[str, Any]:
         "vehicle": tour.unit.get("vehicle"),
         "trailer": tour.unit.get("trailer"),
         "direction": plan.direction if plan else "pickup",
+        "qr_module": bool(SettingsResolver(db, tour.tenant_id).get("driver.qr_module")),
         "stops": [
             {"position": pos, "order_id": oid, "number": num, "customer": name, "city": city}
             for pos, oid, num, name, city in rows

@@ -299,6 +299,9 @@ class Photo(IdMixin, TimestampMixin, TenantMixin, Base):
     a4: Mapped[dict[str, Any]] = mapped_column(default=dict)
     ai_results: Mapped[dict[str, Any]] = mapped_column(default=dict)
     caption: Mapped[str | None] = mapped_column(String(300))
+    client_id: Mapped[str | None] = mapped_column(
+        String(64), index=True
+    )  # offline upload from the driver app
 
 
 DRAFT_STATUS = ["new", "processing", "review", "confirmed", "rejected", "failed"]

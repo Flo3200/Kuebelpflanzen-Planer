@@ -1,0 +1,10 @@
+{
+  "name": "Kübelpflanzen-Planer",
+  "short_name": "Kübelplaner",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#faf7f1",
+  "theme_color": "#1f3d2b",
+  "lang": "de",
+  "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

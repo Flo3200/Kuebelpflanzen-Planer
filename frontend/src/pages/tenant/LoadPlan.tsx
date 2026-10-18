@@ -9,7 +9,7 @@ import { fmtDate, t } from "../../i18n";
 import { useState } from "react";
 
 interface LoadPlanResponse {
-  tour: TourHead & { plan_id: string; trip_no: number };
+  tour: TourHead & { plan_id: string; trip_no: number; qr_module?: boolean };
   plan: LoadPlanPayload | null;
 }
 
@@ -53,11 +53,18 @@ export function LoadPlanPage() {
           tour={d.tour}
           plan={d.plan}
           actions={
-            auth.has("planning.write") && (
-              <button className="btn secondary" onClick={recompute} disabled={busy}>
-                {busy ? t("loadplan.computing") : t("loadplan.recompute")}
-              </button>
-            )
+            <>
+              {d.tour.qr_module && (
+                <a className="btn ghost" href={`/api/tours/${d.tour.id}/labels.pdf`} target="_blank" rel="noreferrer">
+                  {t("loadplan.labels")}
+                </a>
+              )}
+              {auth.has("planning.write") && (
+                <button className="btn secondary" onClick={recompute} disabled={busy}>
+                  {busy ? t("loadplan.computing") : t("loadplan.recompute")}
+                </button>
+              )}
+            </>
           }
         />
       )}

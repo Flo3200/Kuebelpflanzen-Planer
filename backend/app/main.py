@@ -41,6 +41,7 @@ API_ROUTER_MODULES = (
     "app.api.planning",
     "app.api.loading",
     "app.api.driver",
+    "app.api.field",
     "app.api.learning",
     "app.api.billing",
     "app.api.agents",

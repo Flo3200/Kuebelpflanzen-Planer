@@ -169,3 +169,39 @@ Plan-Abnahme mit Ladeplänen über die API; Mandantentrennung).
 **Hinweise:** Eine Planung mit Ladeprüfung dauert im Demo-Betrieb etwa zwei Minuten
 (Hintergrundjob mit Fortschritt). Die Ladeplanung prüft keine Seitentür; wer über eine Schiebetür
 lädt, kann den Plan in der Oberfläche neu berechnen oder Stopps verschieben.
+
+## Phase 6 – Fahrer-App und Lernen (abgeschlossen 2026-10-18)
+
+**Umgesetzt**
+- Fahrer-App (PWA unter `/fahrer`): Anmeldung mit Betriebskennung und PIN oder persönlichem
+  Link, nur eigene Touren, Tagesansicht (heute und morgen), Tour mit Team, Fahrzeug und Pausen,
+  Stopp mit Kundenhinweisen, Navigation (Google Maps, Apple Karten), Anruf, Pflanzen mit Maßen
+  und Fotos, Weg mit Abschnitten und Fotos, benötigte Teamgröße und Hilfsmittel.
+- Zeiterfassung über große Schaltflächen (Ankunft, Tragen beginnt, optional Pflanze fertig,
+  Eingeladen mit Pflichtfoto, Weiterfahren), Pausen, Schichtbeginn/-ende, Abladen.
+- Offline: Tagesplan und Ladeplan lokal, Ereignisse/Fotos/Meldungen in einer IndexedDB-
+  Warteschlange, Senden bei Verbindung, Anzeige „offen/Fehler“, Service Worker für App und Fotos.
+- Ladeansicht in der App (Schritt für Schritt, 3D, Draufsicht); optionales QR-Modul mit
+  Etiketten-PDF und Scan, der den Platz bestätigt.
+- Abweichungen melden (schwerer, größer, Weg anders, Kunde nicht da, Schaden mit Foto);
+  im Büro übernehmen (Pflanzen-/Wegdaten, Schätzung neu, Hinweis „neu planen“) oder verwerfen.
+- Messungen je Stopp aus den Ereignissen; Ausreißer markieren und ausschließen.
+- Modellanpassung als Hintergrundjob (auch wöchentlich/monatlich): nichtlineare kleinste
+  Quadrate mit Huber, Regularisierung, Faktoren je Person, k-fache Kreuzvalidierung je
+  Formelstufe, Auswahl der Parameter nach Datenmenge, Standardfehler, Planungspuffer aus der
+  Streuung, Vorschlag einer besseren Stufe; Übernahme als neue Formelversion.
+- Qualitätsansicht: vorhergesagt gegen gemessen, Fehlerverteilung, Fehler nach Merkmal,
+  Kreuzvalidierung, Parameter, Faktoren je Person, Puffer, auffällige Messungen.
+- Experimentmodus geprüft (größeres Team nur oberhalb der benötigten Größe, markiert).
+- Demodaten: synthetische Messungen aus bekannten wahren Werten.
+- Hintergrundjobs speichern erklärte Fehler (z. B. „Zu wenige Messungen“) als deutschen Text.
+
+**Tests:** 15 neue Tests (85 gesamt). **Abnahme:** erfüllt – aus 220 synthetischen Messungen mit
+12 % Streuung und 3 % Ausreißern werden die wahren Parameter auf ±15 % wiedergefunden
+(z. B. a0 8,0 → 8,2; a1 0,11 → 0,105; t_fixed 14 → 13,7; k_height 0,8 → 0,83).
+
+**Hinweise:** Faktoren je Person lassen sich nur mit genauen Messungen gut bestimmen, weil eine
+Person die Teamgeschwindigkeit nur anteilig ändert; bis genug Daten vorliegen, bleiben sie nah
+an 1,0 (so gewollt). Die Registrierung des Service Workers ließ sich im eingebauten Browser der
+Entwicklungsumgebung nicht prüfen (er lässt keine Service Worker zu); die Warteschlange für den
+Offline-Betrieb funktioniert unabhängig davon.

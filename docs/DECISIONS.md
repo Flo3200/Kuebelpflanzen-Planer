@@ -112,3 +112,31 @@ und Wege der Abholung verwendet. Die Tourenplanung behandelt sie später als eig
   nie wieder auf diese Einheit; bei Platzmangel nach dem zweiten Fehlschlag und in der letzten Runde
   immer. Gleiche Fahrten werden nicht zweimal gepackt. Bleibt eine Tour danach unpassend, behält sie
   ihren Ladeplan mit deutscher Begründung (welche Pflanze, warum) und wird in der Planung markiert.
+
+## D16 – Fahrer-App und Messungen
+- Jede Schaltfläche erzeugt ein Ereignis mit Gerätezeit und `client_id`. Die App speichert Ereignisse,
+  Fotos und Meldungen zuerst in IndexedDB und sendet sie, sobald Verbindung besteht (Fotos zuerst).
+  Der Server legt pro `client_id` nur einmal an; doppeltes Senden ist harmlos. Ein fehlerhaftes
+  Ereignis blockiert die übrigen nicht (Savepoint je Ereignis); dauerhaft abgelehnte bleiben sichtbar.
+- „Eingeladen“ verlangt ein Foto (Einstellung `driver.require_pickup_photo`), serverseitig geprüft.
+- Messung je Stopp: Ankunft → Tragen beginnt = Fixzeit, Tragen beginnt → Eingeladen = Tragezeit,
+  Ankunft → Eingeladen = Dauer vor Ort (das, was die Zeitformel vorhersagt). Pausen in einem
+  Intervall werden abgezogen; Fahrzeit = Ankunft minus letzte Abfahrt.
+- Der Service Worker (`/sw.js`, Bereich `/fahrer`) hält App-Dateien, Fotos und den Tagesplan vor;
+  Schreibvorgänge laufen nie über ihn, sondern über die IndexedDB-Warteschlange.
+- QR-Etiketten enthalten `KP1:<Pflanzen-ID>`; Scan per BarcodeDetector, sonst Nummer eintippen.
+
+## D17 – Modellanpassung
+- Robuste Fehlerfunktion (Huber) über iterativ neu gewichtete kleinste Quadrate, damit die
+  Gewichte nur auf Messungen wirken, nie auf die Regularisierung.
+- Regularisierung der Parameter zum bisherigen Wert (λ, Skala je Parameter); Faktoren je Person
+  zum Wert 1 mit `learning.staff_factor_prior_n` Schein-Messungen, skaliert mit der typischen
+  Wirkung des Faktors auf eine Messung.
+- Faktoren je Person beziehen sich auf den Durchschnitt (Mittelwert 1). Sonst wären ein
+  gemeinsamer Faktor aller Personen und die Formelparameter nicht unterscheidbar.
+- Zu wenige Messungen: nur die einflussreichsten Parameter werden angepasst (Anzahl Messungen
+  ÷ Mindestanzahl je Parameter), die übrigen bleiben.
+- Planungspuffer: Streuung = robuste Standardabweichung von log(gemessen/vorhergesagt) aus der
+  Kreuzvalidierung; geplant wird mit exp(z_q · σ).
+- Eine bessere Formelstufe wird nur vorgeschlagen; Übernahme erzeugt eine neue Formelversion
+  (Quelle „fit“), Personenfaktoren und Puffer als Einstellungen – alles im Protokoll rücknehmbar.
