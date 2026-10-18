@@ -11,6 +11,7 @@ from typing import Any
 from fastapi import APIRouter, File, Form, Request, UploadFile
 from pydantic import BaseModel, Field
 from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 from app.api.deps import DB, CurrentActor
 from app.api.files import IMAGE_TYPES, photo_dict, save_photo
@@ -38,6 +39,7 @@ from app.portal.service import (
     progress,
     tenant_contact,
 )
+from app.core.modules import module_enabled, module_states, require_module
 from app.settings.service import SettingsResolver
 from app.timemodel.plantfill import geometry
 
@@ -48,19 +50,21 @@ GUIDED_PLANT = ["plant_front", "plant_side", "plant_top", "pot"]
 GUIDED_PATH = ["path_start", "path_segment", "path_end"]
 
 
-def _customer(actor: Actor) -> uuid.UUID:
+def _customer(actor: Actor, db: Session) -> uuid.UUID:
     actor.require("customer.portal")
     if actor.customer_id is None:
         raise Forbidden()
+    require_module(db, actor.tenant_id, "portal")
     return actor.customer_id
 
 
 @router.get("/api/portal/me")
 def me(actor: CurrentActor, db: DB) -> dict[str, Any]:
-    cid = _customer(actor)
+    cid = _customer(actor, db)
     c = db.get(Customer, cid)
     t = db.get(Tenant, actor.tenant_id)
     r = SettingsResolver(db, actor.tenant_id)
+    modules = module_states(r)
     return {
         "customer": {"id": c.id, "name": c.name, "email": c.email, "phone": c.phone},
         "tenant": tenant_contact(t),
@@ -69,7 +73,8 @@ def me(actor: CurrentActor, db: DB) -> dict[str, Any]:
             "at": c.consent_at,
             "text": r.get("privacy.consent_text") or "",
         },
-        "payments": r.get("payments.provider"),
+        "payments": r.get("payments.provider") if modules["payments"] else "off",
+        "modules": {"customer_billing": modules["customer_billing"], "payments": modules["payments"]},
     }
 
 
@@ -85,13 +90,22 @@ def _photos(db, **where) -> list[dict[str, Any]]:
 
 def order_view(db, actor: Actor, o: PickupOrder, full: bool = False) -> dict[str, Any]:
     source = o.return_of_id or o.id
-    quotes = list(db.scalars(select(Quote).where(Quote.order_id == o.id).order_by(Quote.created_at.desc())))
-    invoices = list(
-        db.scalars(
-            select(Invoice)
-            .where(Invoice.order_id == o.id, Invoice.kind == "customer")
-            .order_by(Invoice.issue_date.desc())
+    billing = module_enabled(db, o.tenant_id, "customer_billing")
+    quotes = (
+        list(db.scalars(select(Quote).where(Quote.order_id == o.id).order_by(Quote.created_at.desc())))
+        if billing
+        else []
+    )
+    invoices = (
+        list(
+            db.scalars(
+                select(Invoice)
+                .where(Invoice.order_id == o.id, Invoice.kind == "customer")
+                .order_by(Invoice.issue_date.desc())
+            )
         )
+        if billing
+        else []
     )
     appt = appointment(db, o)
     a = db.get(Address, o.address_id)
@@ -120,7 +134,7 @@ def order_view(db, actor: Actor, o: PickupOrder, full: bool = False) -> dict[str
         if a
         else None,
         "price": {"gross": price.get("gross"), "net": price.get("net"), "vat_pct": price.get("vat_pct")}
-        if price
+        if price and billing
         else None,
         "quotes": [
             {
@@ -184,13 +198,13 @@ def order_view(db, actor: Actor, o: PickupOrder, full: bool = False) -> dict[str
 
 @router.get("/api/portal/orders")
 def orders(actor: CurrentActor, db: DB) -> list[dict[str, Any]]:
-    _customer(actor)
+    _customer(actor, db)
     return [order_view(db, actor, o) for o in customer_orders(db, actor)]
 
 
 @router.get("/api/portal/orders/{order_id}")
 def order(order_id: uuid.UUID, actor: CurrentActor, db: DB) -> dict[str, Any]:
-    _customer(actor)
+    _customer(actor, db)
     return order_view(db, actor, own_order(db, actor, order_id), full=True)
 
 
@@ -201,7 +215,7 @@ class ConsentIn(BaseModel):
 @router.post("/api/portal/consent")
 def consent(data: ConsentIn, actor: CurrentActor, db: DB) -> dict[str, Any]:
     """Consent to store photos of garden and home (text from the tenant's settings is saved with it)."""
-    c = db.get(Customer, _customer(actor))
+    c = db.get(Customer, _customer(actor, db))
     if data.accept:
         c.consent_photos = True
         c.consent_at = datetime.now(UTC)
@@ -230,7 +244,7 @@ async def upload(
     plant_id: uuid.UUID | None = Form(None),
 ) -> dict[str, Any]:
     """Guided photo set: per plant front/side (with A4 sheet), top, pot; the path from start to end."""
-    cid = _customer(actor)
+    cid = _customer(actor, db)
     o = own_order(db, actor, order_id)
     c = db.get(Customer, cid)
     if not c.consent_photos:
@@ -266,7 +280,7 @@ class LocationIn(BaseModel):
 @router.put("/api/portal/orders/{order_id}/location")
 def location(order_id: uuid.UUID, data: LocationIn, actor: CurrentActor, db: DB) -> dict[str, Any]:
     """Pin where the plants are (and hints for parking, bell, access)."""
-    _customer(actor)
+    _customer(actor, db)
     o = own_order(db, actor, order_id)
     a = db.get(Address, o.address_id)
     old = {"lat": a.lat, "lon": a.lon}
@@ -294,7 +308,7 @@ def location(order_id: uuid.UUID, data: LocationIn, actor: CurrentActor, db: DB)
 
 @router.post("/api/portal/quotes/{quote_id}/accept")
 def accept_quote(quote_id: uuid.UUID, actor: CurrentActor, db: DB) -> dict[str, Any]:
-    _customer(actor)
+    _customer(actor, db)
     q = db.get(Quote, quote_id)
     if q is None:
         raise NotFound()
@@ -335,7 +349,7 @@ class ReturnWishIn(BaseModel):
 @router.put("/api/portal/orders/{order_id}/return-wish")
 def return_wish(order_id: uuid.UUID, data: ReturnWishIn, actor: CurrentActor, db: DB) -> dict[str, Any]:
     """When the plants should come back in spring. Applied to the return order while it is not planned."""
-    _customer(actor)
+    _customer(actor, db)
     o = own_order(db, actor, order_id)
     if o.direction != "pickup":
         raise AppError("errors.validation")
@@ -383,8 +397,9 @@ class PayIn(BaseModel):
 @router.post("/api/portal/payments", status_code=201)
 def pay(data: PayIn, actor: CurrentActor, db: DB) -> dict[str, Any]:
     """Start an online payment of an invoice (or an offer as prepayment); returns the checkout URL."""
-    cid = _customer(actor)
+    cid = _customer(actor, db)
     r = SettingsResolver(db, actor.tenant_id)
+    require_module(db, actor.tenant_id, "payments", r)
     provider_name = r.get("payments.provider")
     if provider_name == "off":
         raise AppError("errors.module_off", status_code=409)
@@ -430,7 +445,7 @@ def pay(data: PayIn, actor: CurrentActor, db: DB) -> dict[str, Any]:
 
 @router.get("/api/portal/payments/{payment_id}")
 def payment_status(payment_id: uuid.UUID, actor: CurrentActor, db: DB) -> dict[str, Any]:
-    cid = _customer(actor)
+    cid = _customer(actor, db)
     p = db.get(Payment, payment_id)
     if p is None or p.customer_id != cid:
         raise NotFound()
@@ -444,7 +459,7 @@ class SimulateIn(BaseModel):
 @router.post("/api/portal/payments/{payment_id}/simulate")
 def simulate(payment_id: uuid.UUID, data: SimulateIn, actor: CurrentActor, db: DB) -> dict[str, Any]:
     """Test payment only: confirm or cancel the simulated checkout (no money moves)."""
-    cid = _customer(actor)
+    cid = _customer(actor, db)
     p = db.get(Payment, payment_id)
     if p is None or p.customer_id != cid:
         raise NotFound()

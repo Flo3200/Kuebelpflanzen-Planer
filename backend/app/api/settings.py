@@ -68,6 +68,7 @@ def registry_payload(lang: str = "de") -> dict[str, Any]:
                 "group": s.group,
                 "important": s.important,
                 "admin_only": s.admin_only,
+                "module": s.module,
                 **setting_text(s.key, lang),
             }
             for s in SETTINGS

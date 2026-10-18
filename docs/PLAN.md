@@ -100,3 +100,96 @@ Scopes), Test-/Produktivmodus serverseitig, Bestätigungspflicht, Einstellungs-K
 
 ## Phase 8 – später
 Kundenzugang, Rücklieferung als Planungsmodus (Datenmodell ist vorbereitet: `direction`), Hosting.
+
+## Verbesserungsrunde (Auftrag `docs/AUFTRAG_VERBESSERUNGEN.md`, Stand 2026-10-18)
+
+Grundlage: `docs/OFFEN.md`. Reihenfolge A → B → D → E → C → F → G → H. Nach jedem Paket: `make check`,
+Eintrag in `CHANGELOG.md`, Entscheidungen in `DECISIONS.md`, Commit und Push. Nichts wird endgültig
+gelöscht: wegfallende Funktionen verschwinden aus der Oberfläche und werden per Modul-Schalter
+abgeschaltet, Tabellen bleiben, Migrationen sind umkehrbar.
+
+| Paket | Inhalt | Stand |
+|---|---|---|
+| A | Fokus Logistik, Modul-Schalter, schlanke Eingaben | offen |
+| B | Pflanzenarten im Hintergrund | offen |
+| D | Teams durch den Unternehmer | offen |
+| E | Eigene Kostenpositionen, reine Logistikkosten | offen |
+| C | Fahrzeuge per Foto und Chat, Module (Regale, Einbauten, Anhänger) | offen |
+| F | Abladezeit per Formel, Graphen, Dashboard | offen |
+| G | KI-Ladeanordnung mit Prüfung durch den Packer | offen |
+| H | Checkliste für den Produktinhaber, Rückfrage zu OFFEN Punkt 8 | offen |
+
+### Paket A – Fokus Logistik und schlanke Eingaben
+- Einstellungsgruppe `modules.*` (Ebenen Admin und Betrieb, Standard aus): `modules.storage` (Lager),
+  `modules.customer_billing` (Preise, Angebote und Rechnungen an Endkunden), `modules.portal`
+  (Kundenzugang, ersetzt `portal.enabled` per umkehrbarer Migration), `modules.payments`
+  (Online-Zahlung, setzt den Kundenzugang voraus).
+- Server: Endpunkte eines ausgeschalteten Moduls antworten mit 403 `errors.module_disabled`;
+  `/api/auth/me` liefert die Module; Einstellungen eines Moduls (`SettingDef.module`) erscheinen nur,
+  wenn es an ist; Datenfelder tragen `info["module"]` und `info["advanced"]`.
+- Oberfläche: Menüpunkte, Dashboard-Kacheln, Formularfelder und Schaltflächen eines ausgeschalteten
+  Moduls verschwinden; Felder, die keine Berechnung braucht, stehen eingeklappt unter
+  „Weitere Angaben“. Feldtabelle in `DECISIONS.md`.
+- Frostregel, Rücklieferung und Fahrer-App funktionieren ohne Lager.
+- *Abnahme:* Ein neuer Betrieb sieht nur Logistik-Funktionen; jede Maske zeigt nur die Felder für
+  die Berechnung; Tests für jedes Modul an und aus.
+
+### Paket B – Pflanzenarten im Hintergrund
+- `/species` und die Seite „Pflanzenarten“ nur noch für den Admin (interne Wissensbasis); Betriebe
+  lesen die Arten nicht mehr in der Oberfläche.
+- Neue Spalten an der Pflanze (`species_name`, `tip_tendency`, `soil_kg_per_l`, …) mit
+  Sicherheitswerten; die KI (Foto-Auswertung, Nachrichtenerfassung) setzt Art und Eigenschaften,
+  fehlende Werte kommen aus der Wissensbasis. Umkehrbare Datenmigration kopiert die Werte der
+  bisherigen Art an jede Pflanze.
+- Gewichtsschätzung, Packregeln, Frostregel und Lernen lesen nur noch die Werte der Pflanze.
+- *Abnahme:* Pflanzen ohne Artverwaltung haben alle nötigen Eigenschaften; betroffene Tests grün.
+
+### Paket D – Teams durch den Unternehmer
+- Team-Oberfläche mit Mitgliedern, Standard-Fahrzeug (mit Modulen aus Paket C, sobald vorhanden),
+  gültigen Wochentagen und Zeitraum; Verfügbarkeitskalender zeigt Teams mit Konflikten
+  (Mitglied abwesend, Fahrzeug in Wartung, Person in zwei Teams).
+- Planung mit `planning.form_teams = fixed`: Fehlende oder zu kleine Teams ergeben Warnungen mit
+  Begründung je Stopp und einen Lösungshinweis (welches Team, welche Person), nie einen Fehler.
+- *Abnahme:* Mit festen Teams entsteht immer ein Plan; nicht einplanbare Stopps haben einen
+  verständlichen Grund.
+
+### Paket E – Kosten
+- Tabelle `cost_items`: Name, Betrag, Bezug (pro km, Stunde, Einsatz, Tag, Monat anteilig, Pflanze),
+  Bezugsobjekt (Betrieb, Fahrzeug, Person, Modul). Fließen in Schätzung, Tourkosten und Szenarien ein.
+- Kostenanzeige „Logistikkosten“ (Personal, Fahrzeug, eigene Positionen) getrennt von Preis und
+  Marge; `costs.margin_pct` und `costs.overhead_pct` Standard 0 %.
+- *Abnahme:* Eine eigene Kostenposition ändert sichtbar Tour- und Auftragskosten; Aufschlüsselung
+  pro Tour nachvollziehbar.
+
+### Paket C – Fahrzeuge per Foto und Chat, modular
+- KI-Aufgaben `ai.model.vehicle_photo` (Laderaum-Foto mit A4/Zollstock) und `ai.model.vehicle_chat`
+  (Beschreibung in Worten, Rückfragen, spätere Änderungen) mit versionierten Prompts, Kostenerfassung
+  und Testsätzen im Bewertungswerkzeug; das Testmodell liefert ohne Schlüssel plausible Entwürfe.
+- Ergebnis immer als Fahrzeug-Entwurf mit Sicherheitswerten, Rückfragen bei unsicheren Werten,
+  Bestätigung durch den Unternehmer, Protokoll.
+- Wiederverwendbare Module (`vehicle_modules`: Regal, Einbau, Anhänger) mit Zuordnung zu mehreren
+  Fahrzeugen; Anhänger + Zugfahrzeug als Kombination. Die Ladeplanung liest Regale aus Modulen.
+- *Abnahme:* Fahrzeug vollständig per Chat und per Foto als Entwurf anlegen und bestätigen; Module
+  mehreren Fahrzeugen zuordnen; Ladeplanung nutzt das Ergebnis.
+
+### Paket F – Abladezeit, Graphen, Dashboard
+- Formel `unload` im Formeleditor (Fixzeit + Anteil je Pflanze und je kg), lernbar aus den neuen
+  Fahrer-Ereignissen „Abladen beginnt“/„Abladen fertig“ am Betrieb.
+- Planung zeigt je Tour Ankunft am Betrieb und Abladefenster.
+- Graphen: Auslastung Personal/Fahrzeuge je Tag, Touren im Zeitverlauf, Abladefenster am Betrieb,
+  Kosten je Tag und je Pflanze, Genauigkeit der Zeitschätzung. Dashboard neu: heute/morgen, offene
+  Entwürfe, nicht einplanbare Aufträge mit Grund, Kosten der Woche, Graphen.
+- *Abnahme:* Abladezeit kommt aus der Formel und ändert sich mit der Pflanzenmenge; Graphen
+  funktionieren mit leeren und mit Demodaten.
+
+### Paket G – KI-Ladeanordnung
+- KI-Aufgabe `ai.model.load_layout`: strukturiertes JSON mit Positionen aus Fahrzeuggeometrie,
+  Pflanzenliste und Tourreihenfolge. Der Packer übernimmt sie als Startlösung, prüft alle Regeln und
+  verbessert sie. Einstellung `packing.mode`: `rules` (Standard), `ai_start`, `compare`.
+- Vergleichstest mit Demodaten (Punktzahl, Verstöße, Rechenzeit, KI-Kosten).
+- *Abnahme:* KI-Vorschläge werden nie ungeprüft übernommen; Vergleichsbericht in `DECISIONS.md`.
+
+### Paket H – Konfiguration und Rückfragen
+- Keine Programmierung: Checkliste für den Produktinhaber (API-Schlüssel und Ausgabenlimit,
+  Rechnungssteller, Einwilligungstext, Zwei-Faktor-Pflicht, Inhaber-Passwort, Hosting) und die
+  Rückfrage zu Punkt 8 aus `OFFEN.md` (vor Paket A gestellt).

@@ -28,6 +28,7 @@ from app.core.security import (
     verify_totp,
 )
 from app.models.core import AuthSession, LoginAttempt, OneTimeCode, Tenant, User
+from app.core.modules import MODULES, module_enabled, module_states
 from app.settings.service import SettingsResolver
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -198,6 +199,10 @@ def me(actor: CurrentActor, request: Request) -> dict:
             if tenant is None
             else {"id": str(tenant.id), "name": tenant.name, "slug": tenant.slug},
             "acting_as_tenant": actor.role == "admin" and tenant is not None,
+            # optional modules of the tenant; the platform view has no tenant and sees all
+            "modules": module_states(SettingsResolver(db, tenant.id))
+            if tenant is not None
+            else {m: True for m in MODULES},
             "mfa_setup_required": bool(sess and sess.mfa_pending),
             "csrf_token": sess.csrf_token if sess else None,
         }
@@ -313,7 +318,7 @@ def customer_link_login(code: str, request: Request, response: Response) -> dict
         if (
             tenant is None
             or tenant.status != "active"
-            or not bool(SettingsResolver(db, tenant.id).get("portal.enabled"))
+            or not module_enabled(db, tenant.id, "portal")
         ):
             raise Unauthorized("errors.code_invalid")
         otc.used_at = now

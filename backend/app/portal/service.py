@@ -21,6 +21,7 @@ from app.models.orders import Customer, Photo, PickupOrder, StoredFile
 from app.models.planning import Plan, Tour, TourStop
 from app.models.platform import Invoice, Payment
 from app.settings.service import SettingsResolver
+from app.core.modules import require_module
 
 # what the customer sees as progress of one order
 PICKUP_STEPS = ["request", "offer", "confirmed", "planned", "picked_up", "stored", "returned"]
@@ -30,8 +31,7 @@ RETURN_STEPS = ["confirmed", "planned", "returned"]
 def portal_link(db: Session, actor: Actor, customer: Customer) -> dict[str, Any]:
     """Creates the portal login of a customer (once) and a new personal link."""
     r = SettingsResolver(db, customer.tenant_id)
-    if not bool(r.get("portal.enabled")):
-        raise AppError("errors.module_off", status_code=409)
+    require_module(db, customer.tenant_id, "portal", r)
     user = db.scalar(select(User).where(User.customer_id == customer.id, User.role == "customer"))
     if user is None:
         user = User(

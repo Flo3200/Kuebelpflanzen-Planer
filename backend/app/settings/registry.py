@@ -56,6 +56,7 @@ class SettingDef:
     admin_only: bool = False  # tenant-level values may only be written by the platform admin
     secret: bool = False
     tags: tuple[str, ...] = field(default_factory=tuple)
+    module: str | None = None  # shown and used only while this module is on (app/core/modules.py)
 
 
 def _s(*args, **kwargs) -> SettingDef:
@@ -63,12 +64,27 @@ def _s(*args, **kwargs) -> SettingDef:
 
 
 SETTINGS: tuple[SettingDef, ...] = (
+    # --- modules (off by default: the platform focuses on logistics) -----------
+    _s("modules.storage", "bool", False, "modules", important=True),
+    _s("modules.customer_billing", "bool", False, "modules", important=True),
+    _s("modules.portal", "bool", False, "modules", important=True),
+    _s("modules.payments", "bool", False, "modules", important=True),
     # --- general -------------------------------------------------------------
     _s("general.season_start_month", "int", 9, "general", unit="Monat", min=1, max=12),
     _s("general.currency", "enum", "EUR", "general", choices=("EUR", "CHF")),
     _s("general.timezone", "str", "Europe/Berlin", "general"),
-    _s("general.storage_warn_pct", "float", 90.0, "general", unit="%", min=10, max=100, important=True),
-    _s("general.storage_space_factor", "float", 1.25, "general", unit="×", min=1.0, max=3.0),
+    _s(
+        "general.storage_warn_pct",
+        "float",
+        90.0,
+        "general",
+        unit="%",
+        min=10,
+        max=100,
+        important=True,
+        module="storage",
+    ),
+    _s("general.storage_space_factor", "float", 1.25, "general", unit="×", min=1.0, max=3.0, module="storage"),
     # --- security / platform -------------------------------------------------
     _s("security.admin_require_2fa", "bool", False, "security", levels=P),
     _s("security.owner_require_2fa", "bool", False, "security"),
@@ -232,9 +248,19 @@ SETTINGS: tuple[SettingDef, ...] = (
     ),
     _s("costs.equipment_per_use", "float", 0.0, "costs", levels=(*PT, "equipment"), unit="€", min=0, max=500),
     _s("costs.overhead_pct", "float", 15.0, "costs", unit="%", min=0, max=200, important=True),
-    _s("costs.margin_pct", "float", 20.0, "costs", unit="%", min=0, max=300, important=True),
-    _s("costs.vat_pct", "float", 19.0, "costs", unit="%", min=0, max=30),
-    _s("costs.small_business", "bool", False, "costs"),
+    _s(
+        "costs.margin_pct",
+        "float",
+        20.0,
+        "costs",
+        unit="%",
+        min=0,
+        max=300,
+        important=True,
+        module="customer_billing",
+    ),
+    _s("costs.vat_pct", "float", 19.0, "costs", unit="%", min=0, max=30, module="customer_billing"),
+    _s("costs.small_business", "bool", False, "costs", module="customer_billing"),
     # --- pricing ------------------------------------------------------------------
     _s(
         "pricing.base_price",
@@ -246,6 +272,7 @@ SETTINGS: tuple[SettingDef, ...] = (
         min=0,
         max=5000,
         important=True,
+        module="customer_billing",
     ),
     _s(
         "pricing.rate_per_labour_min",
@@ -257,6 +284,7 @@ SETTINGS: tuple[SettingDef, ...] = (
         min=0,
         max=20,
         important=True,
+        module="customer_billing",
     ),
     _s(
         "pricing.per_plant_fee",
@@ -268,6 +296,7 @@ SETTINGS: tuple[SettingDef, ...] = (
         min=0,
         max=500,
         important=True,
+        module="customer_billing",
     ),
     _s(
         "pricing.minimum_price",
@@ -279,22 +308,30 @@ SETTINGS: tuple[SettingDef, ...] = (
         min=0,
         max=5000,
         important=True,
+        module="customer_billing",
     ),
     _s(
-        "pricing.distance_mode", "enum", "distance", "pricing", choices=("off", "distance", "zones", "detour")
+        "pricing.distance_mode",
+        "enum",
+        "distance",
+        "pricing",
+        choices=("off", "distance", "zones", "detour"),
+        module="customer_billing",
     ),
-    _s("pricing.distance_rate_km", "float", 0.9, "pricing", unit="€/km", min=0, max=20),
-    _s("pricing.distance_free_km", "float", 5.0, "pricing", unit="km", min=0, max=200),
+    _s("pricing.distance_rate_km", "float", 0.9, "pricing", unit="€/km", min=0, max=20, module="customer_billing"),
+    _s("pricing.distance_free_km", "float", 5.0, "pricing", unit="km", min=0, max=200, module="customer_billing"),
     _s(
         "pricing.zones",
         "json",
         [{"max_km": 10, "surcharge": 0}, {"max_km": 25, "surcharge": 15}, {"max_km": 9999, "surcharge": 35}],
         "pricing",
+        module="customer_billing",
     ),
-    _s("pricing.rounding", "float", 1.0, "pricing", unit="€", min=0, max=50),
-    _s("pricing.prices_include_vat", "bool", True, "pricing"),
-    _s("pricing.typical_tour_stops", "int", 8, "pricing", unit="", min=1, max=50),
-    _s("pricing.local_detour_km", "float", 4.0, "pricing", unit="km", min=0, max=100),
+    _s("pricing.rounding", "float", 1.0, "pricing", unit="€", min=0, max=50, module="customer_billing"),
+    _s("pricing.prices_include_vat", "bool", True, "pricing", module="customer_billing"),
+    # used for the drive share of the cost estimate before planning, hence group costs
+    _s("pricing.typical_tour_stops", "int", 8, "costs", unit="", min=1, max=50),
+    _s("pricing.local_detour_km", "float", 4.0, "costs", unit="km", min=0, max=100),
     # --- planning -------------------------------------------------------------------
     _s("planning.day_start", "time", "07:00", "planning", levels=(*PT, "staff", "vehicle"), important=True),
     _s("planning.day_end", "time", "17:30", "planning", levels=(*PT, "staff", "vehicle"), important=True),
@@ -417,15 +454,30 @@ SETTINGS: tuple[SettingDef, ...] = (
     ),
     _s("returns.frost_safe_date", "str", "05-15", "returns", important=True),
     _s("returns.time_factor", "float", 1.0, "returns", unit="×", min=0.3, max=3.0),
-    _s("returns.price_mode", "enum", "separate", "returns", choices=("separate", "included", "factor")),
-    _s("returns.price_factor", "float", 0.8, "returns", unit="×", min=0, max=3.0),
+    _s(
+        "returns.price_mode",
+        "enum",
+        "separate",
+        "returns",
+        choices=("separate", "included", "factor"),
+        module="customer_billing",
+    ),
+    _s("returns.price_factor", "float", 0.8, "returns", unit="×", min=0, max=3.0, module="customer_billing"),
     _s("returns.default_window_days", "int", 42, "returns", unit="Tage", min=1, max=180),
     # --- customer portal and online payment -------------------------------------------
-    _s("portal.enabled", "bool", True, "portal", important=True),
-    _s("portal.link_days", "int", 120, "portal", unit="Tage", min=1, max=730),
-    _s("portal.accept_quote_confirms", "bool", True, "portal"),
-    _s("payments.provider", "enum", "off", "portal", choices=("off", "test", "stripe"), important=True),
-    _s("payments.stripe_account", "str", "", "portal"),
+    # the on/off switch is modules.portal (was portal.enabled until the logistics focus)
+    _s("portal.link_days", "int", 120, "portal", unit="Tage", min=1, max=730, module="portal"),
+    _s("portal.accept_quote_confirms", "bool", True, "portal", module="portal"),
+    _s(
+        "payments.provider",
+        "enum",
+        "off",
+        "portal",
+        choices=("off", "test", "stripe"),
+        important=True,
+        module="payments",
+    ),
+    _s("payments.stripe_account", "str", "", "portal", module="payments"),
     # --- agents --------------------------------------------------------------------
     _s("agents.token_days", "int", 30, "agents", unit="Tage", min=1, max=365),
     _s("agents.rate_per_min", "int", 120, "agents", unit="/min", min=1, max=10000),

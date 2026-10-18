@@ -106,7 +106,8 @@
     "agents": "Agenten-Zugänge",
     "weight": "Gewichtsschätzung",
     "returns": "Rücklieferung im Frühjahr",
-    "portal": "Kundenzugang und Online-Zahlung"
+    "portal": "Kundenzugang und Online-Zahlung",
+    "modules": "Module"
   },
   "settings": {
     "general.season_start_month": {
@@ -755,10 +756,6 @@
       "label": "Zeitraum für Rücklieferungen (Tage)",
       "help": "Länge des Zeitraums, der beim Anlegen der Rücklieferungen vorgeschlagen wird."
     },
-    "portal.enabled": {
-      "label": "Kundenzugang",
-      "help": "Kunden können mit ihrem persönlichen Link ihre Aufträge sehen, Fotos hochladen, den Standort setzen, Angebote annehmen und bezahlen."
-    },
     "portal.link_days": {
       "label": "Gültigkeit des Kunden-Links (Tage)",
       "help": "So lange funktioniert ein persönlicher Link für den Kundenzugang."
@@ -779,6 +776,22 @@
     "payments.stripe_account": {
       "label": "Stripe-Konto des Betriebs",
       "help": "Die Kennung des verbundenen Stripe-Kontos (acct_…). Der Plattform-Schlüssel steht in der .env."
+    },
+    "modules.storage": {
+      "label": "Lager",
+      "help": "Lagerflächen, Lagerbelegung und Lagerplatz je Pflanze. Aus: Die App plant nur Abholung, Touren, Beladung, Abladen und Rücklieferung."
+    },
+    "modules.customer_billing": {
+      "label": "Preise, Angebote und Rechnungen an Kunden",
+      "help": "Kundenpreis, Angebots-PDF und Rechnungen an Ihre Kunden. Aus: Die App zeigt nur die Logistikkosten. Die Abrechnung der Plattform mit Ihrem Betrieb bleibt."
+    },
+    "modules.portal": {
+      "label": "Kundenzugang",
+      "help": "Kunden können mit ihrem persönlichen Link ihre Aufträge sehen, Fotos hochladen, den Standort setzen und (wenn eingeschaltet) Angebote annehmen und bezahlen."
+    },
+    "modules.payments": {
+      "label": "Online-Zahlung",
+      "help": "Kunden bezahlen Rechnungen im Kundenzugang online. Braucht den Kundenzugang; den Anbieter wählen Sie unter „Kundenzugang und Online-Zahlung“."
     }
   },
   "fields": {
