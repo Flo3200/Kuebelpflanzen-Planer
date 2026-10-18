@@ -19,6 +19,9 @@ from app.planning.inputs import PlanningInput, build_input
 from app.planning.solver import SolvedTrip, SolveResult, solve
 from app.routing.provider import cached_matrix
 from app.settings.service import SettingsResolver
+from app.timemodel.costitems import allocate_to_stops
+from app.timemodel.costitems import load_items as load_cost_items
+from app.timemodel.costitems import trip_costs as trip_cost_items
 
 PALETTE = [
     "#2b5139",
@@ -239,6 +242,11 @@ def write_results(
     r = SettingsResolver(db, plan.tenant_id)
     overhead = float(r.get("costs.overhead_pct")) / 100
     surcharge = float(r.get("costs.overtime_surcharge_pct")) / 100
+    cost_items = load_cost_items(db, plan.tenant_id)
+    workdays = int(r.get("costs.workdays_per_month"))
+    units_per_day: dict[date, int] = defaultdict(int)
+    for k in {t.unit.key: t.unit.date for t in res.trips}.values():
+        units_per_day[k] += 1
     kept_ids = {t.id for t in kept}
     old: dict[str, list[str]] = {}
     for t in db.scalars(select(Tour).where(Tour.plan_id == plan.id)):
@@ -267,6 +275,23 @@ def write_results(
             labour = (trip.end - trip.start) * unit.labour_cost_min
             vehicle = trip.distance_km * unit.cost_km + (trip.end - trip.start) * unit.vehicle_cost_min
             ot = overtime_min * unit.labour_cost_min * surcharge if trip is trips[-1] else 0.0
+            custom, custom_lines = trip_cost_items(
+                cost_items,
+                vehicle_ids={unit.vehicle.id} | ({unit.trailer.id} if unit.trailer else set()),
+                staff_ids=[m.id for m in unit.members],
+                km=trip.distance_km,
+                minutes=trip.end - trip.start,
+                plants=sum(len(s.stop.plants) for s in trip.stops),
+                first_trip_of_day=trip is trips[0],
+                units_that_day=units_per_day[unit.date],
+                workdays_per_month=workdays,
+            )
+            shares = allocate_to_stops(
+                custom_lines, [len(s.stop.plants) for s in trip.stops], [c["direct"] for c in costs_per_stop]
+            )
+            for c, share in zip(costs_per_stop, shares, strict=True):
+                c["custom"] = share
+                c["direct"] = round(c["direct"] + share, 2)
             pack = (pack_results or {}).get((key, trip.trip_no))
             tour = Tour(
                 tenant_id=plan.tenant_id,
@@ -298,8 +323,10 @@ def write_results(
                     "labour": round(labour, 2),
                     "vehicle": round(vehicle, 2),
                     "overtime": round(ot, 2),
-                    "direct": round(labour + vehicle + ot, 2),
-                    "self_cost": round((labour + vehicle + ot) * (1 + overhead), 2),
+                    "custom": custom,
+                    "custom_items": custom_lines,
+                    "direct": round(labour + vehicle + ot + custom, 2),
+                    "self_cost": round((labour + vehicle + ot + custom) * (1 + overhead), 2),
                     "overtime_min": overtime_min if trip is trips[-1] else 0,
                 },
                 breaks=list(trip.breaks),
@@ -576,12 +603,31 @@ def evaluate_tour(db: Session, tour: Tour) -> None:
         "vehicle_cost_min", 0
     )
     overhead = float(est.resolver.get("costs.overhead_pct")) / 100
+    same_day = {
+        t.unit_key
+        for t in db.scalars(select(Tour).where(Tour.plan_id == tour.plan_id, Tour.date == tour.date))
+    }
+    custom, custom_lines = trip_cost_items(
+        load_cost_items(db, tour.tenant_id),
+        vehicle_ids={str(x) for x in (tour.vehicle_id, tour.trailer_id) if x}
+        | {unit.get("vehicle_id")} - {None},
+        staff_ids=[str(m) for m in tour.member_ids],
+        km=tour.distance_km,
+        minutes=tour.end_min - tour.start_min,
+        plants=load.get("plants", 0) if isinstance(load, dict) else 0,
+        first_trip_of_day=tour.trip_no == 1,
+        units_that_day=max(1, len(same_day)),
+        workdays_per_month=int(est.resolver.get("costs.workdays_per_month")),
+    )
+    ot = float(tour.costs.get("overtime", 0) or 0)
     tour.costs = {
         **tour.costs,
         "labour": round(labour, 2),
         "vehicle": round(vehicle, 2),
-        "direct": round(labour + vehicle, 2),
-        "self_cost": round((labour + vehicle) * (1 + overhead), 2),
+        "custom": custom,
+        "custom_items": custom_lines,
+        "direct": round(labour + vehicle + ot + custom, 2),
+        "self_cost": round((labour + vehicle + ot + custom) * (1 + overhead), 2),
     }
     tour.changed_at = datetime.now(UTC)
     tour.load_status = "unknown"

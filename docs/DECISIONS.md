@@ -291,3 +291,19 @@ erscheinen nur mit dem Modul. Nichts wurde gelöscht.
   (`SolveWithParameters`) bei einer gewöhnlichen Planung ab; zwei Wiederholungen der Planungstests
   und der folgende Gesamtlauf liefen fehlerfrei. Ursache liegt in der nativen Bibliothek, nicht im
   Modell; bei erneutem Auftreten OR-Tools-Version prüfen.
+
+## D27 – Eigene Kostenpositionen
+- Tabelle `cost_items` (Name, Betrag, Bezug, optional Fahrzeug **oder** Person; ohne = ganzer
+  Betrieb; aktiv). Module (Paket C) werden als weiterer Bezug ergänzt.
+- Tour: Positionen des Betriebs, des Fahrzeugs/Anhängers der Tour und jeder Person im Team. Pro km ×
+  gefahrene km, pro Stunde × Tourdauer (je Person), pro Einsatz je Fahrt, pro Tag einmal je Einheit und
+  Tag (erste Fahrt; Betriebspositionen auf die Einheiten des Tages verteilt), pro Monat ÷
+  `costs.workdays_per_month` wie pro Tag, pro Pflanze × transportierte Pflanzen. Aufteilung auf Stopps:
+  Pflanzenpositionen nach Pflanzen, der Rest nach dem Anteil an den direkten Kosten.
+- Auftrag vor der Planung: wie die übrigen Kosten mit dem Fahranteil (`pricing.typical_tour_stops`,
+  `pricing.local_detour_km`), einem Durchschnittsfahrzeug (Fahrzeugpositionen ÷ Zahl der Fahrzeuge) und
+  einer Durchschnittsperson (× Teamgröße ÷ Zahl der Personen).
+- Die Positionen werden nach dem Lösen angerechnet; der Solver optimiert weiter mit den Grundsätzen
+  (Lohn, Fahrzeug pro km/Stunde). Szenarien vergleichen die Gesamtkosten einschließlich der Positionen.
+- `costs.overhead_pct` und `costs.margin_pct` Standard 0 % (reine Logistikkosten); die Marge gehört
+  zum Preis-Modul.

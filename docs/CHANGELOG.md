@@ -333,3 +333,18 @@ Artverwaltung alle nötigen Eigenschaften, alle betroffenen Tests grün.
 Abwesenheit und Wochentage als Warnung, Konflikte im Kalender); `make check` grün (128 Backend-,
 9 Frontend-Tests). **Abnahme:** erfüllt – mit festen Teams entsteht immer ein Plan, nicht
 einplanbare Stopps haben einen verständlichen Grund und einen Lösungshinweis.
+
+## Verbesserungsrunde – Paket E: Kosten (2026-10-18)
+
+**Umgesetzt**
+- Neue Seite „Kosten“ für eigene Kostenpositionen (Betrieb, Fahrzeug oder Person; pro km, Stunde,
+  Einsatz, Einsatztag, Monat anteilig, Pflanze) und Reiter „Eigene Kosten“ bei Fahrzeugen und Personal.
+- Positionen fließen in Auftragsschätzung, Tourkosten, Stoppkosten, Kosten nach der Planung und
+  Szenarien ein; Tour und Auftrag zeigen die Aufschlüsselung.
+- Kostenanzeige „Logistikkosten“ getrennt von Preis und Marge; Gemeinkostenzuschlag und Marge
+  standardmäßig 0 %.
+
+**Tests:** 3 neue Tests (`test_costs.py`: Standard 0 %, Position ändert die Auftragskosten, Positionen
+für Fahrzeug, Person und Betrieb in den Tourkosten mit Aufteilung auf Stopps); `make check` grün
+(131 Backend-, 9 Frontend-Tests). **Abnahme:** erfüllt – eine eigene Kostenposition ändert sichtbar
+Tour- und Auftragskosten, die Aufschlüsselung je Tour ist nachvollziehbar.

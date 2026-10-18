@@ -508,7 +508,10 @@ function ToursList({ plan, onChange }: { plan: any; onChange: () => void }) {
                 </tbody>
               </table>
               <div className="row small muted" style={{ marginTop: 8 }}>
-                {t("planning.costs_line", { labour: fmtMoney(tr.costs.labour), vehicle: fmtMoney(tr.costs.vehicle), overtime: fmtMoney(tr.costs.overtime) })}
+                {t("planning.costs_line", { labour: fmtMoney(tr.costs.labour), vehicle: fmtMoney(tr.costs.vehicle), overtime: fmtMoney(tr.costs.overtime), custom: fmtMoney(tr.costs.custom ?? 0) })}
+                {(tr.costs.custom_items ?? []).length > 0 && (
+                  <span>({tr.costs.custom_items.map((x: any) => `${x.name} ${fmtMoney(x.amount)}`).join(", ")})</span>
+                )}
                 {tr.breaks.map((b: any, i: number) => (
                   <span key={i}>· {t("planning.break_at", { from: hm(b.start), to: hm(b.end) })}</span>
                 ))}

@@ -71,7 +71,8 @@
     "quote_expired": "Dieses Angebot ist abgelaufen. Bitte fragen Sie ein neues an.",
     "nothing_to_pay": "Hier ist nichts (mehr) zu bezahlen.",
     "payment_not_configured": "Die Online-Zahlung ist für diesen Betrieb noch nicht eingerichtet.",
-    "payment_failed": "Die Zahlung konnte nicht gestartet werden: {detail}"
+    "payment_failed": "Die Zahlung konnte nicht gestartet werden: {detail}",
+    "cost_item_scope": "Eine Kostenposition gehört entweder zu einem Fahrzeug, zu einer Person oder zum ganzen Betrieb."
   },
   "origins": {
     "default": "Systemstandard",
@@ -317,11 +318,11 @@
     },
     "costs.overhead_pct": {
       "label": "Gemeinkostenzuschlag",
-      "help": "Zuschlag auf die direkten Kosten für Verwaltung, Lager und Sonstiges."
+      "help": "Zuschlag auf die direkten Logistikkosten (Personal, Fahrzeug, eigene Positionen). Standard 0 %: Die Kostenanzeige zeigt reine Logistikkosten."
     },
     "costs.margin_pct": {
       "label": "Marge",
-      "help": "Angestrebter Gewinnaufschlag auf die Selbstkosten. Wird in der Kostendeckung angezeigt."
+      "help": "Angestrebter Gewinnaufschlag für den Kundenpreis (Modul Preise/Rechnungen). Standard 0 %; gehört nicht zu den Logistikkosten."
     },
     "costs.vat_pct": {
       "label": "Mehrwertsteuersatz (Kunden)",
@@ -792,6 +793,10 @@
     "modules.payments": {
       "label": "Online-Zahlung",
       "help": "Kunden bezahlen Rechnungen im Kundenzugang online. Braucht den Kundenzugang; den Anbieter wählen Sie unter „Kundenzugang und Online-Zahlung“."
+    },
+    "costs.workdays_per_month": {
+      "label": "Arbeitstage pro Monat",
+      "help": "Monatliche Kostenpositionen werden durch diese Zahl geteilt und je Einsatztag angerechnet."
     }
   },
   "fields": {
@@ -1435,7 +1440,33 @@
       "timing": "Termin",
       "pot": "Topf",
       "crown": "Krone",
-      "validity": "Einsatztage"
+      "validity": "Einsatztage",
+      "scope": "Gilt für"
+    },
+    "cost_item": {
+      "name": {
+        "label": "Bezeichnung",
+        "help": "z. B. Leasingrate, Versicherung, Maut, Reinigung"
+      },
+      "amount_eur": {
+        "label": "Betrag"
+      },
+      "basis": {
+        "label": "Bezug"
+      },
+      "vehicle_id": {
+        "label": "Fahrzeug",
+        "help": "Leer lassen, wenn die Position für den ganzen Betrieb gilt."
+      },
+      "staff_id": {
+        "label": "Person"
+      },
+      "active": {
+        "label": "aktiv"
+      },
+      "notes": {
+        "label": "Notizen"
+      }
     }
   },
   "enums": {
@@ -1512,7 +1543,13 @@
     "plant.species_source.ai": "KI",
     "plant.species_source.knowledge": "Wissensbasis",
     "plant.species_source.person": "von Hand",
-    "plant.species_source.migrated": "aus der früheren Artenliste"
+    "plant.species_source.migrated": "aus der früheren Artenliste",
+    "cost_item.basis.per_km": "pro km",
+    "cost_item.basis.per_hour": "pro Stunde",
+    "cost_item.basis.per_use": "pro Einsatz (Fahrt)",
+    "cost_item.basis.per_day": "pro Einsatztag",
+    "cost_item.basis.per_month": "pro Monat (anteilig je Einsatztag)",
+    "cost_item.basis.per_plant": "pro Pflanze"
   },
   "permissions": {
     "platform.tenants": "Betriebe verwalten",

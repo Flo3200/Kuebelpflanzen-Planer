@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../api/client";
 import { fmtWeekdays } from "../../components/EntityForm";
 import { ResourcePage } from "../../components/ResourcePage";
+import { CostItemsFor } from "./Costs";
 import { Badge, Card, ConfirmButton, ErrorBox, Kpi, Modal, PageHeader, Spinner, useToast } from "../../components/ui";
 import { fmtDate, fmtNumber, t } from "../../i18n";
 
@@ -17,7 +18,10 @@ export function StaffPage() {
       columns={["name", "licences", "qualifications", "active"]}
       settingsScope="staff"
       settingsGroups={["staff", "costs", "planning"]}
-      extraTabs={[{ key: "availability", label: t("resources.availability"), render: (row) => <AvailabilityRules type="staff" id={row.id} /> }]}
+      extraTabs={[
+        { key: "availability", label: t("resources.availability"), render: (row) => <AvailabilityRules type="staff" id={row.id} /> },
+        { key: "costs", label: t("costs.tab"), render: (row) => <CostItemsFor field="staff_id" id={row.id} /> },
+      ]}
     />
   );
 }
@@ -64,6 +68,7 @@ export function VehiclesPage() {
       extraTabs={[
         { key: "shelves", label: t("resources.shelves"), render: (row) => <ShelfEditor vehicle={row} /> },
         { key: "availability", label: t("resources.availability"), render: (row) => <AvailabilityRules type="vehicle" id={row.id} /> },
+        { key: "costs", label: t("costs.tab"), render: (row) => <CostItemsFor field="vehicle_id" id={row.id} /> },
       ]}
     />
   );

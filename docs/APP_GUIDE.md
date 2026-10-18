@@ -127,11 +127,17 @@ Personen wie die schwerste Pflanze. Mehr als die höchste Teamgröße wird marki
 
 ## Kosten und Preise
 
-Der Kundenpreis, Angebote und Rechnungen an Kunden gehören zum Modul „Preise, Angebote und
-Rechnungen an Kunden“. Selbstkosten = Arbeitszeit · Stundenkosten (Lohn + Arbeitgeberanteil) + Fahrzeugkosten +
-Hilfsmittel + Gemeinkosten. Der Kundenpreis kommt aus der Preisformel: Grundpreis + Preis pro
-Arbeitsminute + Preis pro Pflanze + Entfernungszuschlag, mindestens der Mindestpreis. Angebote
-werden als PDF erzeugt. Nach der Planung zeigt jeder Auftrag, ob der Preis die Kosten deckt.
+Die App zeigt **Logistikkosten**: Personal (Arbeitszeit × Stundenkosten aus Lohn und
+Arbeitgeberanteil), Fahrzeug (pro km, pro Stunde, Kraftstoff), Hilfsmittel und **eigene
+Kostenpositionen**. Eigene Positionen legt der Betrieb unter „Kosten“ an (oder im Reiter „Eigene
+Kosten“ eines Fahrzeugs oder einer Person): Name, Betrag und Bezug – pro km, pro Stunde, pro
+Einsatz (Fahrt), pro Einsatztag, pro Monat (anteilig je Einsatztag, `costs.workdays_per_month`) oder
+pro Pflanze. Sie gelten für den ganzen Betrieb, ein Fahrzeug oder eine Person und fließen in die
+Auftragsschätzung, die Tourkosten (mit Aufschlüsselung je Tour) und Szenarien ein.
+Gemeinkostenzuschlag (`costs.overhead_pct`) und Marge (`costs.margin_pct`) stehen standardmäßig auf
+0 %. Kundenpreis, Kostendeckung, Angebote und Rechnungen an Kunden gehören zum Modul „Preise,
+Angebote und Rechnungen an Kunden“: Der Kundenpreis kommt aus der Preisformel (Grundpreis + Preis
+pro Arbeitsminute + Preis pro Pflanze + Entfernungszuschlag, mindestens der Mindestpreis).
 
 ## Tourenplanung
 

@@ -116,7 +116,7 @@ export function EstimateDetails({ orderId, estimate, onChange }: { orderId: stri
               </table>
             </div>
           </Card>
-          <Card title={t("estimate.costs_title")}>
+          <Card title={billing ? t("estimate.costs_title") : t("estimate.costs_title_logistics")}>
             <dl className="dl">
               <dt>{t("estimate.cost_labour")}</dt>
               <dd className="num">{fmtMoney(costs.labour)}</dd>
@@ -126,6 +126,13 @@ export function EstimateDetails({ orderId, estimate, onChange }: { orderId: stri
               <dd className="num">{fmtMoney(costs.vehicle)}</dd>
               <dt>{t("estimate.cost_equipment")}</dt>
               <dd className="num">{fmtMoney(costs.equipment)}</dd>
+              <dt>{t("estimate.cost_custom")}</dt>
+              <dd className="num">
+                {fmtMoney(costs.custom ?? 0)}
+                {(costs.custom_items ?? []).length > 0 && (
+                  <div className="xs muted">{costs.custom_items.map((x: any) => `${x.name} ${fmtMoney(x.amount)}`).join(" · ")}</div>
+                )}
+              </dd>
               <dt>{t("estimate.self_cost")}</dt>
               <dd className="num">
                 <strong>{fmtMoney(costs.self_cost)}</strong>

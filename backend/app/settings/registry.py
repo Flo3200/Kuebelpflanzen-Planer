@@ -249,11 +249,13 @@ SETTINGS: tuple[SettingDef, ...] = (
         max=60,
     ),
     _s("costs.equipment_per_use", "float", 0.0, "costs", levels=(*PT, "equipment"), unit="€", min=0, max=500),
-    _s("costs.overhead_pct", "float", 15.0, "costs", unit="%", min=0, max=200, important=True),
+    # logistics costs only by default (package E): overhead and margin are 0 %, still adjustable
+    _s("costs.overhead_pct", "float", 0.0, "costs", unit="%", min=0, max=200, important=True),
+    _s("costs.workdays_per_month", "int", 21, "costs", unit="Tage", min=1, max=31),
     _s(
         "costs.margin_pct",
         "float",
-        20.0,
+        0.0,
         "costs",
         unit="%",
         min=0,

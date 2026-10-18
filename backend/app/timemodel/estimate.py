@@ -13,16 +13,18 @@ from datetime import UTC, datetime
 from statistics import NormalDist
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.formula.parser import FormulaError
 from app.formula.store import CompiledFormula, load_active
 from app.models.core import Tenant
-from app.models.masterdata import Equipment, Species, StaffMember
+from app.models.masterdata import Equipment, Species, StaffMember, Vehicle
 from app.models.orders import AccessPath, Address, PathSegment, PickupOrder, Plant
 from app.routing.provider import provider_for
 from app.settings.service import SettingsResolver
+from app.timemodel.costitems import load_items as load_cost_items
+from app.timemodel.costitems import order_costs as order_cost_items
 from app.timemodel.plantfill import geometry, volume_m3
 from app.timemodel.teams import CrewResult, CrewRules, EquipmentInfo, PathInfo, required_crew
 
@@ -112,6 +114,21 @@ class Estimator:
         r.prefetch("staff", [s.id for s in staff])
         rates = [self.hourly_cost(s.id) for s in staff]
         self.avg_hourly_cost = sum(rates) / len(rates) if rates else self.hourly_cost(None)
+        self.n_staff = len(staff)
+        self.n_vehicles = (
+            db.scalar(
+                select(func.count())
+                .select_from(Vehicle)
+                .where(
+                    Vehicle.tenant_id == tenant_id,
+                    Vehicle.deleted_at.is_(None),
+                    Vehicle.active.is_(True),
+                    Vehicle.kind != "trailer",
+                )
+            )
+            or 0
+        )
+        self.cost_items = load_cost_items(db, tenant_id)
         self.species: dict[uuid.UUID, Species] = {}
         self.routing = provider_for(r)
         # spring return: setting plants down at the customer may take longer or shorter
@@ -348,7 +365,18 @@ class Estimator:
         )
         used_eq = {c.crew.equipment.id: c.crew.equipment for c in calcs if c.crew.equipment}
         equipment_cost = sum(e.cost_per_use for e in used_eq.values())
-        direct = labour_cost + drive_labour_cost + vehicle_cost + equipment_cost
+        custom_cost, custom_lines = order_cost_items(
+            self.cost_items,
+            n_vehicles=self.n_vehicles,
+            n_staff=self.n_staff,
+            team=team,
+            km=share_km,
+            hours=(share_drive_min + stop["duration_min"]) / 60,
+            plants=len(calcs),
+            stops_per_tour=n_typical,
+            workdays_per_month=int(r.get("costs.workdays_per_month")),
+        )
+        direct = labour_cost + drive_labour_cost + vehicle_cost + equipment_cost + custom_cost
         self_cost = direct * (1 + float(r.get("costs.overhead_pct")) / 100)
         target = self_cost * (1 + float(r.get("costs.margin_pct")) / 100)
         price = self.price(
@@ -382,6 +410,8 @@ class Estimator:
                 "drive_labour": round(drive_labour_cost, 2),
                 "vehicle": round(vehicle_cost, 2),
                 "equipment": round(equipment_cost, 2),
+                "custom": round(custom_cost, 2),
+                "custom_items": custom_lines,
                 "direct": round(direct, 2),
                 "self_cost": round(self_cost, 2),
                 "target_price_net": round(target, 2),

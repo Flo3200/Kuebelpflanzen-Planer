@@ -16,6 +16,7 @@ from app.api.deps import DB, CurrentActor
 from app.core import audit
 from app.core.context import Actor
 from app.core.errors import AppError, NotFound
+from app.models.costs import CostItem
 from app.models.masterdata import (
     Availability,
     Equipment,
@@ -119,6 +120,36 @@ def _availability_changed(db: Session, actor: Actor, row: Availability, created:
 
 
 router.include_router(crud_router(AVAIL, "/api/availability", after_save=_availability_changed))
+
+# ----------------------------------------------------------------------------- own cost items
+
+COST_ITEM = EntitySpec(
+    "cost_item",
+    CostItem,
+    "tenant.view",
+    "tenant.settings",
+    search=("name",),
+    filters=("vehicle_id", "staff_id", "basis"),
+    order_by=("name",),
+)
+
+
+def _validate_cost_item(db: Session, actor: Actor, row: CostItem, created: bool) -> None:
+    if row.vehicle_id and row.staff_id:
+        raise AppError("errors.cost_item_scope")
+    if (row.amount_eur or 0) < 0:
+        raise AppError("errors.validation")
+
+
+def _cost_item_changed(db: Session, actor: Actor, row: CostItem, created: bool) -> None:
+    from app.timemodel.service import schedule_refresh
+
+    schedule_refresh(db, actor.require_tenant())  # order estimates include own costs
+
+
+router.include_router(
+    crud_router(COST_ITEM, "/api/cost-items", before_save=_validate_cost_item, after_save=_cost_item_changed)
+)
 
 
 @router.get("/api/availability-calendar", tags=["availability"])

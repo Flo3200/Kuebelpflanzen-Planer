@@ -35,6 +35,7 @@ export const TENANT_NAV: NavSection[] = [
   {
     label: "nav.section_analysis",
     items: [
+      { to: "/betrieb/kosten", label: "nav.costs", perm: "tenant.view" },
       { to: "/betrieb/preise", label: "nav.pricing", perm: "orders.read", module: "customer_billing" },
       { to: "/betrieb/formeln", label: "nav.formulas", perm: "formulas.write" },
       { to: "/betrieb/modell", label: "nav.model", perm: "planning.read" },

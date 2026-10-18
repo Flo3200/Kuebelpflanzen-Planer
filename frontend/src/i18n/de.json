@@ -92,7 +92,8 @@
     "teams": "Teams",
     "ai_tenant": "KI-Nutzung",
     "deviations": "Meldungen",
-    "species_kb": "Wissensbasis Pflanzenarten"
+    "species_kb": "Wissensbasis Pflanzenarten",
+    "costs": "Kosten"
   },
   "login": {
     "title": "Willkommen zurück",
@@ -527,7 +528,7 @@
     "cost_drive_labour": "Arbeitskosten Fahrt (Anteil)",
     "cost_vehicle": "Fahrzeugkosten (Anteil)",
     "cost_equipment": "Hilfsmittel",
-    "self_cost": "Selbstkosten (mit Gemeinkosten)",
+    "self_cost": "Logistikkosten gesamt",
     "target_price": "Zielpreis netto (mit Marge)",
     "price_net": "Preis netto",
     "distance": "Entfernung zum Betrieb",
@@ -541,7 +542,9 @@
       "plant_exceeds_team": "Pflanze #{n} bräuchte mehr Personen als das größte zulässige Team.",
       "no_weight": "Pflanze #{n} hat kein Gewicht.",
       "no_coordinates": "Die Adresse hat keine Koordinaten; die Entfernung fehlt."
-    }
+    },
+    "costs_title_logistics": "Logistikkosten",
+    "cost_custom": "Eigene Positionen"
   },
   "plants": {
     "estimated_hint": "Kursiv mit ≈ = geschätzter Wert (aus Pflanzenart und Standardwerten). Klicken Sie eine Pflanze an, um sie zu bearbeiten.",
@@ -935,7 +938,7 @@
     "on_site": "vor Ort (geplant)",
     "move_to": "Verschieben nach",
     "experiment": "Experiment",
-    "costs_line": "Arbeit {labour} · Fahrzeug {vehicle} · Überstunden {overtime}",
+    "costs_line": "Arbeit {labour} · Fahrzeug {vehicle} · Überstunden {overtime} · Eigene Positionen {custom}",
     "break_at": "Pause {from}–{to}",
     "all_assigned": "Alle Aufträge sind eingeplant.",
     "reason": "Grund",
@@ -1636,5 +1639,15 @@
   "teams": {
     "weekdays_all": "alle Arbeitstage",
     "valid": "Zeitraum"
+  },
+  "costs": {
+    "title": "Eigene Kostenpositionen",
+    "description": "Kosten, die die App sonst nicht kennt: Leasing, Versicherung, Maut, Reinigung, Spesen … Jede Position gilt für den ganzen Betrieb, ein Fahrzeug oder eine Person und wird pro km, Stunde, Einsatz, Einsatztag, Monat (anteilig je Einsatztag) oder Pflanze angerechnet. Sie fließt in Auftragskosten, Tourkosten und Szenarien ein.",
+    "empty": "Noch keine eigenen Kostenpositionen.",
+    "scope": "Gilt für",
+    "whole_nursery": "ganzer Betrieb",
+    "tab": "Eigene Kosten",
+    "add": "Kostenposition hinzufügen",
+    "object_help": "Diese Positionen werden angerechnet, wenn dieses Fahrzeug bzw. diese Person auf Tour ist."
   }
 }
