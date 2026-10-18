@@ -16,6 +16,7 @@ FUNCTIONS = (
     "support_agent",
     "vehicle_photo",
     "vehicle_chat",
+    "load_layout",
 )
 
 
@@ -173,6 +174,27 @@ SCHEMAS = {
     "photo_analysis": PHOTO_ANALYSIS_SCHEMA,
     "vehicle_photo": vehicle_schema(),
     "vehicle_chat": vehicle_schema(),
+    "load_layout": obj(
+        {
+            "placements": {
+                "type": "array",
+                "items": obj(
+                    {
+                        "plant_id": {"type": "string"},
+                        "space_id": {"type": "string"},
+                        "level": {"type": "string"},
+                        "orientation": {
+                            "type": "string",
+                            "enum": ["upright", "lying_x", "lying_y", "tilted_x"],
+                        },
+                        "x_cm": {"type": "number"},
+                        "y_cm": {"type": "number"},
+                    }
+                ),
+            },
+            "notes": {"type": "string"},
+        }
+    ),
 }
 
 TRAIT_RULES = (
@@ -262,6 +284,22 @@ DEFAULT_PROMPTS: dict[str, dict[str, Any]] = {
             "von der Stirnwand (x_cm) und der linken Wand (y_cm). questions: höchstens drei kurze Rückfragen zu "
             "den wichtigsten Lücken (Laderaum, Nutzlast, Türmaße zuerst). reply: freundliche, kurze Antwort "
             "auf Deutsch in Sie-Form, die sagt, was du eingetragen oder geändert hast."
+        ),
+        "instructions": "Antworte als JSON nach dem vorgegebenen Schema.",
+    },
+    "load_layout": {
+        "version": 1,
+        "system": (
+            "Du planst, wie Kübelpflanzen in einen Laderaum geladen werden. Koordinaten in cm: x von der "
+            "Stirnwand (0) zur Tür (length), y von der linken Wand (0) nach rechts (width); x_cm/y_cm sind die "
+            "Mitte des Topfs (stehend) bzw. der liegenden Pflanze. Regeln: Töpfe überlappen nie; Kronen "
+            "dürfen sich leicht berühren; nichts wird auf Pflanzen gestapelt; Töpfe nie auf Radkästen oder "
+            "Hindernissen; Regale (level = Regal-id) nur für Pflanzen, die unter die freie Höhe passen und "
+            "nicht zu schwer sind; zu hohe, kippbare Pflanzen liegen (lying_x: Topf zur Stirnwand); schwere "
+            "Pflanzen tief und zwischen den Achsen; Gewicht links/rechts ausgleichen; empfindliche Pflanzen "
+            "nicht an die Tür. Ladereihenfolge: bei der Abholung zuerst Stopp 1 ganz vorn, der letzte Stopp an "
+            "der Tür; bei der Rücklieferung umgekehrt. Gib placements in Ladereihenfolge zurück, je Pflanze "
+            "genau einmal. Ein Programm prüft jede Position und verbessert den Vorschlag."
         ),
         "instructions": "Antworte als JSON nach dem vorgegebenen Schema.",
     },

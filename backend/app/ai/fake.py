@@ -83,6 +83,12 @@ def _vehicle_fake(kind: str, request: AIRequest) -> dict[str, Any]:
     return fake_vehicle_photo(request.context) if kind == "photo" else fake_vehicle_chat(request.context)
 
 
+def _layout_fake(request: AIRequest) -> dict[str, Any]:
+    from app.packing.ai_layout import fake_layout
+
+    return fake_layout(request.context)
+
+
 class FakeProvider:
     def complete(
         self, model_name: str, request: AIRequest, api_key: str | None, options: dict[str, Any]
@@ -94,6 +100,7 @@ class FakeProvider:
             "photo_analysis": self._photo_analysis,
             "vehicle_photo": lambda r: _vehicle_fake("photo", r),
             "vehicle_chat": lambda r: _vehicle_fake("chat", r),
+            "load_layout": _layout_fake,
         }.get(request.function)
         data = fn(request) if fn else {"text": "Testmodell: keine Auswertung für diese Funktion."}
         import json

@@ -191,7 +191,9 @@ def pack_orders(
     orders: list[PickupOrder],
     direction: str,
     time_limit: float | None = None,
+    mode: str | None = None,
 ) -> tuple[PackResult, list[Space]]:
+    """mode: packing.mode (rules, ai_start, compare); None = the setting."""
     r = SettingsResolver(db, tenant_id)
     spaces = [space_from_vehicle(db, db.get(Vehicle, vid)) for vid in vehicle_ids if vid]
     items: list[PlantItem] = []
@@ -202,8 +204,13 @@ def pack_orders(
             select(Plant).where(Plant.order_id == source, Plant.deleted_at.is_(None)).order_by(Plant.number)
         ):
             items.append(plant_item(db, r, plant, str(order.id), pos, cache))
-    packer = Packer(spaces, settings_for(r, direction, time_limit))
-    return packer.run(items), spaces
+    from app.packing.ai_layout import pack_with_mode
+
+    mode = mode or str(r.get("packing.mode"))
+    res = pack_with_mode(
+        db, tenant_id, mode, spaces, items, lambda: Packer(spaces, settings_for(r, direction, time_limit))
+    )
+    return res, spaces
 
 
 def pack_trip_check(db: Session, inp, trip) -> tuple[bool, str, dict[str, Any]]:
@@ -217,8 +224,15 @@ def pack_trip_check(db: Session, inp, trip) -> tuple[bool, str, dict[str, Any]]:
     orders = [s.stop.order for s in trip.stops]
     r = SettingsResolver(db, inp.tenant_id)
     limit = min(float(r.get("packing.time_limit_s")), 2.0)
+    # feasibility checks during tour planning stay rule-based (fast, no AI cost per trip)
     res, spaces = pack_orders(
-        db, inp.tenant_id, vehicle_ids, orders, orders[0].direction if orders else "pickup", limit
+        db,
+        inp.tenant_id,
+        vehicle_ids,
+        orders,
+        orders[0].direction if orders else "pickup",
+        limit,
+        mode="rules",
     )
     return res.ok, res.message, result_payload(res, spaces)
 

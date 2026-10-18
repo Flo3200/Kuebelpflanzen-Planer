@@ -41,6 +41,18 @@ class PackSettings:
 
 
 @dataclass
+class StartLayout:
+    """A proposed arrangement (package G, from the AI): loading order, orientation and position per
+    plant. The packer uses it as its start solution: every proposed position is checked with all
+    rules and only kept if valid; the annealing then improves the order and orientations."""
+
+    sequence: list[str] = field(default_factory=list)  # plant ids in loading order
+    orientation: dict[str, str] = field(default_factory=dict)  # plant id -> upright | lying_x | ...
+    positions: dict[str, tuple[str, float, float, str]] = field(default_factory=dict)  # (space, x, y, level)
+    source: str = "ai"
+
+
+@dataclass
 class PackResult:
     ok: bool
     placements: list[Placement]
@@ -77,6 +89,8 @@ class Packer:
         self.spaces = spaces
         self.s = settings
         self.rng = random.Random(settings.seed)
+        self.hints: dict[str, tuple[str, float, float, str]] = {}  # proposed positions (StartLayout)
+        self.hints_used = 0
 
     # ------------------------------------------------------------------ static checks
 
@@ -285,6 +299,14 @@ class Packer:
                         s.id for s in sp.shelves if item.total_h <= s.clearance and item.weight <= s.max_load
                     ] + levels
                 best: Placement | None = None
+                hint = self.hints.get(item.plant_id)
+                if hint is not None and hint[0] == sp.id and hint[3] in levels:
+                    # proposed position first - kept only if every rule holds
+                    z = 0.0 if hint[3] == "floor" else next(s.z for s in sp.shelves if s.id == hint[3])
+                    p = Placement(item, sp.id, orient, hint[1], hint[2], z, hint[3], seq_no)
+                    if self._valid(p, sp, placed, shelf_loads):
+                        best = p
+                        self.hints_used += 1
                 strips: list[tuple[float, float, float]] = []  # (y0, y1, length from the front wall)
                 if to_come:
                     edge = max(
@@ -304,6 +326,8 @@ class Packer:
                         edge = start + w
                 # extreme points first, a coarse grid only if none of them is valid; keeping the lane free first
                 for keep_lane, use_grid in ((True, False), (True, True), (False, False), (False, True)):
+                    if best is not None:
+                        break
                     if keep_lane and not strips:
                         continue
                     for level in levels:
@@ -494,7 +518,26 @@ class Packer:
     def _group(self, it: PlantItem) -> int:
         return it.stop_position if self.s.direction == "pickup" else -it.stop_position
 
-    def run(self, items: list[PlantItem]) -> PackResult:
+    def start_sequence(
+        self, items: list[PlantItem], layout: StartLayout
+    ) -> list[tuple[PlantItem, Orientation]]:
+        """Loading order and orientations of a proposed layout; plants it misses follow in rule order."""
+        by_id = {it.plant_id: it for it in items}
+        rule = self.initial_sequence(items)
+        seq: list[tuple[PlantItem, Orientation]] = []
+        for pid in layout.sequence:
+            it = by_id.pop(pid, None)
+            if it is None:
+                continue
+            options = self.options(it)
+            want = layout.orientation.get(pid)
+            seq.append((it, next((o for o in options if o.name == want), options[0])))
+        seq += [(it, o) for it, o in rule if it.plant_id in by_id]
+        # the loading order of the stops is a hard rule: the proposal's order counts within a stop
+        seq.sort(key=lambda pair: self._group(pair[0]))
+        return seq
+
+    def run(self, items: list[PlantItem], start_layout: StartLayout | None = None) -> PackResult:
         start = time.monotonic()
         by_id = {it.plant_id: it for it in items}
         static = [
@@ -504,11 +547,30 @@ class Packer:
         ]
         skip = {u["plant_id"] for u in static}
         items = [it for it in items if it.plant_id not in skip]
-        seq = self.initial_sequence(items)
+        if start_layout is not None:
+            self.hints = dict(start_layout.positions)
+            seq = self.start_sequence(items, start_layout)
+        else:
+            seq = self.initial_sequence(items)
+        self.hints_used = 0
         placed, unplaced = self.place(seq)
         best_score, best_metrics, best_viol = self.evaluate(placed, unplaced)
+        start_info = (
+            {
+                "source": start_layout.source,
+                "score": round(best_score, 1),
+                "unplaced": len(unplaced),
+                "positions_proposed": len(start_layout.positions),
+                "positions_valid": self.hints_used,
+            }
+            if start_layout is not None
+            else None
+        )
         best = (list(seq), placed, unplaced)
         cur_seq, cur_score = list(seq), best_score
+        # the proposed positions only shape the start solution; the annealing then searches freely
+        # and keeps the start only while nothing better (fewer violations, better balance) is found
+        self.hints = {}
         iterations = 0
         limit = self.s.time_limit_s
         if not unplaced and best_score < 1e4:
@@ -541,6 +603,8 @@ class Packer:
         ok = not unplaced and not hard_viol
         message = pack_message(ok, unplaced, hard_viol, by_id)
         best_metrics["seconds"] = round(time.monotonic() - start, 2)
+        if start_info is not None:
+            best_metrics["start"] = start_info
         result = PackResult(
             ok, placed, unplaced, best_metrics, sorted(set(best_viol)), message, iterations, best_score
         )

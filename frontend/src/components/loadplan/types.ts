@@ -73,7 +73,18 @@ export interface LoadPlanPayload {
   ok?: boolean;
   message?: string;
   placements: LPPlacement[];
-  metrics: { spaces?: Record<string, Record<string, number>>; placed?: number; unplaced?: number; seconds?: number };
+  metrics: {
+    spaces?: Record<string, Record<string, number>>;
+    placed?: number;
+    unplaced?: number;
+    seconds?: number;
+    /** package G: rules | ai_start | compare */
+    mode?: string;
+    ai?: { model: string; seconds: number; cost_eur: number };
+    ai_error?: string;
+    start?: { positions_proposed: number; positions_valid: number; score: number };
+    compare?: { winner: string; rules: Record<string, any>; ai_start: Record<string, any> };
+  };
   violations: string[];
   unplaced: { plant_id: string; number: number; reason: string; label?: string }[];
   spaces: LPSpace[];

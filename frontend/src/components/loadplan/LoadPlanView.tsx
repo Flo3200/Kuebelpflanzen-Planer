@@ -192,6 +192,7 @@ export function LoadPlanView(props: {
             <Card title={t("loadplan.metrics")}>
               <Metrics plan={plan} />
             </Card>
+            <AiInfo plan={plan} />
             {(plan.unplaced.length > 0 || plan.violations.length > 0) && (
               <Card title={t("loadplan.problems")}>
                 <ul className="small" style={{ margin: 0, paddingLeft: 18 }}>
@@ -210,5 +211,53 @@ export function LoadPlanView(props: {
         )}
       </div>
     </div>
+  );
+}
+
+/** Package G: how the AI proposal was used (start solution, comparison with the rules). */
+function AiInfo({ plan }: { plan: LoadPlanPayload }) {
+  const m = plan.metrics;
+  if (!m.mode && !m.ai_error) return null;
+  const row = (key: string, r: Record<string, any>) => (
+    <tr key={key}>
+      <td>{t(`loadplan.ai.${key}`)}</td>
+      <td className="num">{r.ok ? "✓" : "✕"}</td>
+      <td className="num">{r.unplaced}</td>
+      <td className="num">{r.violations}</td>
+      <td className="num">{r.score}</td>
+      <td className="num">{r.seconds} s</td>
+    </tr>
+  );
+  return (
+    <Card title={t("loadplan.ai.title")}>
+      {m.ai_error && <p className="small muted">{t("loadplan.ai.error")}</p>}
+      {m.start && (
+        <p className="small muted">
+          {t("loadplan.ai.start", { valid: m.start.positions_valid, n: m.start.positions_proposed, model: m.ai?.model ?? "" })}
+        </p>
+      )}
+      {m.compare && (
+        <div className="table-wrap">
+          <table className="table small">
+            <thead>
+              <tr>
+                <th />
+                <th className="num">{t("loadplan.ai.ok")}</th>
+                <th className="num">{t("loadplan.ai.unplaced")}</th>
+                <th className="num">{t("loadplan.ai.violations")}</th>
+                <th className="num">{t("loadplan.ai.score")}</th>
+                <th className="num">{t("loadplan.ai.time")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {row("rules", m.compare.rules)}
+              {row("ai_start", m.compare.ai_start)}
+            </tbody>
+          </table>
+        </div>
+      )}
+      {m.compare && <p className="small">{t("loadplan.ai.winner", { w: t(`loadplan.ai.${m.compare.winner}`) })}</p>}
+      <p className="xs muted">{t("loadplan.ai.checked")}</p>
+    </Card>
   );
 }
