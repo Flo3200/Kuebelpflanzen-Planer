@@ -2,6 +2,22 @@
 
 Stand 2026-10-18. Gesammelt aus dem Gespräch mit der Produktinhaberin bzw. dem Produktinhaber.
 
+## Stand nach der Verbesserungsrunde (2026-10-18)
+
+| Punkt | Umgesetzt in | Stand |
+|---|---|---|
+| 1 Fahrzeug aus Foto/Chat, modular | Paket C | erledigt (mit Testmodell; echte KI braucht Schlüssel) |
+| 1b Eingaben reduzieren | Paket A | erledigt |
+| 1c Pflanzenarten entfernen | Paket B | erledigt (interne Wissensbasis) |
+| 1d Nur Logistik | Paket A | erledigt (Module, standardmäßig aus) |
+| 2 Teams durch den Unternehmer | Paket D | erledigt |
+| 3 Kosten | Paket E | erledigt (Marge und Gemeinkosten 0 %) |
+| 4 Abladezeit, Graphen / 6 Dashboard | Paket F | erledigt |
+| 5 Ladeanordnung per KI | Paket G | erledigt, Standard bleibt „Regeln“ (D31) |
+| Wunsch: mehrstufige Tourenoptimierung | Ergänzung T | erledigt (D30) |
+| 7 Konfiguration | `docs/CHECKLISTE_PRODUKTINHABER.md` | beim Betreiber |
+| 8 unklar | – | Rückfrage offen |
+
 ## Bereits per Einstellung erledigt (Plattformebene)
 - `planning.form_teams = fixed`: Teams legt der Unternehmer fest.
 - `portal.enabled = false`: Kein Endkunden-Zugang.
