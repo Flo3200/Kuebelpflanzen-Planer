@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -112,6 +113,35 @@ def create_app() -> FastAPI:
         docs_url="/api/docs",
         redoc_url=None,
     )
+
+    # agents: bearer tokens and a log entry for every call
+    from app.agents.tokens import authenticate as agent_authenticate
+    from app.agents.tokens import log_call
+    from app.api.deps import BEARER_AUTHENTICATORS
+
+    if agent_authenticate not in BEARER_AUTHENTICATORS:
+        BEARER_AUTHENTICATORS.append(agent_authenticate)
+
+    @app.middleware("http")
+    async def agent_call_log(request: Request, call_next):
+        started = time.monotonic()
+        response = await call_next(request)
+        token_id = getattr(request.state, "agent_token_id", None)
+        if token_id is not None:
+            actor = getattr(request.state, "actor", None)
+            try:
+                log_call(
+                    token_id,
+                    getattr(actor, "tenant_id", None) if actor and actor.role == "agent" else None,
+                    getattr(actor, "tenant_id", None),
+                    request.method,
+                    request.url.path,
+                    response.status_code,
+                    int((time.monotonic() - started) * 1000),
+                )
+            except Exception:  # noqa: BLE001 - logging must never break the answer
+                logging.getLogger("kp.agents").exception("agent call log failed")
+        return response
 
     @app.exception_handler(AppError)
     async def app_error(_: Request, exc: AppError) -> JSONResponse:

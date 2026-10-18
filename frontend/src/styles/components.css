@@ -875,3 +875,42 @@ table.table {
   font-size: 12px;
   font-weight: 600;
 }
+
+/* ---------------------------------------------------------------- settings AI chat */
+.chat {
+  display: grid;
+  gap: var(--space-3);
+  max-height: 60vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.chat-msg {
+  display: grid;
+  gap: 6px;
+  justify-items: start;
+}
+.chat-msg.user {
+  justify-items: end;
+}
+.chat-bubble {
+  max-width: min(680px, 90%);
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+  white-space: pre-wrap;
+}
+.chat-msg.user .chat-bubble {
+  background: var(--primary);
+  color: var(--primary-contrast);
+}
+.chat-change {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 10px;
+  border-left: 3px solid var(--accent);
+  background: var(--accent-soft);
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-sm, 0.9rem);
+}

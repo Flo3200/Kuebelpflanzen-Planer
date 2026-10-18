@@ -205,3 +205,32 @@ Person die Teamgeschwindigkeit nur anteilig ändert; bis genug Daten vorliegen, 
 an 1,0 (so gewollt). Die Registrierung des Service Workers ließ sich im eingebauten Browser der
 Entwicklungsumgebung nicht prüfen (er lässt keine Service Worker zu); die Warteschlange für den
 Offline-Betrieb funktioniert unabhängig davon.
+
+## Phase 7 – Abrechnung, Agenten, Einstellungs-KI (abgeschlossen 2026-10-18)
+
+**Umgesetzt**
+- Agenten: Einwahl-Link mit Einmal-Code, Token mit Rechten (lesen, Entwürfe, Stammdaten, planen,
+  Einstellungen; Admin: Admin-Unterstützung, alles), Ablauf, Widerruf, Ratenbegrenzung,
+  Protokoll aller Aufrufe, Bestätigungspflicht für löschende und abrechnungsrelevante Aktionen
+  (Freigabe in der Oberfläche, dann Wiederholung mit `X-KP-Confirmation`).
+- Schalter Testphase/Produktivbetrieb (Admin), serverseitig durchgesetzt.
+- `/agent/README.md`: Anleitung in einfacher Sprache mit curl-Beispielen und der aktuellen
+  Endpunktliste aus der API.
+- Abrechnung: Bausteine je Betrieb (Abo monatlich/jährlich, pro abgeholter Pflanze, KI-Verbrauch
+  mit Aufschlag, BYOK ausgenommen), Monatsrechnung als Hintergrundjob, PDF mit Pflichtangaben
+  (§ 14 UStG), Mehrwertsteuer oder Kleinunternehmerregelung, fortlaufende Nummern, Storno,
+  „bezahlt“, Verbrauchsübersicht für Betrieb und Admin; Rechnungen der Betriebe an ihre Kunden.
+- Einstellungs-KI: Chat mit Werkzeugen (lesen, ändern, zurücksetzen, erklären, Anleitung
+  durchsuchen), Rechte des Benutzers, Protokoll mit Quelle „Einstellungs-KI“, Rückgängig-Knopf.
+- `docs/APP_GUIDE.md` (Funktionsbeschreibung für Menschen und die Einstellungs-KI).
+- Oberflächen: Agenten (Betrieb und Admin), Abrechnung (Betrieb und Admin), Einstellungs-KI,
+  Kundenrechnung im Auftrag.
+
+**Tests:** 11 neue Tests (96 gesamt). **Abnahme:** erfüllt – ein Agent wählt sich per Link ein und
+legt mit einem Bearer-Token einen Entwurf an (`test_agent_enrols_via_link_and_creates_draft`);
+im Produktivbetrieb wird derselbe Aufruf mit einem Admin-Agent-Token für einen Betrieb mit 403
+abgelehnt (`test_production_mode_refuses_admin_agent_for_tenant`).
+
+**Hinweise:** Neuere Chromium-Versionen geben bei `scrollIntoView` ein Promise zurück; Effekte in
+React haben deshalb immer einen Block-Körper (sonst Absturz beim Aufräumen). Ob eine Nutzung von
+Agenten mit den Bedingungen des jeweiligen KI-Anbieters vereinbar ist, prüft der Betreiber.

@@ -140,3 +140,34 @@ und Wege der Abholung verwendet. Die Tourenplanung behandelt sie später als eig
   Kreuzvalidierung; geplant wird mit exp(z_q · σ).
 - Eine bessere Formelstufe wird nur vorgeschlagen; Übernahme erzeugt eine neue Formelversion
   (Quelle „fit“), Personenfaktoren und Puffer als Einstellungen – alles im Protokoll rücknehmbar.
+
+## D18 – Agenten
+- Einwahl: Einmal-Code (24 h) → Token `kpa_…` (nur als Hash gespeichert, einmal angezeigt), mit
+  Scopes, Ablauf, Widerruf und Ratenbegrenzung (Aufrufe der letzten Minute aus dem Aufrufprotokoll).
+- Admin-Agenten im **Produktivbetrieb**: Rolle `agent_admin` ohne RLS-Bypass, Rechte auf
+  „Admin-Unterstützung“ beschnitten, Header `X-KP-Tenant` wird abgelehnt. In der **Testphase**:
+  Rolle `admin`, alle Rechte, Betrieb über `X-KP-Tenant`. Beides wird beim Prüfen des Tokens
+  serverseitig entschieden, nicht im Endpunkt.
+- Bestätigungspflicht als allgemeiner Mechanismus: Der Endpunkt ruft `confirm_if_agent(action,
+  payload)`. Ohne Freigabe entsteht eine offene Bestätigung (eigene Transaktion) und die Antwort ist
+  202. Nach Freigabe wiederholt der Agent die Anfrage mit `X-KP-Confirmation`; die Freigabe passt
+  nur zu Token, Aktion und Parametern und gilt einmal. Geheimnisse (API-Schlüssel) stehen nie in
+  der Bestätigung.
+- `/agent/README.md` wird bei jedem Abruf aus dem OpenAPI-Schema erzeugt (immer aktuell).
+
+## D19 – Abrechnung
+- Die Bausteine je Betrieb sind Einstellungen der Ebene Betrieb, die nur der Admin setzen darf
+  (`billing.*`). So gelten Protokoll, Rücknahme und Herkunftsanzeige wie überall.
+- Rechnungsnummern der Plattform: `KP-<Jahr>-<laufend>` aus einem eigenen Zähler mit Zeilensperre;
+  Rechnungen an Kunden eines Betriebs: `R-<Jahr>-<laufend>` aus dem Zähler des Betriebs.
+- Rechnungen sind eingefroren (Positionen, Beträge, Aussteller- und Empfängerdaten); Storno als
+  eigene Rechnung mit negativen Beträgen. Felder für Online-Zahlung sind vorhanden.
+- Abgeholte Pflanzen = Pflanzen der Abholaufträge, deren Stopp im Monat „Eingeladen“ gemeldet hat.
+  KI-Verbrauch nur mit Plattform-Schlüssel (BYOK wird nicht berechnet).
+
+## D20 – Einstellungs-KI
+- Werkzeuge: Einstellungen auflisten, lesen, ändern, zurücksetzen, erklären, Funktionsbeschreibung
+  durchsuchen. Die Änderungen laufen über denselben Dienst wie die Oberfläche (Rechteprüfung,
+  Protokoll mit Quelle `settings_ai`), die Antwort enthält die Protokoll-IDs für „Rückgängig“.
+- Der Systemtext enthält `docs/APP_GUIDE.md` und alle Einstellungen mit Wert und Herkunft; bei
+  Anthropic wird er mit Prompt-Caching übertragen (gleich in jeder Runde).

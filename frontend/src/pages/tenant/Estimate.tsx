@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../api/client";
 import { Badge, Card, Kpi, useToast } from "../../components/ui";
 import { fmtDate, fmtMinutes, fmtMoney, fmtNumber, t, tMaybe } from "../../i18n";
+import { OrderInvoices } from "../common/Billing";
 import { coverageTone } from "./Pricing";
 
 export function EstimateDetails({ orderId, estimate, onChange }: { orderId: string; estimate: any; onChange: () => void }) {
@@ -165,6 +166,7 @@ export function EstimateDetails({ orderId, estimate, onChange }: { orderId: stri
               ))}
             </div>
           </Card>
+          <OrderInvoices orderId={orderId} />
         </div>
       </div>
     </div>

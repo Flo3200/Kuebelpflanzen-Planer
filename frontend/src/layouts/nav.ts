@@ -67,6 +67,7 @@ export const ADMIN_NAV: NavSection[] = [
       { to: "/admin/ki", label: "nav.ai", perm: "platform.ai" },
       { to: "/admin/abrechnung", label: "nav.billing", perm: "platform.billing" },
       { to: "/admin/agenten", label: "nav.agents", perm: "platform.agents" },
+      { to: "/admin/assistent", label: "nav.assistant", perm: "platform.settings" },
     ],
   },
   {

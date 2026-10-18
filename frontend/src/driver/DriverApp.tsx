@@ -84,7 +84,9 @@ function Gate({ onContrast }: { onContrast: () => void }) {
 
 function Shell({ me, onContrast }: { me: DriverMe; onContrast: () => void }) {
   const day = useDay();
-  useEffect(() => startSync(), []);
+  useEffect(() => {
+    startSync();
+  }, []);
   return (
     <Ctx.Provider value={{ me, day }}>
       <Header onContrast={onContrast} />

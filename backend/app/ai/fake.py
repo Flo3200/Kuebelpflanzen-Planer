@@ -549,7 +549,8 @@ class FakeProvider:
             best, score = None, 0
             for item in index:
                 hay = (item["label"] + " " + item["key"]).lower()
-                s = sum(1 for w in words if w[:5] in hay)
+                # whole words count more than word beginnings
+                s = sum(3 if w in hay else 1 if w[:5] in hay else 0 for w in words)
                 if s > score:
                     best, score = item["key"], s
             return best

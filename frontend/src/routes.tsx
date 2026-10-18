@@ -1,6 +1,9 @@
 // Routes of the feature pages, kept apart from App.tsx so phases can add pages without touching the shell.
 import { Route } from "react-router-dom";
 import { AdminAIPage, TenantAIPage } from "./pages/admin/AI";
+import { AgentsPage } from "./pages/common/Agents";
+import { AssistantPage } from "./pages/common/Assistant";
+import { AdminBillingPage, TenantBillingPage } from "./pages/common/Billing";
 import { FormulasPage } from "./pages/common/Formulas";
 import { SpeciesPage } from "./pages/common/Species";
 import { DeviationsPage } from "./pages/tenant/Deviations";
@@ -37,6 +40,9 @@ export function tenantRoutes() {
     <Route key="scenarios" path="szenarien" element={<ScenariosPage />} />,
     <Route key="deviations" path="meldungen" element={<DeviationsPage />} />,
     <Route key="model" path="modell" element={<ModelPage />} />,
+    <Route key="agents" path="agenten" element={<AgentsPage />} />,
+    <Route key="billing" path="abrechnung" element={<TenantBillingPage />} />,
+    <Route key="assistant" path="assistent" element={<AssistantPage />} />,
     ...extraTenantRoutes(),
   ];
 }
@@ -46,6 +52,9 @@ export function adminRoutes() {
     <Route key="ai" path="ki" element={<AdminAIPage />} />,
     <Route key="species" path="pflanzenarten" element={<SpeciesPage admin />} />,
     <Route key="formulas" path="formeln" element={<FormulasPage />} />,
+    <Route key="agents" path="agenten" element={<AgentsPage admin />} />,
+    <Route key="billing" path="abrechnung" element={<AdminBillingPage />} />,
+    <Route key="assistant" path="assistent" element={<AssistantPage />} />,
     ...extraAdminRoutes(),
   ];
 }

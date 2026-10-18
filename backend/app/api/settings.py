@@ -9,6 +9,7 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+from app.agents.confirm import confirm_if_agent
 from app.api.deps import DB, CurrentActor
 from app.core.context import Actor
 from app.core.errors import AppError, Forbidden
@@ -116,9 +117,26 @@ def get_values(
     }
 
 
+BILLING_RELEVANT = {"ai.key_mode", "ai.monthly_limit_eur", "platform.mode"}
+
+
 @router.put("")
 def put_value(data: SetIn, actor: CurrentActor, db: DB) -> dict[str, Any]:
     tid = target_tenant(actor, data.tenant_id, data.scope)
+    if data.key.startswith("billing.") or data.key in BILLING_RELEVANT:
+        # agents: billing-relevant changes need a human confirmation
+        confirm_if_agent(
+            db,
+            actor,
+            f"setting:{data.key}",
+            {
+                "key": data.key,
+                "value": data.value,
+                "scope": data.scope,
+                "tenant_id": str(tid) if tid else None,
+                "object_id": str(data.object_id) if data.object_id else None,
+            },
+        )
     entry = set_value(
         db, actor, scope=data.scope, key=data.key, value=data.value, tenant_id=tid, object_id=data.object_id
     )

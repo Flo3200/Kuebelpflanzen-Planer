@@ -22,7 +22,9 @@ export function AppShell({ nav }: { nav: NavSection[] }) {
   const location = useLocation();
   const navigate = useNavigate();
   const qc = useQueryClient();
-  useEffect(() => setOpen(false), [location.pathname]);
+  useEffect(() => {
+    setOpen(false);
+  }, [location.pathname]);
 
   const leaveTenant = async () => {
     await api.post("/api/auth/act-as", { tenant_id: null });

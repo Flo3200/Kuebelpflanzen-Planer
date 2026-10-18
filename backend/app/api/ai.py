@@ -10,6 +10,7 @@ from fastapi import APIRouter, File, Form, UploadFile
 from pydantic import BaseModel
 from sqlalchemy import func, select
 
+from app.agents.confirm import confirm_if_agent
 from app.ai.functions import FUNCTIONS
 from app.ai.service import prompt_for, spend_status
 from app.api.deps import DB, CurrentActor
@@ -424,6 +425,10 @@ def put_key(data: KeyIn, actor: CurrentActor, db: DB) -> dict[str, Any]:
     tid = actor.require_tenant()
     if db.get(AIProvider, data.provider_id) is None:
         raise NotFound()
+    # never store the key itself in the confirmation
+    confirm_if_agent(
+        db, actor, "ai:set_key", {"provider_id": str(data.provider_id), "hint": data.api_key.strip()[-4:]}
+    )
     row = db.scalar(
         select(TenantAIKey).where(TenantAIKey.tenant_id == tid, TenantAIKey.provider_id == data.provider_id)
     )
@@ -448,6 +453,7 @@ def put_key(data: KeyIn, actor: CurrentActor, db: DB) -> dict[str, Any]:
 def delete_key(provider_id: uuid.UUID, actor: CurrentActor, db: DB) -> dict[str, Any]:
     actor.require("tenant.settings")
     tid = actor.require_tenant()
+    confirm_if_agent(db, actor, "ai:delete_key", {"provider_id": str(provider_id)})
     row = db.scalar(
         select(TenantAIKey).where(TenantAIKey.tenant_id == tid, TenantAIKey.provider_id == provider_id)
     )

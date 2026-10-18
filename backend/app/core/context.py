@@ -19,6 +19,7 @@ class Actor:
     via: str = "ui"  # ui | api | agent | settings_ai | system
     agent_token_id: uuid.UUID | None = None
     staff_member_id: uuid.UUID | None = None
+    confirmation_id: str | None = None  # agents: approved confirmation sent with X-KP-Confirmation
 
     @property
     def is_platform_admin(self) -> bool:

@@ -187,7 +187,8 @@ class AnthropicProvider:
             response = client.messages.create(
                 model=model_name,
                 max_tokens=options.get("max_tokens", 8000),
-                system=system,
+                # the long system prompt (app guide, settings) is the same in every round: cache it
+                system=[{"type": "text", "text": system, "cache_control": {"type": "ephemeral"}}],
                 messages=messages,
                 tools=[{**t, "strict": True} for t in tools],
                 output_config={"effort": options.get("effort", "medium")},

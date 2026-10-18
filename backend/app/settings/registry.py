@@ -234,6 +234,7 @@ SETTINGS: tuple[SettingDef, ...] = (
     _s("costs.overhead_pct", "float", 15.0, "costs", unit="%", min=0, max=200, important=True),
     _s("costs.margin_pct", "float", 20.0, "costs", unit="%", min=0, max=300, important=True),
     _s("costs.vat_pct", "float", 19.0, "costs", unit="%", min=0, max=30),
+    _s("costs.small_business", "bool", False, "costs"),
     # --- pricing ------------------------------------------------------------------
     _s(
         "pricing.base_price",

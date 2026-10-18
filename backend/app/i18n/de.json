@@ -31,10 +31,10 @@
     "formula_syntax": "Formelfehler an Position {pos}: {detail}",
     "formula_unknown_name": "Unbekannter Name „{name}“ in der Formel.",
     "formula_eval": "Die Formel konnte nicht berechnet werden: {detail}",
-    "needs_confirmation": "Diese Aktion muss von einem Menschen in der Oberfläche bestätigt werden.",
+    "needs_confirmation": "Diese Aktion muss ein Mensch in der Oberfläche bestätigen. Danach dieselbe Anfrage mit dem Kopf X-KP-Confirmation: {confirmation_id} wiederholen.",
     "production_mode_block": "Im Produktivbetrieb dürfen Admin-Agenten keine Aufgaben für Betriebe ausführen.",
-    "agent_scope": "Das Token erlaubt diese Aktion nicht (benötigter Bereich: {scope}).",
-    "rate_limited": "Zu viele Anfragen. Bitte kurz warten.",
+    "agent_scope": "Diese Rechte gibt es für diese Art von Agent nicht: {scopes}",
+    "rate_limited": "Zu viele Aufrufe. Bitte kurz warten.",
     "ai_limit": "Das KI-Ausgabenlimit dieses Monats ist erreicht.",
     "ai_not_configured": "Für diese Funktion ist kein KI-Modell eingestellt.",
     "ai_failed": "Die KI-Anfrage ist fehlgeschlagen: {detail}",
@@ -59,7 +59,13 @@
     "fit_too_few": "Zu wenige Messungen für eine Anpassung (mindestens {min}).",
     "fit_failed": "Die Modellanpassung ist fehlgeschlagen: {detail}",
     "demo_only": "Nur in Demo-Betrieben möglich.",
-    "module_off": "Dieses Modul ist für den Betrieb nicht eingeschaltet."
+    "module_off": "Dieses Modul ist für den Betrieb nicht eingeschaltet.",
+    "production_admin_agent": "Im Produktivbetrieb dürfen Admin-Agenten keine Aufgaben für Betriebe ausführen.",
+    "confirmation_invalid": "Die Bestätigung passt nicht zu dieser Aktion, ist abgelaufen oder wurde schon verwendet.",
+    "invoice_exists": "Für diesen Zeitraum gibt es schon die Rechnung {number}.",
+    "invoice_empty": "In diesem Zeitraum gibt es nichts abzurechnen.",
+    "no_estimate": "Für diesen Auftrag gibt es noch keinen Preis.",
+    "setting_unknown": "Die Einstellung „{key}“ gibt es nicht."
   },
   "origins": {
     "default": "Systemstandard",
@@ -698,6 +704,10 @@
     "team.plan_over_limit": {
       "label": "Pflanzen über der Höchstgröße trotzdem einplanen",
       "help": "Wenn aktiv, werden Stopps mit Pflanzen, die mehr Personen als das größte Team bräuchten, mit dem größten Team eingeplant und deutlich markiert (z. B. für Sonderausrüstung). Wenn aus, bleiben sie ungeplant."
+    },
+    "costs.small_business": {
+      "label": "Kleinunternehmerregelung (eigene Rechnungen)",
+      "help": "Wenn aktiv, weisen Rechnungen an Ihre Kunden keine Umsatzsteuer aus (§ 19 UStG)."
     }
   },
   "fields": {
@@ -1618,5 +1628,8 @@
       "secure": "mit Gurt sichern"
     },
     "plant": "Pflanze"
+  },
+  "assistant": {
+    "no_answer": "Dazu habe ich keine Antwort."
   }
 }
