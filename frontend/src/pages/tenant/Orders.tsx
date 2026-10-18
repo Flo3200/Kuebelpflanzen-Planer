@@ -109,9 +109,32 @@ export function CustomerDetailPage() {
     const o = await api.post("/api/orders", { customer_id: id, address_id: addressId });
     navigate(`/betrieb/auftraege/${o.order.id}`);
   };
+  const erase = async () => {
+    try {
+      await api.post(`/api/customers/${id}/erase`, { confirm: true });
+      toast({ text: t("privacy.erased") });
+      refresh();
+    } catch (e) {
+      toast({ text: (e as Error).message, tone: "error" });
+    }
+  };
   return (
     <>
-      <PageHeader eyebrow={t("nav.customers")} title={customer.name} description={[customer.email, customer.phone].filter(Boolean).join(" · ")} />
+      <PageHeader
+        eyebrow={t("nav.customers")}
+        title={customer.name}
+        description={[customer.email, customer.phone].filter(Boolean).join(" · ")}
+        actions={
+          <>
+            <a className="btn ghost" href={`/api/customers/${id}/export`}>
+              {t("privacy.export")}
+            </a>
+            <ConfirmButton className="btn ghost" question={t("privacy.erase_q")} onConfirm={erase}>
+              {t("privacy.erase")}
+            </ConfirmButton>
+          </>
+        }
+      />
       <div className="grid cols-2" style={{ alignItems: "start" }}>
         <Card title={t("customers.data")}>
           <EntityForm

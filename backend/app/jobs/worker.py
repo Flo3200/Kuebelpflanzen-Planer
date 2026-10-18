@@ -46,6 +46,7 @@ def load_handlers() -> None:
         "app.learning.jobs",
         "app.billing.jobs",
         "app.pdf.jobs",
+        "app.privacy.jobs",
     ):
         try:
             importlib.import_module(mod)

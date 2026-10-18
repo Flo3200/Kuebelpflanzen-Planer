@@ -65,7 +65,8 @@
     "invoice_exists": "Für diesen Zeitraum gibt es schon die Rechnung {number}.",
     "invoice_empty": "In diesem Zeitraum gibt es nichts abzurechnen.",
     "no_estimate": "Für diesen Auftrag gibt es noch keinen Preis.",
-    "setting_unknown": "Die Einstellung „{key}“ gibt es nicht."
+    "setting_unknown": "Die Einstellung „{key}“ gibt es nicht.",
+    "confirm_required": "Bitte ausdrücklich bestätigen."
   },
   "origins": {
     "default": "Systemstandard",

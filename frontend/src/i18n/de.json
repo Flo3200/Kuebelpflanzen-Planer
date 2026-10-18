@@ -1466,5 +1466,11 @@
       "platform": "Plattform"
     },
     "note": "Die Einstellungs-KI ändert nur, was du ausdrücklich verlangst, und nur im Rahmen deiner Rechte. Alles steht im Änderungsprotokoll (Quelle: Einstellungs-KI)."
+  },
+  "privacy": {
+    "export": "Daten exportieren",
+    "erase": "Daten löschen",
+    "erase_q": "Alle personenbezogenen Daten dieses Kunden löschen (Name, Kontakt, Adresse, Fotos, Angebote)? Rechnungen bleiben wegen der Aufbewahrungspflicht. Das lässt sich nicht rückgängig machen.",
+    "erased": "Personenbezogene Daten gelöscht."
   }
 }

@@ -3,6 +3,20 @@
 Grundlage: Spezifikation „Planungsplattform für die Abholung von Kübelpflanzen“ (Abschnitte 1–22).
 Jede Phase endet mit: Tests grün, Abnahmekriterium geprüft, Eintrag in `docs/CHANGELOG.md`.
 
+## Stand (2026-10-18)
+
+| Phase | Stand |
+|---|---|
+| 1 Grundgerüst | abgeschlossen |
+| 2 Stammdaten und Erfassung | abgeschlossen |
+| 3 Zeit- und Kostenmodell | abgeschlossen |
+| 4 Tourenplanung und Szenarien | abgeschlossen |
+| 5 3D-Ladeplanung | abgeschlossen |
+| 6 Fahrer-App und Lernen | abgeschlossen |
+| 7 Abrechnung, Agenten, Einstellungs-KI | abgeschlossen |
+| Datenschutz (Abschnitt 19), Dokumentation (Abschnitt 22) | abgeschlossen |
+| 8 später | offen: Kundenzugang, Rücklieferung als eigener Planungsmodus, Hosting |
+
 ## Projektstruktur
 
 ```
@@ -21,7 +35,10 @@ backend/            FastAPI-Anwendung (Python 3.12, uv)
     jobs/           Job-Queue (SKIP LOCKED) + Worker
     storage/        StorageBackend (lokal, später S3)
     billing/        Plattform-Abrechnung, Rechnungs-PDF
-    pdf/            PDF-Erzeugung (WeasyPrint, Fallback: reportlab)
+    pdf/            PDF-Erzeugung mit reportlab (D8): Angebote, Rechnungen, Etiketten
+    field/          Ereignisse der Fahrer-App, Messungen
+    agents/         Agenten-Tokens, Bestätigungen, Agenten-README
+    privacy/        Export, Löschung, Löschfristen
     api/            Router je Bereich
     demo/           Demodaten-Generator
   alembic/          Migrationen (inkl. RLS-Policies)

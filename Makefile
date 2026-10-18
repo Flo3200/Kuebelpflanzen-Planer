@@ -2,7 +2,7 @@
 SHELL := /bin/bash
 ENV := source scripts/dev-env.sh &&
 
-.PHONY: dev db test test-backend test-frontend lint format check build demo backup
+.PHONY: dev db test test-backend test-frontend lint format check build demo backup agent-readme
 
 dev:            ## API + worker + built frontend on http://localhost:8000
 	bash scripts/dev.sh
@@ -17,7 +17,7 @@ demo:           ## load demo data (replaces existing demo tenants)
 	$(ENV) cd backend && uv run python -m app.demo --reset
 
 test-backend:
-	$(ENV) cd backend && uv run pytest -q
+	$(ENV) cd backend && PYTHONPATH=. uv run pytest -q
 
 test-frontend:
 	$(ENV) cd frontend && npm run typecheck && npm test
@@ -36,3 +36,6 @@ check: lint test
 
 backup:
 	bash scripts/backup.sh
+
+agent-readme:   ## write agent/README.md from the API (also served live at /agent/README.md)
+	$(ENV) cd backend && PYTHONPATH=. uv run python tools/agent_readme.py ../agent/README.md

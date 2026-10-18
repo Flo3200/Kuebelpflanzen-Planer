@@ -234,3 +234,16 @@ abgelehnt (`test_production_mode_refuses_admin_agent_for_tenant`).
 **Hinweise:** Neuere Chromium-Versionen geben bei `scrollIntoView` ein Promise zurück; Effekte in
 React haben deshalb immer einen Block-Körper (sonst Absturz beim Aufräumen). Ob eine Nutzung von
 Agenten mit den Bedingungen des jeweiligen KI-Anbieters vereinbar ist, prüft der Betreiber.
+
+## Datenschutz und Dokumentation (abgeschlossen 2026-10-18)
+
+- Export aller Daten eines Kunden als ZIP (Daten, Fotos, Angebote, Rechnungen) und Löschung auf
+  Anfrage: Name, Kontakt, Straße, Koordinaten, Notizen, Nachrichten, Fotos und Angebote werden
+  entfernt; Pflanzen, Messungen und Touren bleiben (nicht personenbezogen), Rechnungen bleiben bis
+  zum Ende der Aufbewahrungsfrist; personenbezogene Werte im Änderungsprotokoll werden geleert.
+- Tägliche Löschfristen je Betrieb (Fotos, Kunden ohne Aktivität, Kundenrechnungen nach Ablauf
+  der Aufbewahrung), manuell auslösbar.
+- `README.md` (Installation, Start, Demodaten, Tests, Sicherung), `docs/APP_GUIDE.md`,
+  `agent/README.md` (`make agent-readme`), Frontend-Unit-Tests (Vitest) für `make check`.
+
+**Tests:** 2 neue Backend-Tests (98 gesamt) und 9 Frontend-Tests.
