@@ -348,3 +348,23 @@ einplanbare Stopps haben einen verständlichen Grund und einen Lösungshinweis.
 für Fahrzeug, Person und Betrieb in den Tourkosten mit Aufteilung auf Stopps); `make check` grün
 (131 Backend-, 9 Frontend-Tests). **Abnahme:** erfüllt – eine eigene Kostenposition ändert sichtbar
 Tour- und Auftragskosten, die Aufschlüsselung je Tour ist nachvollziehbar.
+
+## Verbesserungsrunde – Paket C: Fahrzeuge per Foto und Chat, modular (2026-10-18)
+
+**Umgesetzt**
+- „Fahrzeuge → Per Chat anlegen“ und „Per Foto anlegen“: KI-Entwurf mit Sicherheitswert je Wert,
+  Rückfragen, Antworten im Chat, Korrektur von Hand, Bestätigen oder Verwerfen; offene Entwürfe
+  bleiben auf der Fahrzeugseite sichtbar. Reiter „Per Chat ändern“ für bestehende Fahrzeuge.
+- Neue Seite „Module“: Regale und Einbauten, mehreren Fahrzeugen zuordenbar (Reiter „Module“ am
+  Fahrzeug), mit Eigengewicht; Kombinationen Zugfahrzeug + Anhänger.
+- Lade- und Tourenplanung rechnen mit den Modulen; Kostenpositionen können zu einem Modul gehören.
+- KI-Aufgaben `vehicle_photo`/`vehicle_chat` mit versionierten Prompts, Testmodell ohne Schlüssel,
+  Testsätze im Bewertungswerkzeug (Funktion wählbar, Beispielsatz für den Chat).
+
+**Tests:** 7 neue Tests (`test_fleet.py`: Chat-Entwurf und Bestätigung, Rückfragen und Antwort,
+Änderung per Chat mit Protokoll, Laderaum-Foto mit A4-Maßstab und Korrektur, Module an mehreren
+Fahrzeugen in Lade- und Tourenplanung, Anhänger-Kombination, Modulkosten, Testsatz im
+Bewertungswerkzeug); `make check` grün (138 Backend-, 9 Frontend-Tests). **Abnahme:** erfüllt – ein
+Fahrzeug lässt sich per Chat und per Foto als Entwurf anlegen und bestätigen, Module lassen sich
+mehreren Fahrzeugen zuordnen, die Ladeplanung nutzt das Ergebnis. Mit echten KI-Modellen ist es noch
+nicht erprobt (kein API-Schlüssel hinterlegt).

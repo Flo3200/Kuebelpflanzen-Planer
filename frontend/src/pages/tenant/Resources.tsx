@@ -5,6 +5,8 @@ import { api } from "../../api/client";
 import { fmtWeekdays } from "../../components/EntityForm";
 import { ResourcePage } from "../../components/ResourcePage";
 import { CostItemsFor } from "./Costs";
+import { VehicleModulesTab } from "./Modules";
+import { OpenVehicleDrafts, VehicleDraftDialog } from "./VehicleDraft";
 import { Badge, Card, ConfirmButton, ErrorBox, Kpi, Modal, PageHeader, Spinner, useToast } from "../../components/ui";
 import { fmtDate, fmtNumber, t } from "../../i18n";
 
@@ -56,8 +58,21 @@ export function TeamsPage() {
 }
 
 export function VehiclesPage() {
+  const [dialog, setDialog] = useState<{ mode: "chat" | "photo"; vehicleId?: string; draftId?: string } | null>(null);
   return (
+    <>
     <ResourcePage
+      headerExtra={
+        <>
+          <button className="btn secondary" onClick={() => setDialog({ mode: "chat" })}>
+            {t("vehicledraft.new_chat")}
+          </button>
+          <button className="btn secondary" onClick={() => setDialog({ mode: "photo" })}>
+            {t("vehicledraft.new_photo")}
+          </button>
+        </>
+      }
+      intro={<OpenVehicleDrafts onOpen={(d) => setDialog({ mode: d.source === "photo" ? "photo" : "chat", draftId: d.id, vehicleId: d.vehicle_id ?? undefined })} />}
       entity="vehicle"
       url="/api/vehicles"
       title={t("nav.vehicles")}
@@ -66,11 +81,31 @@ export function VehiclesPage() {
       settingsScope="vehicle"
       settingsGroups={["drive", "costs", "planning"]}
       extraTabs={[
+        { key: "modules", label: t("modules.tab"), render: (row) => <VehicleModulesTab vehicle={row} /> },
+        {
+          key: "chat",
+          label: t("vehicledraft.tab_change"),
+          render: (row) => (
+            <div className="stack">
+              <p className="muted small">{t("vehicledraft.change_help")}</p>
+              <div className="row">
+                <button className="btn" onClick={() => setDialog({ mode: "chat", vehicleId: row.id })}>
+                  {t("vehicledraft.change_by_chat")}
+                </button>
+                <button className="btn secondary" onClick={() => setDialog({ mode: "photo", vehicleId: row.id })}>
+                  {t("vehicledraft.change_by_photo")}
+                </button>
+              </div>
+            </div>
+          ),
+        },
         { key: "shelves", label: t("resources.shelves"), render: (row) => <ShelfEditor vehicle={row} /> },
         { key: "availability", label: t("resources.availability"), render: (row) => <AvailabilityRules type="vehicle" id={row.id} /> },
         { key: "costs", label: t("costs.tab"), render: (row) => <CostItemsFor field="vehicle_id" id={row.id} /> },
       ]}
     />
+    {dialog && <VehicleDraftDialog {...dialog} onClose={() => setDialog(null)} />}
+    </>
   );
 }
 

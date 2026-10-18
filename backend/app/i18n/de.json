@@ -72,7 +72,9 @@
     "nothing_to_pay": "Hier ist nichts (mehr) zu bezahlen.",
     "payment_not_configured": "Die Online-Zahlung ist für diesen Betrieb noch nicht eingerichtet.",
     "payment_failed": "Die Zahlung konnte nicht gestartet werden: {detail}",
-    "cost_item_scope": "Eine Kostenposition gehört entweder zu einem Fahrzeug, zu einer Person oder zum ganzen Betrieb."
+    "cost_item_scope": "Eine Kostenposition gehört entweder zu einem Fahrzeug, zu einer Person oder zum ganzen Betrieb.",
+    "vehicle_draft_incomplete": "Für die Planung fehlen noch Angaben: {fields}. Bitte im Chat ergänzen oder im Entwurf eintragen.",
+    "combination_invalid": "Ein Anhänger lässt sich nur einem Zugfahrzeug zuordnen."
   },
   "origins": {
     "default": "Systemstandard",
@@ -797,6 +799,14 @@
     "costs.workdays_per_month": {
       "label": "Arbeitstage pro Monat",
       "help": "Monatliche Kostenpositionen werden durch diese Zahl geteilt und je Einsatztag angerechnet."
+    },
+    "ai.model.vehicle_photo": {
+      "label": "Modell: Fahrzeug aus Laderaum-Foto",
+      "help": "KI-Modell, das aus Fotos des Laderaums (mit A4-Blatt oder Zollstock) Maße, Radkästen, Regale und Türmaße ableitet."
+    },
+    "ai.model.vehicle_chat": {
+      "label": "Modell: Fahrzeug per Chat",
+      "help": "KI-Modell, das aus Ihrer Beschreibung ein Fahrzeug anlegt oder ändert und bei Lücken nachfragt."
     }
   },
   "fields": {
@@ -1441,7 +1451,9 @@
       "pot": "Topf",
       "crown": "Krone",
       "validity": "Einsatztage",
-      "scope": "Gilt für"
+      "scope": "Gilt für",
+      "geometry": "Lage und Maße",
+      "shelf": "Nur Regale"
     },
     "cost_item": {
       "name": {
@@ -1463,6 +1475,51 @@
       },
       "active": {
         "label": "aktiv"
+      },
+      "notes": {
+        "label": "Notizen"
+      },
+      "module_id": {
+        "label": "Modul",
+        "help": "Wird angerechnet, wenn ein Fahrzeug mit diesem Modul fährt."
+      }
+    },
+    "vehicle_module": {
+      "name": {
+        "label": "Bezeichnung",
+        "help": "z. B. „Regal links 120 cm“ oder „Werkzeugkiste“"
+      },
+      "kind": {
+        "label": "Art"
+      },
+      "x_cm": {
+        "label": "Abstand von der Stirnwand"
+      },
+      "y_cm": {
+        "label": "Abstand von der linken Wand"
+      },
+      "length_cm": {
+        "label": "Länge"
+      },
+      "depth_cm": {
+        "label": "Tiefe"
+      },
+      "height_cm": {
+        "label": "Höhe",
+        "help": "Regal: Höhe der Ladeebene über dem Boden. Einbau: Höhe des Kastens."
+      },
+      "clearance_cm": {
+        "label": "Freie Höhe über dem Regal"
+      },
+      "max_load_kg": {
+        "label": "Tragfähigkeit"
+      },
+      "blocks_floor": {
+        "label": "Belegt den Boden darunter"
+      },
+      "weight_kg": {
+        "label": "Eigengewicht",
+        "help": "Wird von der Nutzlast der Fahrzeuge abgezogen."
       },
       "notes": {
         "label": "Notizen"
@@ -1549,7 +1606,9 @@
     "cost_item.basis.per_use": "pro Einsatz (Fahrt)",
     "cost_item.basis.per_day": "pro Einsatztag",
     "cost_item.basis.per_month": "pro Monat (anteilig je Einsatztag)",
-    "cost_item.basis.per_plant": "pro Pflanze"
+    "cost_item.basis.per_plant": "pro Pflanze",
+    "vehicle_module.kind.shelf": "Regal (Ladeebene)",
+    "vehicle_module.kind.fixture": "Einbau (belegt Platz)"
   },
   "permissions": {
     "platform.tenants": "Betriebe verwalten",

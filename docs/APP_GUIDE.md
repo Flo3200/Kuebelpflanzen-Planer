@@ -139,6 +139,27 @@ Gemeinkostenzuschlag (`costs.overhead_pct`) und Marge (`costs.margin_pct`) stehe
 Angebote und Rechnungen an Kunden“: Der Kundenpreis kommt aus der Preisformel (Grundpreis + Preis
 pro Arbeitsminute + Preis pro Pflanze + Entfernungszuschlag, mindestens der Mindestpreis).
 
+## Fahrzeuge per Chat und Foto, Module
+
+Fahrzeuge lassen sich ohne Formular anlegen und ändern:
+- **Per Chat**: Unter „Fahrzeuge → Per Chat anlegen“ beschreibt der Betrieb das Fahrzeug in eigenen
+  Worten (Modell, Laderaum, Nutzlast, Türmaße, Regale, Anhängerkupplung, Kosten, Angaben aus dem
+  Fahrzeugschein). Die KI (`ai.model.vehicle_chat`) erstellt einen **Entwurf**, zeigt jeden Wert mit
+  Sicherheit und fragt nach, was fehlt. Änderungen später im Reiter „Per Chat ändern“ eines
+  Fahrzeugs („Nutzlast jetzt 1.000 kg“).
+- **Per Foto**: Fotos des Laderaums mit A4-Blatt oder Zollstock als Maßstab
+  (`ai.model.vehicle_photo`); die KI leitet Maße, Radkästen, Regale und Türmaße ab, unsichere Werte
+  fragt sie nach.
+Erst mit „Fahrzeug anlegen“ bzw. „Änderung übernehmen“ entsteht oder ändert sich das Fahrzeug
+(Kosten als Fahrzeug-Einstellungen, Regale als Module), mit Eintrag im Änderungsprotokoll. Jeder Wert
+bleibt von Hand korrigierbar. Ohne API-Schlüssel arbeitet ein Testmodell mit einfachen Regeln.
+
+**Module** (Menü „Module“): Regale (zusätzliche Ladeebene) und Einbauten (belegter Platz) legt man
+einmal an und ordnet sie beliebig vielen Fahrzeugen zu (Reiter „Module“ eines Fahrzeugs); ihr
+Eigengewicht senkt die Nutzlast. Lade- und Tourenplanung rechnen mit den Modulen, eigene
+Kostenpositionen können zu einem Modul gehören. Dort stehen auch die Kombinationen **Zugfahrzeug +
+Anhänger**.
+
 ## Tourenplanung
 
 Die Planung bündelt bestätigte Aufträge über mehrere Tage. Jede Einheit ist Tag × Fahrzeug

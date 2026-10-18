@@ -31,6 +31,8 @@ def load_items(db: Session, tenant_id: uuid.UUID) -> list[CostItem]:
 
 
 def scope_of(item: CostItem) -> str:
+    if item.module_id:
+        return "module"
     if item.vehicle_id:
         return "vehicle"
     if item.staff_id:
@@ -69,13 +71,17 @@ def trip_costs(
     first_trip_of_day: bool,
     units_that_day: int,
     workdays_per_month: int,
+    module_ids: set[str] | None = None,
 ) -> tuple[float, list[dict[str, Any]]]:
-    """Own costs of one trip of a unit; returns (total, lines per item)."""
+    """Own costs of one trip of a unit; returns (total, lines per item). module_ids: modules of the
+    vehicle (and trailer) of the unit."""
     lines: list[dict[str, Any]] = []
     hours = max(0.0, minutes) / 60
     for item in items:
         scope = scope_of(item)
-        if scope == "vehicle":
+        if scope == "module":
+            times = 1 if str(item.module_id) in (module_ids or set()) else 0
+        elif scope == "vehicle":
             times = 1 if str(item.vehicle_id) in vehicle_ids else 0
         elif scope == "staff":
             times = staff_ids.count(str(item.staff_id))
@@ -113,19 +119,24 @@ def order_costs(
     plants: int,
     stops_per_tour: int,
     workdays_per_month: int,
+    module_vehicles: dict[str, int] | None = None,
 ) -> tuple[float, list[dict[str, Any]]]:
-    """Expected own costs of one order before planning (average vehicle and staff member)."""
+    """Expected own costs of one order before planning (average vehicle and staff member).
+    module_vehicles: number of vehicles that carry each module."""
     lines: list[dict[str, Any]] = []
     stops = max(1, stops_per_tour)
     for item in items:
         scope = scope_of(item)
         # an average vehicle carries a vehicle item with probability 1/n; a team of `team` people
         # contains a given person with probability team/n
-        share = (
-            1.0
-            if scope == "tenant"
-            else (1 / max(1, n_vehicles) if scope == "vehicle" else team / max(1, n_staff))
-        )
+        if scope == "tenant":
+            share = 1.0
+        elif scope == "vehicle":
+            share = 1 / max(1, n_vehicles)
+        elif scope == "module":
+            share = (module_vehicles or {}).get(str(item.module_id), 0) / max(1, n_vehicles)
+        else:
+            share = team / max(1, n_staff)
         amt = float(item.amount_eur or 0)
         if item.basis == "per_km":
             value = amt * km

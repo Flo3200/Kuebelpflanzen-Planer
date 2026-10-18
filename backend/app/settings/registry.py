@@ -37,6 +37,8 @@ AI_FUNCTIONS = (
     "message_intake",
     "settings_assistant",
     "support_agent",
+    "vehicle_photo",
+    "vehicle_chat",
 )
 
 

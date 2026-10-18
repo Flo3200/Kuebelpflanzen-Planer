@@ -101,6 +101,10 @@ class EvalSet(IdMixin, TimestampMixin, OptionalTenantMixin, Base):
 
     name: Mapped[str] = mapped_column(String(120))
     notes: Mapped[str | None] = mapped_column(Text)
+    # AI function the set tests: photo_analysis, vehicle_photo, vehicle_chat
+    function: Mapped[str] = mapped_column(
+        String(40), default="photo_analysis", server_default="photo_analysis"
+    )
 
 
 class EvalItem(IdMixin, TimestampMixin, OptionalTenantMixin, Base):
@@ -112,6 +116,7 @@ class EvalItem(IdMixin, TimestampMixin, OptionalTenantMixin, Base):
     )
     label: Mapped[str] = mapped_column(String(120))
     photo_file_ids: Mapped[list[Any]] = mapped_column(default=list)
+    input_text: Mapped[str | None] = mapped_column(Text)  # chat functions: the message to evaluate
     truth: Mapped[dict[str, Any]] = mapped_column(default=dict)
 
 

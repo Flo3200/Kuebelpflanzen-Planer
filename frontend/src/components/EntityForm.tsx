@@ -43,6 +43,7 @@ export const ENTITY_URLS: Record<string, string> = {
   species: "/api/species",
   team: "/api/teams",
   storage_area: "/api/storage-areas",
+  vehicle_module: "/api/vehicle-modules",
 };
 
 export function useEntityMeta(name: string) {

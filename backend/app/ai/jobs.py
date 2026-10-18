@@ -70,12 +70,15 @@ def eval_run_job(ctx: JobContext) -> dict:
 
     from app.ai import service as ai
     from app.ai.providers import AIImage
-    from app.models.ai import AIUsage, EvalItem, EvalRun
+    from app.models.ai import AIUsage, EvalItem, EvalRun, EvalSet
     from app.models.orders import StoredFile
     from app.storage.backend import get_storage
 
     run = ctx.db.get(EvalRun, uuid.UUID(ctx.payload["run_id"]))
     run.status = "running"
+    function = (
+        (ctx.db.get(EvalSet, run.set_id).function or "photo_analysis") if run.set_id else "photo_analysis"
+    )
     items = list(ctx.db.scalars(select(EvalItem).where(EvalItem.set_id == run.set_id)))
     errors: dict[str, list[float]] = {}
     details = []
@@ -99,17 +102,32 @@ def eval_run_job(ctx: JobContext) -> dict:
                 }
             )
         try:
+            if function == "vehicle_chat":
+                text = item.input_text or ""
+                context = {"message": text, "messages": [{"role": "user", "text": text}], "threshold": 0.6}
+            elif function == "vehicle_photo":
+                text = "Fotos des Laderaums:\n" + "\n".join(
+                    f"Bild {n}: {p['width']}×{p['height']} px"
+                    + (f", A4-Maßstab {p['a4'].get('cm_per_px')} cm/px" if p["a4"].get("detected") else "")
+                    for n, p in enumerate(context_photos, start=1)
+                )
+                if item.input_text:
+                    text += f"\n\nAngaben dazu: {item.input_text}"
+                context = {"photos": context_photos, "note": item.input_text or "", "threshold": 0.6}
+            else:
+                text, context = "Bitte auswerten.", {"photos": context_photos}
             resp, _ = ai.call(
                 ctx.db,
                 None,
-                "photo_analysis",
-                "Bitte auswerten.",
+                function,
+                text,
                 images=images,
-                context={"photos": context_photos},
+                context=context,
                 job_id=ctx.job_id,
                 model_id=run.model_id,
             )
-            plant = (resp.data or {}).get("plant") or {}
+            section = "plant" if function == "photo_analysis" else "vehicle"
+            plant = (resp.data or {}).get(section) or {}
         except AppError as exc:
             details.append({"item": item.label, "error": exc.code})
             continue

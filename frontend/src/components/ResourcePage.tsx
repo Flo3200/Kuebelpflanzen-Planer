@@ -24,6 +24,8 @@ export function ResourcePage(props: {
   emptyText?: string;
   formFields?: string[];
   headerExtra?: ReactNode;
+  /** shown between the page header and the table */
+  intro?: ReactNode;
   filter?: (row: any) => boolean;
 }) {
   const qc = useQueryClient();
@@ -57,6 +59,7 @@ export function ResourcePage(props: {
           </>
         }
       />
+      {props.intro}
       {list.isLoading && <Spinner />}
       <ErrorBox error={list.error} />
       {list.data && rows.length === 0 && <Empty title={props.title} text={props.emptyText ?? t("resource.empty")} />}

@@ -32,6 +32,7 @@ API_ROUTER_MODULES = (
     "app.api.meta",
     "app.api.dashboard",
     "app.api.masterdata",
+    "app.api.fleet",
     "app.api.orders",
     "app.api.files",
     "app.api.storage",
@@ -73,6 +74,9 @@ def bootstrap_admin() -> None:
         from app.demo.species_catalog import seed_species
 
         seed_ai(db)
+        from app.ai.bootstrap import seed_eval_sets
+
+        seed_eval_sets(db)
         seed_species(db)
         from app.formula.defaults import seed_formulas
 

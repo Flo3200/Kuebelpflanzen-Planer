@@ -2,7 +2,14 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../api/client";
 import { Badge, Card, ErrorBox, Modal, PageHeader, Spinner, Tabs, useToast } from "../../components/ui";
-import { fmtDate, fmtMoney, fmtNumber, t } from "../../i18n";
+import { fmtDate, fmtMoney, fmtNumber, t, tMaybe } from "../../i18n";
+
+const EVAL_FUNCTIONS = ["photo_analysis", "vehicle_photo", "vehicle_chat"];
+const EVAL_TRUTH: Record<string, string> = {
+  photo_analysis: '{"total_height_cm": 180, "pot_diameter_cm": 50}',
+  vehicle_photo: '{"cargo_width_cm": 178, "cargo_height_cm": 194}',
+  vehicle_chat: '{"cargo_length_cm": 330, "cargo_width_cm": 178, "cargo_height_cm": 194, "payload_kg": 1150}',
+};
 
 export function AdminAIPage() {
   const [tab, setTab] = useState<"models" | "prompts" | "usage" | "eval">("models");
@@ -382,7 +389,8 @@ function EvalTool() {
   const sets = useQuery({ queryKey: ["eval-sets"], queryFn: () => api.get<any[]>("/api/admin/ai/eval-sets"), refetchInterval: 4000 });
   const models = useQuery({ queryKey: ["ai-models-admin"], queryFn: () => api.get<any[]>("/api/admin/ai/models") });
   const [name, setName] = useState("");
-  const [item, setItem] = useState<{ setId: string; label: string; truth: string; files: File[] } | null>(null);
+  const [fn, setFn] = useState("photo_analysis");
+  const [item, setItem] = useState<{ setId: string; fn: string; label: string; truth: string; text: string; files: File[] } | null>(null);
   const [chosen, setChosen] = useState<string[]>([]);
   const refresh = () => qc.invalidateQueries({ queryKey: ["eval-sets"] });
   return (
@@ -390,16 +398,27 @@ function EvalTool() {
       <p className="muted small">{t("ai.eval_description")}</p>
       <div className="row">
         <input className="input" style={{ width: 280 }} value={name} onChange={(e) => setName(e.target.value)} placeholder={t("ai.eval_set_name")} aria-label={t("ai.eval_set_name")} />
-        <button className="btn secondary" disabled={!name} onClick={async () => (await api.post("/api/admin/ai/eval-sets", { name }), setName(""), refresh())}>
+        <select className="input" style={{ width: 240 }} value={fn} onChange={(e) => setFn(e.target.value)} aria-label={t("ai.eval_function")}>
+          {EVAL_FUNCTIONS.map((f) => (
+            <option key={f} value={f}>
+              {t(`ai.functions.${f}`)}
+            </option>
+          ))}
+        </select>
+        <button className="btn secondary" disabled={!name} onClick={async () => (await api.post("/api/admin/ai/eval-sets", { name, function: fn }), setName(""), refresh())}>
           {t("ai.new_eval_set")}
         </button>
       </div>
       {(sets.data ?? []).map((s) => (
         <Card
           key={s.id}
-          title={s.name}
+          title={
+            <>
+              {s.name} <Badge>{t(`ai.functions.${s.function ?? "photo_analysis"}`)}</Badge>
+            </>
+          }
           actions={
-            <button className="btn small secondary" onClick={() => setItem({ setId: s.id, label: "", truth: '{"total_height_cm": 180, "pot_diameter_cm": 50}', files: [] })}>
+            <button className="btn small secondary" onClick={() => setItem({ setId: s.id, fn: s.function ?? "photo_analysis", label: "", truth: EVAL_TRUTH[s.function ?? "photo_analysis"], text: "", files: [] })}>
               {t("ai.add_item")}
             </button>
           }
@@ -435,7 +454,7 @@ function EvalTool() {
                       <td className="small">
                         {Object.entries(r.metrics?.mae ?? {}).map(([k, v]) => (
                           <div key={k}>
-                            {t(`inbox.fields.${k}`)}: {fmtNumber(v as number, 1)}
+                            {tMaybe(`inbox.fields.${k}`) ?? tMaybe(`vehicledraft.fields.${k}`) ?? k}: {fmtNumber(v as number, 1)}
                           </div>
                         ))}
                       </td>
@@ -455,11 +474,12 @@ function EvalTool() {
           footer={
             <button
               className="btn"
-              disabled={!item.label || !item.files.length}
+              disabled={!item.label || (item.fn === "vehicle_chat" ? !item.text : !item.files.length)}
               onClick={async () => {
                 const form = new FormData();
                 form.append("label", item.label);
                 form.append("truth", item.truth);
+                if (item.text) form.append("input_text", item.text);
                 item.files.forEach((f, i) => {
                   form.append("files", f);
                   form.append("kinds", ["plant_front", "plant_side", "plant_top", "pot"][Math.min(i, 3)]);
@@ -483,7 +503,15 @@ function EvalTool() {
               <textarea id="ev-t" className="input mono" rows={3} value={item.truth} onChange={(e) => setItem({ ...item, truth: e.target.value })} />
               <span className="help">{t("ai.truth_help")}</span>
             </div>
-            <input type="file" accept="image/*" multiple onChange={(e) => setItem({ ...item, files: Array.from(e.target.files ?? []) })} aria-label={t("orders.photos")} />
+            {item.fn !== "photo_analysis" && (
+              <div className="field">
+                <label htmlFor="ev-x">{item.fn === "vehicle_chat" ? t("ai.eval_message") : t("ai.eval_note")}</label>
+                <textarea id="ev-x" className="input" rows={3} value={item.text} onChange={(e) => setItem({ ...item, text: e.target.value })} />
+              </div>
+            )}
+            {item.fn !== "vehicle_chat" && (
+              <input type="file" accept="image/*" multiple onChange={(e) => setItem({ ...item, files: Array.from(e.target.files ?? []) })} aria-label={t("orders.photos")} />
+            )}
           </div>
         </Modal>
       )}

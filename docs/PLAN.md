@@ -114,7 +114,7 @@ abgeschaltet, Tabellen bleiben, Migrationen sind umkehrbar.
 | B | Pflanzenarten im Hintergrund | abgeschlossen |
 | D | Teams durch den Unternehmer | abgeschlossen |
 | E | Eigene Kostenpositionen, reine Logistikkosten | abgeschlossen |
-| C | Fahrzeuge per Foto und Chat, Module (Regale, Einbauten, Anhänger) | offen |
+| C | Fahrzeuge per Foto und Chat, Module (Regale, Einbauten, Anhänger) | abgeschlossen (mit Testmodell; echte KI-Tests brauchen einen Schlüssel) |
 | F | Abladezeit per Formel, Graphen, Dashboard | offen |
 | G | KI-Ladeanordnung mit Prüfung durch den Packer | offen |
 | H | Checkliste für den Produktinhaber, Rückfrage zu OFFEN Punkt 8 | offen |

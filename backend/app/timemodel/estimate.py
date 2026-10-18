@@ -16,6 +16,7 @@ from typing import Any
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.fleet.layout import module_vehicles
 from app.formula.parser import FormulaError
 from app.formula.store import CompiledFormula, load_active
 from app.models.core import Tenant
@@ -129,6 +130,7 @@ class Estimator:
             or 0
         )
         self.cost_items = load_cost_items(db, tenant_id)
+        self.module_vehicles = {k: len(v) for k, v in module_vehicles(db, tenant_id).items()}
         self.species: dict[uuid.UUID, Species] = {}
         self.routing = provider_for(r)
         # spring return: setting plants down at the customer may take longer or shorter
@@ -375,6 +377,7 @@ class Estimator:
             plants=len(calcs),
             stops_per_tour=n_typical,
             workdays_per_month=int(r.get("costs.workdays_per_month")),
+            module_vehicles=self.module_vehicles,
         )
         direct = labour_cost + drive_labour_cost + vehicle_cost + equipment_cost + custom_cost
         self_cost = direct * (1 + float(r.get("costs.overhead_pct")) / 100)

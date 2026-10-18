@@ -19,6 +19,7 @@ export const TENANT_NAV: NavSection[] = [
       { to: "/betrieb/personal", label: "nav.staff", perm: "staff.read" },
       { to: "/betrieb/teams", label: "nav.teams", perm: "staff.read" },
       { to: "/betrieb/fahrzeuge", label: "nav.vehicles", perm: "fleet.read" },
+      { to: "/betrieb/module", label: "nav.modules", perm: "fleet.read" },
       { to: "/betrieb/hilfsmittel", label: "nav.equipment", perm: "fleet.read" },
       { to: "/betrieb/verfuegbarkeit", label: "nav.availability", perm: "staff.read" },
       { to: "/betrieb/lager", label: "nav.storage", perm: "tenant.view", module: "storage" },

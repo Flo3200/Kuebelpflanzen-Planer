@@ -38,5 +38,12 @@ class CostItem(IdMixin, TimestampMixin, SoftDeleteMixin, TenantMixin, Base):
         index=True,
         info={"group": "scope", "fk": "staff"},
     )
+    # package C: charged while a vehicle with this module is on tour
+    module_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid,
+        ForeignKey("vehicle_modules.id", ondelete="CASCADE"),
+        index=True,
+        info={"group": "scope", "fk": "vehicle_module"},
+    )
     active: Mapped[bool] = mapped_column(Boolean, default=True, info={"group": "master", "list": True})
     notes: Mapped[str | None] = mapped_column(Text, info={"advanced": True, "group": "master"})

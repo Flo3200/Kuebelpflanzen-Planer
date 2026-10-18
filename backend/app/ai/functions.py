@@ -8,7 +8,15 @@ from __future__ import annotations
 
 from typing import Any
 
-FUNCTIONS = ("completeness_check", "photo_analysis", "message_intake", "settings_assistant", "support_agent")
+FUNCTIONS = (
+    "completeness_check",
+    "photo_analysis",
+    "message_intake",
+    "settings_assistant",
+    "support_agent",
+    "vehicle_photo",
+    "vehicle_chat",
+)
 
 
 def vf(kind: str) -> dict[str, Any]:
@@ -142,10 +150,29 @@ PHOTO_ANALYSIS_SCHEMA = obj(
     }
 )
 
+
+def vehicle_schema() -> dict[str, Any]:
+    """Vehicle draft (package C): vehicle values, costs and shelves, each with a confidence."""
+    from app.fleet.fields import COST_FIELDS, SHELF_FIELDS, VEHICLE_FIELDS
+
+    return obj(
+        {
+            "vehicle": obj({k: vf(kind) for k, kind in VEHICLE_FIELDS}),
+            "costs": obj({k: vf(kind) for k, _, kind in COST_FIELDS}),
+            "shelves": {"type": "array", "items": obj({k: vf(kind) for k, kind in SHELF_FIELDS})},
+            "scale": {"type": "string", "enum": ["a4", "ruler", "known_model", "stated", "none"]},
+            "questions": {"type": "array", "items": {"type": "string"}},
+            "reply": {"type": "string"},
+        }
+    )
+
+
 SCHEMAS = {
     "message_intake": INTAKE_SCHEMA,
     "completeness_check": COMPLETENESS_SCHEMA,
     "photo_analysis": PHOTO_ANALYSIS_SCHEMA,
+    "vehicle_photo": vehicle_schema(),
+    "vehicle_chat": vehicle_schema(),
 }
 
 TRAIT_RULES = (
@@ -202,6 +229,39 @@ DEFAULT_PROMPTS: dict[str, dict[str, Any]] = {
             "mitliefert, nutze ihn. Gib zu jedem Wert eine Sicherheit zwischen 0 und 1 an. Gewicht nur schätzen, "
             "wenn der Topf gut erkennbar ist; Erde wiegt etwa 1,2–1,6 kg pro Liter. Unbekanntes ist null.\n"
             + TRAIT_RULES
+        ),
+        "instructions": "Antworte als JSON nach dem vorgegebenen Schema.",
+    },
+    "vehicle_photo": {
+        "version": 1,
+        "system": (
+            "Du leitest aus Fotos des Laderaums eines Transporters, Lkw oder Anhängers das Fahrzeugmodell für "
+            "die Ladeplanung einer Gärtnerei ab. Maßstab ist ein A4-Blatt (21,0 × 29,7 cm) oder ein Zollstock im "
+            "Bild; wenn eine lokale Erkennung den Maßstab (cm pro Pixel) mitliefert, nutze ihn. Bestimme "
+            "Laderaum (Länge von der Stirnwand bis zur Tür, Breite, Höhe), Türbreite und -höhe, Radkästen "
+            "(Abstand von der Stirnwand, Länge, Breite je Seite, Höhe), Regale (Lage von der Stirnwand und der "
+            "linken Wand, Länge, Tiefe, Höhe der Ebene, freie Höhe darüber) und die Ladekante. Alle Maße in cm. "
+            "Gib zu jedem Wert eine ehrliche Sicherheit zwischen 0 und 1; ohne Maßstab höchstens 0,4. Werte, "
+            "die man auf Fotos nicht sieht (Nutzlast, Achslasten, Kosten), sind null, außer der Text nennt sie. "
+            "questions: kurze deutsche Rückfragen zu fehlenden oder unsicheren Werten (Sie-Form), z. B. "
+            "„Wie hoch ist die zulässige Nutzlast laut Fahrzeugschein?“. reply: eine kurze Zusammenfassung."
+        ),
+        "instructions": "Antworte als JSON nach dem vorgegebenen Schema.",
+    },
+    "vehicle_chat": {
+        "version": 1,
+        "system": (
+            "Du legst mit dem Inhaber einer Gärtnerei im Gespräch ein Fahrzeug für die Touren- und Ladeplanung "
+            "an oder änderst es. Du bekommst den bisherigen Verlauf, den aktuellen Entwurf (Werte mit "
+            "Sicherheit) und die neue Nachricht, optional Fotos und Angaben aus dem Fahrzeugschein. Gib den "
+            "vollständigen, aktualisierten Entwurf zurück: übernimm alle bisherigen Werte, ändere nur, was die "
+            "Nachricht ändert oder ergänzt. Bekannte Modelle (z. B. Mercedes Sprinter L2H2, VW Crafter, Ford "
+            "Transit, Fiat Ducato) darfst du mit typischen Werten füllen, aber mit Sicherheit höchstens 0,6. "
+            "Maße in cm, Gewichte in kg, Kosten in € (pro km, pro Stunde), Verbrauch in l/100 km. kind: van, "
+            "truck, trailer oder car; required_licence: B, BE, C1, C1E, C oder CE. Regale als shelves mit Lage "
+            "von der Stirnwand (x_cm) und der linken Wand (y_cm). questions: höchstens drei kurze Rückfragen zu "
+            "den wichtigsten Lücken (Laderaum, Nutzlast, Türmaße zuerst). reply: freundliche, kurze Antwort "
+            "auf Deutsch in Sie-Form, die sagt, was du eingetragen oder geändert hast."
         ),
         "instructions": "Antworte als JSON nach dem vorgegebenen Schema.",
     },

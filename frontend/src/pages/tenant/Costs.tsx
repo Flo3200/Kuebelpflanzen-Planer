@@ -11,7 +11,8 @@ import { fmtMoney, t } from "../../i18n";
 function useNames() {
   const staff = useQuery({ queryKey: ["fk", "staff"], queryFn: () => api.get<any[]>("/api/staff") });
   const vehicles = useQuery({ queryKey: ["fk", "vehicle"], queryFn: () => api.get<any[]>("/api/vehicles") });
-  return new Map([...(staff.data ?? []), ...(vehicles.data ?? [])].map((x) => [x.id, x.name]));
+  const modules = useQuery({ queryKey: ["fk", "vehicle_module"], queryFn: () => api.get<any[]>("/api/vehicle-modules") });
+  return new Map([...(staff.data ?? []), ...(vehicles.data ?? []), ...(modules.data ?? [])].map((x) => [x.id, x.name]));
 }
 
 export function CostsPage() {
@@ -27,7 +28,10 @@ export function CostsPage() {
       createDefaults={{ basis: "per_day", active: true }}
       render={{
         amount_eur: (r) => fmtMoney(r.amount_eur),
-        vehicle_id: (r) => (r.vehicle_id ? names.get(r.vehicle_id) ?? "?" : r.staff_id ? names.get(r.staff_id) ?? "?" : t("costs.whole_nursery")),
+        vehicle_id: (r) => {
+          const ref = r.vehicle_id ?? r.staff_id ?? r.module_id;
+          return ref ? names.get(ref) ?? "?" : t("costs.whole_nursery");
+        },
       }}
       emptyText={t("costs.empty")}
     />

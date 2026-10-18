@@ -86,3 +86,54 @@ def seed_ai(db: Session) -> None:
                 )
             )
     db.flush()
+
+
+# test set for the evaluation tool: vehicle by chat (photo sets need real photos, the admin adds them)
+VEHICLE_CHAT_EVAL = [
+    (
+        "Sprinter mit Maßen",
+        "Mercedes Sprinter, Laderaum 3,30 x 1,78 x 1,94 m, Nutzlast 1.150 kg. "
+        "Die Tür ist 1,56 m breit und 1,84 m hoch.",
+        {
+            "cargo_length_cm": 330,
+            "cargo_width_cm": 178,
+            "cargo_height_cm": 194,
+            "payload_kg": 1150,
+            "door_width_cm": 156,
+            "door_height_cm": 184,
+        },
+    ),
+    (
+        "7,5-Tonner",
+        "Unser 7,5-Tonner mit Ladebordwand: Ladefläche 6,10 m lang, 2,45 m breit, 2,40 m hoch. "
+        "Nutzlast 2,8 t, Führerschein C1.",
+        {"cargo_length_cm": 610, "cargo_width_cm": 245, "cargo_height_cm": 240, "payload_kg": 2800},
+    ),
+    (
+        "Kofferanhänger",
+        "Kofferanhänger 3,00 x 1,50 x 1,80 m, Nutzlast 1000 kg.",
+        {"cargo_length_cm": 300, "cargo_width_cm": 150, "cargo_height_cm": 180, "payload_kg": 1000},
+    ),
+]
+
+
+def seed_eval_sets(db: Session) -> None:
+    from app.models.ai import EvalItem, EvalSet
+
+    if db.scalar(select(EvalSet.id).where(EvalSet.function == "vehicle_chat").limit(1)) is not None:
+        return
+    s = EvalSet(
+        tenant_id=None,
+        name="Fahrzeug per Chat – Beispiele",
+        function="vehicle_chat",
+        notes="Beschreibungen mit bekannten Maßen; vergleicht die Laderaum-Maße und die Nutzlast.",
+    )
+    db.add(s)
+    db.flush()
+    for label, text, truth in VEHICLE_CHAT_EVAL:
+        db.add(
+            EvalItem(
+                tenant_id=None, set_id=s.id, label=label, input_text=text, truth=truth, photo_file_ids=[]
+            )
+        )
+    db.flush()

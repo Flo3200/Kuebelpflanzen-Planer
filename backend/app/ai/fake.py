@@ -77,6 +77,12 @@ def _sentences(text: str) -> list[str]:
     return out
 
 
+def _vehicle_fake(kind: str, request: AIRequest) -> dict[str, Any]:
+    from app.fleet.fake import fake_vehicle_chat, fake_vehicle_photo
+
+    return fake_vehicle_photo(request.context) if kind == "photo" else fake_vehicle_chat(request.context)
+
+
 class FakeProvider:
     def complete(
         self, model_name: str, request: AIRequest, api_key: str | None, options: dict[str, Any]
@@ -86,6 +92,8 @@ class FakeProvider:
             "message_intake": self._intake,
             "completeness_check": self._completeness,
             "photo_analysis": self._photo_analysis,
+            "vehicle_photo": lambda r: _vehicle_fake("photo", r),
+            "vehicle_chat": lambda r: _vehicle_fake("chat", r),
         }.get(request.function)
         data = fn(request) if fn else {"text": "Testmodell: keine Auswertung für diese Funktion."}
         import json

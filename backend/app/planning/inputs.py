@@ -21,7 +21,8 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models.masterdata import LICENCE_INCLUDES, Equipment, StaffMember, Team, Vehicle, VehicleShelf
+from app.fleet.layout import vehicle_layout
+from app.models.masterdata import LICENCE_INCLUDES, Equipment, StaffMember, Team, Vehicle
 from app.models.orders import Address, Customer, PickupOrder, Plant
 from app.planning.availability import day_windows
 from app.settings.service import SettingsResolver
@@ -284,10 +285,10 @@ def vehicle_in(
     arch = 0.0
     if v.wheel_arch_length_cm and v.wheel_arch_width_cm:
         arch = 2 * v.wheel_arch_length_cm * v.wheel_arch_width_cm
-    shelves = list(db.scalars(select(VehicleShelf).where(VehicleShelf.vehicle_id == v.id)))
-    shelf_area = sum(s.length_cm * s.depth_cm for s in shelves)
-    blocked = sum(s.length_cm * s.depth_cm for s in shelves if s.blocks_floor)
-    area = (v.cargo_length_cm * v.cargo_width_cm - arch - blocked + shelf_area) / 10000
+    layout = vehicle_layout(db, v.id)  # own shelves plus assigned modules (package C)
+    area = (
+        v.cargo_length_cm * v.cargo_width_cm - arch - layout.floor_blocked_cm2() + layout.shelf_area_cm2()
+    ) / 10000
     per_km = float(r.get("costs.vehicle_per_km", ch)) + float(
         r.get("costs.fuel_l_per_100km", ch)
     ) / 100 * float(r.get("costs.fuel_price"))
@@ -301,7 +302,7 @@ def vehicle_in(
         height=v.cargo_height_cm,
         door_w=v.door_width_cm,
         door_h=v.door_height_cm,
-        payload=v.payload_kg,
+        payload=max(0.0, v.payload_kg - layout.module_weight),
         area_m2=max(0.1, area),
         volume_m3=v.cargo_length_cm * v.cargo_width_cm * v.cargo_height_cm / 1e6,
         seats=v.seats or 2,

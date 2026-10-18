@@ -8,8 +8,9 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.fleet.layout import vehicle_layout
 from app.i18n import t
-from app.models.masterdata import Species, Vehicle, VehicleShelf
+from app.models.masterdata import Species, Vehicle
 from app.models.orders import PickupOrder, Plant
 from app.models.planning import Tour, TourStop
 from app.packing.geometry import Box, PlantItem, Shelf, Space
@@ -26,21 +27,13 @@ def space_from_vehicle(db: Session, v: Vehicle) -> Space:
         h = v.wheel_arch_height_cm or 30
         obstacles.append(Box(x0, 0, x1, v.wheel_arch_width_cm, h))
         obstacles.append(Box(x0, v.cargo_width_cm - v.wheel_arch_width_cm, x1, v.cargo_width_cm, h))
+    layout = vehicle_layout(db, v.id)  # own shelves plus assigned modules (package C)
     shelves = [
-        Shelf(
-            str(s.id),
-            s.name,
-            s.x_cm,
-            s.y_cm,
-            s.length_cm,
-            s.depth_cm,
-            s.height_cm,
-            s.clearance_cm,
-            s.max_load_kg,
-            s.blocks_floor,
-        )
-        for s in db.scalars(select(VehicleShelf).where(VehicleShelf.vehicle_id == v.id))
+        Shelf(s.id, s.name, s.x, s.y, s.length, s.depth, s.height, s.clearance, s.max_load, s.blocks_floor)
+        for s in layout.shelves
     ]
+    for f in layout.fixtures:
+        obstacles.append(Box(f.x, f.y, f.x + f.length, f.y + f.depth, f.height))
     is_trailer = v.kind == "trailer"
     return Space(
         id=str(v.id),
@@ -51,7 +44,7 @@ def space_from_vehicle(db: Session, v: Vehicle) -> Space:
         height=v.cargo_height_cm,
         door_w=v.door_width_cm,
         door_h=v.door_height_cm,
-        payload=v.payload_kg,
+        payload=max(0.0, v.payload_kg - layout.module_weight),
         obstacles=obstacles,
         shelves=shelves,
         front_axle_x=None if is_trailer else v.front_axle_x_cm,

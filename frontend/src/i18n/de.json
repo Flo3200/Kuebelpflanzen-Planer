@@ -93,7 +93,8 @@
     "ai_tenant": "KI-Nutzung",
     "deviations": "Meldungen",
     "species_kb": "Wissensbasis Pflanzenarten",
-    "costs": "Kosten"
+    "costs": "Kosten",
+    "modules": "Module"
   },
   "login": {
     "title": "Willkommen zurück",
@@ -736,7 +737,9 @@
       "photo_analysis": "Foto-Auswertung",
       "message_intake": "Nachrichtenerfassung",
       "settings_assistant": "Einstellungs-KI",
-      "support_agent": "Unterstützungs-Agent"
+      "support_agent": "Unterstützungs-Agent",
+      "vehicle_photo": "Fahrzeug aus Laderaum-Foto",
+      "vehicle_chat": "Fahrzeug per Chat"
     },
     "system_prompt": "Systemanweisung",
     "instructions": "Zusatzanweisung",
@@ -775,7 +778,10 @@
     "tenant_description": "Verbrauch, eigene API-Schlüssel und angepasste Prompts Ihres Betriebs.",
     "tab_keys": "Eigene Schlüssel",
     "byok_title": "Eigene API-Schlüssel (BYOK)",
-    "byok_text": "Mit eigenem Schlüssel laufen KI-Aufrufe über Ihr Konto beim Anbieter; der KI-Verbrauch wird dann nicht über die Plattform abgerechnet. Ob eigene Schlüssel genutzt werden, legt der Plattformbetreiber fest (Einstellung „API-Schlüssel“)."
+    "byok_text": "Mit eigenem Schlüssel laufen KI-Aufrufe über Ihr Konto beim Anbieter; der KI-Verbrauch wird dann nicht über die Plattform abgerechnet. Ob eigene Schlüssel genutzt werden, legt der Plattformbetreiber fest (Einstellung „API-Schlüssel“).",
+    "eval_function": "KI-Funktion des Testsatzes",
+    "eval_message": "Nachricht (wie im Chat)",
+    "eval_note": "Angaben zu den Fotos (optional)"
   },
   "formulas": {
     "title": "Formeln",
@@ -1649,5 +1655,101 @@
     "tab": "Eigene Kosten",
     "add": "Kostenposition hinzufügen",
     "object_help": "Diese Positionen werden angerechnet, wenn dieses Fahrzeug bzw. diese Person auf Tour ist."
+  },
+  "modules": {
+    "title": "Module",
+    "description": "Regale und Einbauten, die Sie einmal anlegen und mehreren Fahrzeugen zuordnen, z. B. dasselbe Regal in zwei baugleichen Transportern. Regale sind zusätzliche Ladeebenen, Einbauten belegen Platz; das Eigengewicht wird von der Nutzlast abgezogen. Lade- und Tourenplanung rechnen damit.",
+    "empty": "Noch keine Module.",
+    "vehicles": "In Fahrzeugen",
+    "tab": "Module",
+    "vehicle_help": "Welche Module sind in diesem Fahrzeug eingebaut? Ein Modul kann in mehreren Fahrzeugen stecken.",
+    "kinds": {
+      "shelf": "Regal",
+      "fixture": "Einbau"
+    },
+    "combinations": "Zugfahrzeug + Anhänger",
+    "combinations_help": "Ordnen Sie einem Zugfahrzeug seinen Anhänger zu. Die Planung nimmt den Anhänger mit, wenn jemand im Team den passenden Führerschein hat (z. B. BE).",
+    "no_trailers": "Noch kein Anhänger angelegt (Fahrzeug mit Art „Anhänger“).",
+    "tow_vehicle": "Zugfahrzeug",
+    "trailer": "Anhänger",
+    "no_trailer": "ohne Anhänger",
+    "licence": "Führerschein {l}"
+  },
+  "vehicledraft": {
+    "new_chat": "Per Chat anlegen",
+    "new_photo": "Per Foto anlegen",
+    "title_chat": "Fahrzeug per Chat anlegen",
+    "title_photo": "Fahrzeug aus Laderaum-Fotos",
+    "title_change": "Fahrzeug ändern",
+    "tab_change": "Per Chat ändern",
+    "change_by_chat": "Änderung beschreiben",
+    "change_by_photo": "Neue Laderaum-Fotos",
+    "chat_help": "Beschreiben Sie das Fahrzeug in eigenen Worten: Modell, Laderaum (Länge × Breite × Höhe), Nutzlast, Türmaße, Regale, Anhängerkupplung, Kosten. Gern auch Angaben aus dem Fahrzeugschein. Die KI fragt nach, was fehlt. Erst wenn Sie bestätigen, wird das Fahrzeug angelegt.",
+    "change_help": "Schreiben Sie, was sich geändert hat, z. B. „Nutzlast jetzt 1.000 kg“ oder „Regal links ausgebaut“. Sie sehen die Änderung als Entwurf und bestätigen sie; sie steht danach im Änderungsprotokoll.",
+    "photo_help": "Fotografieren Sie den Laderaum von der Tür aus und gern auch von der Seite. Legen Sie ein A4-Blatt flach auf den Boden oder halten Sie einen Zollstock ins Bild – das ist der Maßstab. Unsichere Werte fragt die KI nach; alles bleibt von Hand korrigierbar.",
+    "photos": "Fotos",
+    "note_placeholder": "Optional: Angaben dazu, z. B. Modell oder Nutzlast laut Fahrzeugschein",
+    "chat_placeholder": "z. B. „Mercedes Sprinter, Laderaum 3,30 x 1,78 x 1,94 m, Nutzlast 1.150 kg …“",
+    "answer_placeholder": "Antwort auf die Rückfragen oder weitere Angaben …",
+    "message": "Nachricht",
+    "send": "Senden",
+    "analyse": "Fotos auswerten",
+    "thinking": "KI arbeitet …",
+    "you": "Sie",
+    "ai": "KI",
+    "questions": "Rückfragen der KI",
+    "to_check": "{n} Werte prüfen",
+    "status": {
+      "open": "Entwurf",
+      "confirmed": "bestätigt",
+      "discarded": "verworfen"
+    },
+    "source": {
+      "chat": "Chat",
+      "photo": "Foto"
+    },
+    "groups": {
+      "general": "Fahrzeug",
+      "cargo": "Laderaum und Nutzlast",
+      "door": "Ladetür",
+      "arches": "Radkästen",
+      "axles": "Achsen",
+      "trailer": "Anhänger",
+      "costs": "Kosten",
+      "shelves": "Regale (werden als Module angelegt)"
+    },
+    "fields": {
+      "cost_per_km": "Kosten pro km",
+      "cost_per_hour": "Kosten pro Stunde",
+      "fuel_l_per_100km": "Verbrauch",
+      "name": "Bezeichnung",
+      "x_cm": "ab Stirnwand",
+      "y_cm": "ab linker Wand",
+      "length_cm": "Länge",
+      "depth_cm": "Tiefe",
+      "height_cm": "Höhe",
+      "clearance_cm": "frei darüber",
+      "max_load_kg": "Tragfähigkeit",
+      "cargo_length_cm": "Laderaum Länge",
+      "cargo_width_cm": "Laderaum Breite",
+      "cargo_height_cm": "Laderaum Höhe",
+      "payload_kg": "Nutzlast",
+      "door_width_cm": "Türbreite",
+      "door_height_cm": "Türhöhe"
+    },
+    "units": {
+      "cost_per_km": "€/km",
+      "cost_per_hour": "€/h",
+      "fuel_l_per_100km": "l/100 km"
+    },
+    "no_shelves": "Keine Regale.",
+    "discard": "Verwerfen",
+    "save_corrections": "Korrekturen speichern",
+    "confirm_new": "Fahrzeug anlegen",
+    "confirm_change": "Änderung übernehmen",
+    "confirmed": "Fahrzeug „{name}“ gespeichert.",
+    "open_drafts": "Offene Fahrzeug-Entwürfe",
+    "unnamed": "ohne Namen",
+    "continue": "Weiter bearbeiten"
   }
 }

@@ -13,6 +13,7 @@ import { PlanningPage } from "./pages/tenant/Planning";
 import { PricingPage } from "./pages/tenant/Pricing";
 import { ScenariosPage } from "./pages/tenant/Scenarios";
 import { CostsPage } from "./pages/tenant/Costs";
+import { ModulesPage } from "./pages/tenant/Modules";
 import { DraftReviewPage, InboxPage } from "./pages/tenant/Inbox";
 import { CustomerDetailPage, CustomersPage, OrderDetailPage, OrdersPage } from "./pages/tenant/Orders";
 import { AvailabilityPage, EquipmentPage, StaffPage, StoragePage, TeamsPage, VehiclesPage } from "./pages/tenant/Resources";
@@ -35,6 +36,7 @@ export function tenantRoutes() {
     <Route key="ai" path="ki" element={<TenantAIPage />} />,
     <Route key="pricing" path="preise" element={<PricingPage />} />,
     <Route key="costs" path="kosten" element={<CostsPage />} />,
+    <Route key="modules" path="module" element={<ModulesPage />} />,
     <Route key="formulas" path="formeln" element={<FormulasPage />} />,
     <Route key="planning" path="planung" element={<PlanningPage />} />,
     <Route key="loadplan" path="planung/touren/:id/ladeplan" element={<LoadPlanPage />} />,

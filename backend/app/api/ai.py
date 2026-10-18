@@ -524,8 +524,15 @@ def eval_sets(actor: CurrentActor, db: DB) -> list[dict[str, Any]]:
                 "id": s.id,
                 "name": s.name,
                 "notes": s.notes,
+                "function": s.function,
                 "items": [
-                    {"id": i.id, "label": i.label, "truth": i.truth, "photos": i.photo_file_ids}
+                    {
+                        "id": i.id,
+                        "label": i.label,
+                        "truth": i.truth,
+                        "photos": i.photo_file_ids,
+                        "input_text": i.input_text,
+                    }
                     for i in items
                 ],
                 "runs": [
@@ -547,15 +554,18 @@ def eval_sets(actor: CurrentActor, db: DB) -> list[dict[str, Any]]:
 class EvalSetIn(BaseModel):
     name: str
     notes: str | None = None
+    function: str = "photo_analysis"  # photo_analysis | vehicle_photo | vehicle_chat
 
 
 @router.post("/api/admin/ai/eval-sets", status_code=201)
 def create_eval_set(data: EvalSetIn, actor: CurrentActor, db: DB) -> dict[str, Any]:
     actor.require("platform.ai")
-    s = EvalSet(tenant_id=None, name=data.name, notes=data.notes)
+    if data.function not in ("photo_analysis", "vehicle_photo", "vehicle_chat"):
+        raise AppError("errors.validation")
+    s = EvalSet(tenant_id=None, name=data.name, notes=data.notes, function=data.function)
     db.add(s)
     db.flush()
-    return {"id": s.id, "name": s.name}
+    return {"id": s.id, "name": s.name, "function": s.function}
 
 
 @router.post("/api/admin/ai/eval-sets/{set_id}/items", status_code=201)
@@ -567,6 +577,7 @@ async def add_eval_item(
     truth: str = Form("{}", description='JSON, z. B. {"total_height_cm": 180, "pot_diameter_cm": 50}'),
     kinds: list[str] = Form(default=[]),
     files: list[UploadFile] = File(default=[]),
+    input_text: str | None = Form(None, description="Fahrzeug per Chat: die Nachricht; Foto: Angaben dazu"),
 ) -> dict[str, Any]:
     import json
 
@@ -586,7 +597,12 @@ async def add_eval_item(
             }
         )
     item = EvalItem(
-        tenant_id=None, set_id=set_id, label=label, truth=json.loads(truth or "{}"), photo_file_ids=file_ids
+        tenant_id=None,
+        set_id=set_id,
+        label=label,
+        truth=json.loads(truth or "{}"),
+        photo_file_ids=file_ids,
+        input_text=input_text,
     )
     db.add(item)
     db.flush()

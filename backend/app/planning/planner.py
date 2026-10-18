@@ -12,6 +12,7 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.fleet.layout import module_vehicles
 from app.models.orders import PickupOrder, Plant
 from app.models.planning import Plan, Tour, TourStop
 from app.planning.hints import explain, team_issue_overview
@@ -244,6 +245,10 @@ def write_results(
     surcharge = float(r.get("costs.overtime_surcharge_pct")) / 100
     cost_items = load_cost_items(db, plan.tenant_id)
     workdays = int(r.get("costs.workdays_per_month"))
+    modules_by_vehicle: dict[str, set[str]] = defaultdict(set)
+    for mod, vehicles in module_vehicles(db, plan.tenant_id).items():
+        for vid in vehicles:
+            modules_by_vehicle[vid].add(mod)
     units_per_day: dict[date, int] = defaultdict(int)
     for k in {t.unit.key: t.unit.date for t in res.trips}.values():
         units_per_day[k] += 1
@@ -285,6 +290,8 @@ def write_results(
                 first_trip_of_day=trip is trips[0],
                 units_that_day=units_per_day[unit.date],
                 workdays_per_month=workdays,
+                module_ids=modules_by_vehicle[unit.vehicle.id]
+                | (modules_by_vehicle[unit.trailer.id] if unit.trailer else set()),
             )
             shares = allocate_to_stops(
                 custom_lines, [len(s.stop.plants) for s in trip.stops], [c["direct"] for c in costs_per_stop]
@@ -607,10 +614,11 @@ def evaluate_tour(db: Session, tour: Tour) -> None:
         t.unit_key
         for t in db.scalars(select(Tour).where(Tour.plan_id == tour.plan_id, Tour.date == tour.date))
     }
+    vids = {str(x) for x in (tour.vehicle_id, tour.trailer_id) if x} | ({unit.get("vehicle_id")} - {None})
     custom, custom_lines = trip_cost_items(
         load_cost_items(db, tour.tenant_id),
-        vehicle_ids={str(x) for x in (tour.vehicle_id, tour.trailer_id) if x}
-        | {unit.get("vehicle_id")} - {None},
+        vehicle_ids=vids,
+        module_ids={m for m, vs in module_vehicles(db, tour.tenant_id).items() if vs & vids},
         staff_ids=[str(m) for m in tour.member_ids],
         km=tour.distance_km,
         minutes=tour.end_min - tour.start_min,

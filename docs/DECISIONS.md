@@ -307,3 +307,29 @@ erscheinen nur mit dem Modul. Nichts wurde gelöscht.
   (Lohn, Fahrzeug pro km/Stunde). Szenarien vergleichen die Gesamtkosten einschließlich der Positionen.
 - `costs.overhead_pct` und `costs.margin_pct` Standard 0 % (reine Logistikkosten); die Marge gehört
   zum Preis-Modul.
+
+## D28 – Fahrzeuge per Foto und Chat, Module
+- Neue KI-Aufgaben `vehicle_photo` und `vehicle_chat` (`ai.model.*`, Prompts Version 1, gemeinsames
+  JSON-Schema: Fahrzeugwerte, Kosten, Regale je mit Sicherheit, Maßstab, Rückfragen, Antwort).
+  Verbrauch und Kosten laufen über die bestehende KI-Schicht.
+- Ergebnis ist immer ein `vehicle_draft` (Status offen/bestätigt/verworfen). Der Chat schickt den
+  bisherigen Entwurf und den Verlauf mit; die KI gibt den vollständigen, aktualisierten Entwurf zurück.
+  Von Hand korrigierte Werte (Sicherheit 1) überschreibt die KI nie. Rückfragen und Prüffelder: Werte
+  unter `photos.min_confidence` und fehlende Pflichtwerte (Laderaum, Nutzlast, Türmaße); ohne sie lässt
+  sich nicht bestätigen.
+- Bestätigen schreibt Spalten des Fahrzeugs, Kosten als Objekt-Einstellungen (Hierarchie und
+  Protokoll wie überall) und Regale als Module; ein Eintrag im Änderungsprotokoll mit Quelle
+  `vehicle_draft:chat|photo`. Bei Änderungen eines Fahrzeugs werden nur Module geändert oder
+  gelöscht, die kein anderes Fahrzeug nutzt (gemeinsame werden nur abgehängt).
+- Module (`vehicle_modules`, Zuordnung `vehicle_module_links`): Regal oder Einbau mit Lage, Maßen,
+  Eigengewicht. `app/fleet/layout.py` liefert eigene Regale (bisheriger Regal-Editor bleibt) plus
+  Module für Packer (Regale als Ebenen, Einbauten als Hindernisse, Nutzlast minus Eigengewicht) und
+  Tourenplanung (Fläche).
+- Zugfahrzeug + Anhänger: Kombination über das Standard-Anhängerfeld des Zugfahrzeugs; ein Anhänger
+  kann mehreren Zugfahrzeugen zugeordnet sein, die Planung nutzt ihn je Tag einmal.
+- Das Testmodell erkennt bekannte Modelle (Werte mit Sicherheit 0,5), genannte Maße/Nutzlast/
+  Kennzeichen/Kosten/Regale (0,9) und nutzt beim Foto den lokalen A4-Maßstab (Breite/Höhe 0,45,
+  Länge von der Tür aus nur geschätzt 0,2).
+- Bewertungswerkzeug: Testsätze haben eine KI-Funktion (`photo_analysis`, `vehicle_photo`,
+  `vehicle_chat`) und Einträge optional mit Text; ein Testsatz „Fahrzeug per Chat – Beispiele“ wird
+  angelegt (Foto-Testsätze brauchen echte Fotos und legt der Admin an).
