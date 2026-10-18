@@ -39,6 +39,7 @@ AI_FUNCTIONS = (
     "support_agent",
     "vehicle_photo",
     "vehicle_chat",
+    "load_layout",
 )
 
 
@@ -388,12 +389,16 @@ SETTINGS: tuple[SettingDef, ...] = (
     _s("planning.pack_retry_limit", "int", 4, "planning", unit="", min=0, max=20),
     _s("planning.capacity_shrink", "float", 0.9, "planning", unit="×", min=0.5, max=0.99),
     _s("planning.form_teams", "enum", "auto", "planning", choices=("auto", "fixed")),
+    # staged optimisation: fastest route -> team composition variants -> search experiments -> final
+    _s("planning.strategy", "enum", "staged", "planning", choices=("staged", "single"), important=True),
     _s("planning.team_size_default", "int", 2, "planning", unit="Pers.", min=1, max=8),
     _s("planning.day_preference_eur", "float", 3.0, "planning", unit="€/Tag", min=0, max=1000),
     _s("planning.unit_fixed_eur", "float", 15.0, "planning", unit="€", min=0, max=10000),
     _s("planning.horizon_days", "int", 10, "planning", unit="Tage", min=1, max=90),
     # --- packing --------------------------------------------------------------------
     _s("packing.time_limit_s", "float", 3.0, "packing", unit="s", min=0.2, max=120),
+    # package G: AI proposal as start solution (always checked and improved by the packer)
+    _s("packing.mode", "enum", "rules", "packing", choices=("rules", "ai_start", "compare")),
     _s(
         "packing.sort_rule",
         "enum",

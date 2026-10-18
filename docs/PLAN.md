@@ -116,8 +116,9 @@ abgeschaltet, Tabellen bleiben, Migrationen sind umkehrbar.
 | E | Eigene Kostenpositionen, reine Logistikkosten | abgeschlossen |
 | C | Fahrzeuge per Foto und Chat, Module (Regale, Einbauten, Anhänger) | abgeschlossen (mit Testmodell; echte KI-Tests brauchen einen Schlüssel) |
 | F | Abladezeit per Formel, Graphen, Dashboard | abgeschlossen |
-| G | KI-Ladeanordnung mit Prüfung durch den Packer | offen |
-| H | Checkliste für den Produktinhaber, Rückfrage zu OFFEN Punkt 8 | offen |
+| T | Ergänzung (Wunsch Produktinhaber): mehrstufige Tourenoptimierung | abgeschlossen |
+| G | KI-Ladeanordnung mit Prüfung durch den Packer | abgeschlossen (Standard bleibt „Regeln“, siehe D31) |
+| H | Checkliste für den Produktinhaber, Rückfrage zu OFFEN Punkt 8 | abgeschlossen (Punkt 8 unbeantwortet) |
 
 ### Paket A – Fokus Logistik und schlanke Eingaben
 - Einstellungsgruppe `modules.*` (Ebenen Admin und Betrieb, Standard aus): `modules.storage` (Lager),
@@ -181,6 +182,14 @@ abgeschaltet, Tabellen bleiben, Migrationen sind umkehrbar.
   Entwürfe, nicht einplanbare Aufträge mit Grund, Kosten der Woche, Graphen.
 - *Abnahme:* Abladezeit kommt aus der Formel und ändert sich mit der Pflanzenmenge; Graphen
   funktionieren mit leeren und mit Demodaten.
+
+### Ergänzung T – mehrstufige Tourenoptimierung (Wunsch des Produktinhabers)
+- Rechenzeit in Stufen: schnellste Route über alle Stopps (nur Fahrzeit) als Referenz und als Grundlage
+  für die Teameinteilung, dann Teameinteilungs-Varianten (Faustregel, nach der schnellsten Route,
+  einheitlich 2 bzw. 3 Personen) im Vergleich, dann gezielte Experimente mit anderen Suchverfahren;
+  die beste Variante bekommt die restliche Zeit. Einstellung `planning.strategy` (`staged`/`single`).
+- Keine Experimente über externe Sprachmodelle (OpenRouter), Begründung in `DECISIONS.md` (D30).
+- *Abnahme:* Bericht der Stufen am Plan, beste Variante gewählt, Zeitbudget eingehalten (auch 500 Stopps).
 
 ### Paket G – KI-Ladeanordnung
 - KI-Aufgabe `ai.model.load_layout`: strukturiertes JSON mit Positionen aus Fahrzeuggeometrie,

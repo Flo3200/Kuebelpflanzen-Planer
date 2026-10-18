@@ -816,6 +816,27 @@
         "formula": "aus der Formel",
         "fixed": "feste Minuten"
       }
+    },
+    "planning.strategy": {
+      "label": "Optimierung in Stufen",
+      "help": "In Stufen: erst die schnellste Route über alle Stopps, dann mehrere Teameinteilungen und Suchverfahren im Vergleich; die beste Variante bekommt die restliche Rechenzeit. Einfach: ein einziger Lauf mit der bisherigen Teamregel.",
+      "choices": {
+        "staged": "in Stufen",
+        "single": "ein Lauf"
+      }
+    },
+    "ai.model.load_layout": {
+      "label": "Modell: Ladeanordnung",
+      "help": "KI-Modell, das eine Anordnung der Pflanzen im Laderaum vorschlägt (nur mit Lademodus „KI als Start“ oder „Vergleich“)."
+    },
+    "packing.mode": {
+      "label": "Lademodus",
+      "help": "Regeln: der bewährte Ladeplaner. KI als Start: die KI schlägt eine Anordnung vor, der Ladeplaner prüft jede Regel und verbessert sie. Vergleich: beide rechnen, das bessere Ergebnis gewinnt, beide stehen im Ladeplan. KI-Vorschläge werden nie ungeprüft übernommen. Die Tourenplanung prüft immer mit den Regeln.",
+      "choices": {
+        "rules": "Regeln",
+        "ai_start": "KI als Start",
+        "compare": "Vergleich"
+      }
     }
   },
   "fields": {

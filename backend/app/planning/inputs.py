@@ -348,6 +348,8 @@ def form_units(
     team_size_override: int | None = None,
     issues: list[dict[str, Any]] | None = None,
     names: dict[str, str] | None = None,
+    sizes_override: list[int] | None = None,
+    strict_sizes: bool = False,
 ) -> list[Unit]:
     """issues collects fixed teams that cannot work today (with reason); names: staff/vehicle names."""
     max_size = int(r.get("team.max_size"))
@@ -470,7 +472,14 @@ def form_units(
         sizes[0] = big
         while sum(sizes) > len(staff) and len(sizes) > 1:
             sizes.pop()
-    leftover = len(staff) - sum(sizes)
+    if sizes_override:
+        # staged optimisation: team sizes after the trips of the fastest route (biggest first)
+        sizes = [max(1, min(max_size, int(x))) for x in sizes_override][: len(vehs)]
+        while sum(sizes) > len(staff) and len(sizes) > 1:
+            sizes.pop()
+    # the rule spreads the remaining staff over the teams; strict variants of the staged optimisation
+    # keep the given sizes (the other people stay at the nursery: lower labour costs)
+    leftover = 0 if (strict_sizes or sizes_override) else len(staff) - sum(sizes)
     i = 0
     while leftover > 0 and sizes:
         if sizes[i % len(sizes)] < max_size:
@@ -545,29 +554,17 @@ def frost_safe_from(r: SettingsResolver, plants: list[Plant], first_day: date, e
         return None
 
 
-def build_input(
+def _build_stops(
     db: Session,
+    r: SettingsResolver,
+    est: Estimator,
     tenant_id: uuid.UUID,
-    start_date: date,
-    days: int,
-    direction: str = "pickup",
-    order_ids: list[uuid.UUID] | None = None,
-    scenario: dict[str, Any] | None = None,
-    pins: dict[str, str] | None = None,
-    forced_units: list[dict[str, Any]] | None = None,
-) -> PlanningInput:
-    """forced_units: snapshots of units that must exist again (fixed tours): date, vehicle, members."""
-    scenario = scenario or {}
-    r = SettingsResolver(db, tenant_id)
-    est = Estimator(db, tenant_id)
-    from app.models.core import Tenant
-
-    tenant = db.get(Tenant, tenant_id)
-    depot = (tenant.depot_lat or 48.78, tenant.depot_lon or 9.18)
-    days = max(1, days + int(scenario.get("days_delta", 0)))
-    dates = [start_date + timedelta(days=i) for i in range(days)]
-
-    # ---- stops
+    dates: list[date],
+    direction: str,
+    order_ids: list[uuid.UUID] | None,
+    pins: dict[str, str] | None,
+) -> tuple[list[StopIn], list[dict[str, Any]]]:
+    """Stops (orders with plants, time windows, allowed days) – independent of the teams."""
     q = select(PickupOrder).where(
         PickupOrder.tenant_id == tenant_id,
         PickupOrder.deleted_at.is_(None),
@@ -681,6 +678,39 @@ def build_input(
         if pins and stop.id in pins:
             stop.pinned_unit = pins[stop.id]
         stops.append(stop)
+
+    return stops, unplannable
+
+
+def build_input(
+    db: Session,
+    tenant_id: uuid.UUID,
+    start_date: date,
+    days: int,
+    direction: str = "pickup",
+    order_ids: list[uuid.UUID] | None = None,
+    scenario: dict[str, Any] | None = None,
+    pins: dict[str, str] | None = None,
+    forced_units: list[dict[str, Any]] | None = None,
+    reuse: PlanningInput | None = None,
+) -> PlanningInput:
+    """forced_units: snapshots of units that must exist again (fixed tours): date, vehicle, members.
+    reuse: an input of the same run whose stops are taken over (only the units are formed again)."""
+    scenario = scenario or {}
+    r = SettingsResolver(db, tenant_id)
+    est = reuse.estimator if reuse is not None else Estimator(db, tenant_id)
+    from app.models.core import Tenant
+
+    tenant = db.get(Tenant, tenant_id)
+    depot = (tenant.depot_lat or 48.78, tenant.depot_lon or 9.18)
+    days = max(1, days + int(scenario.get("days_delta", 0)))
+    dates = [start_date + timedelta(days=i) for i in range(days)]
+
+    # ---- stops (reused by team variants of the staged optimisation)
+    if reuse is not None:
+        est, stops, unplannable = reuse.estimator, reuse.stops, [dict(u) for u in reuse.unplannable]
+    else:
+        stops, unplannable = _build_stops(db, r, est, tenant_id, dates, direction, order_ids, pins)
 
     # ---- resources
     all_eq = list(
@@ -832,6 +862,8 @@ def build_input(
             scenario.get("team_size"),
             issues=team_issues if mode == "fixed" else None,
             names=names,
+            sizes_override=(scenario.get("day_team_sizes") or {}).get(day.isoformat()),
+            strict_sizes=bool(scenario.get("strict_team_size")),
         )
     if direction == "pickup" and units:
         # package F: the solver works with the unloading time of a typical full trip of each team;
@@ -844,6 +876,7 @@ def build_input(
         weights = [avg_w] * max(1, round(per_stop * typical))
         for u in units:
             u.unload_min = um.minutes(weights, u.team_size, n_stops=typical, vehicle_id=u.vehicle.id)
+    tw_mode = r.get("planning.time_windows")
     settings = {
         "skip_penalty": float(r.get("planning.skip_penalty")),
         "allow_over_limit": bool(r.get("team.plan_over_limit")),

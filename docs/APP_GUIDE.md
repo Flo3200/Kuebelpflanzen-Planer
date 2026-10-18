@@ -179,6 +179,16 @@ Hilfsmittel, unverträgliche Pflanzen, fixierte Touren. Stopps, die nicht passen
 Grund. Touren lassen sich verschieben (Zeitachse) und fixieren; bei Stornierung oder Ausfall
 zeigt die App „Neu planen“. **Szenarien** vergleichen z. B. „+1 Person“ oder „+1 Fahrzeug“.
 
+### Optimierung in Stufen
+
+Mit `planning.strategy = staged` (Standard) nutzt die Planung ihre Rechenzeit in Stufen: (1) die
+schnellste Route über alle Stopps, nur nach Fahrzeit – als Referenz und um zu sehen, welche Fahrt wie
+viele Personen braucht; (2) mehrere Teameinteilungen im Vergleich (bisherige Faustregel, Teams nach
+der schnellsten Route, alle Teams mit 2 bzw. 3 Personen); (3) gezielte Experimente mit anderen
+Suchverfahren; (4) die beste Variante bekommt die restliche Zeit. Unter „So wurde optimiert“ zeigt
+jeder Plan die Stufen mit Kosten, nicht eingeplanten Aufträgen und Tagen. Mit festen Teams gibt es
+nur eine Teameinteilung; Szenarien rechnen in einem Lauf, damit sie vergleichbar bleiben.
+
 ### Feste Teams
 
 Unter „Teams“ legt der Betrieb feste Teams an: Mitglieder, Standard-Fahrzeug, Einsatztage
@@ -207,6 +217,12 @@ Für jede Tour wird ein Ladeplan berechnet: Töpfe sind starr, Kronen dürfen si
 Achslasten und Stützlast werden beachtet. Die Ladereihenfolge folgt der Tour: bei der Abholung
 steht, was zuerst eingeladen wird, ganz hinten. Passt eine Tour nicht, plant die Tourenplanung
 neu oder nennt Pflanze und Grund. Ansicht: Draufsicht, 3D und Schritt für Schritt.
+
+**KI-Ladeanordnung** (`packing.mode`): Mit „KI als Start“ schlägt die KI eine Anordnung vor
+(`ai.model.load_layout`); der Ladeplaner prüft jede Position gegen alle Regeln, übernimmt nur gültige
+und verbessert danach weiter. „Vergleich“ rechnet beides und nimmt das bessere Ergebnis; der Ladeplan
+zeigt beide Werte. Standard ist „Regeln“. Die Prüfung während der Tourenplanung ist immer
+regelbasiert.
 
 ## Rücklieferung im Frühjahr
 

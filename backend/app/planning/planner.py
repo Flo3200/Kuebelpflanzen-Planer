@@ -18,6 +18,7 @@ from app.models.planning import Plan, Tour, TourStop
 from app.planning.hints import explain, team_issue_overview
 from app.planning.inputs import PlanningInput, build_input, plant_weight
 from app.planning.solver import SolvedTrip, SolveResult, solve
+from app.planning.staged import run_stages, score
 from app.routing.provider import cached_matrix
 from app.settings.service import SettingsResolver
 from app.timemodel.costitems import allocate_to_stops
@@ -108,6 +109,37 @@ def run_plan(
     inp.stops = [s for s in inp.stops if s.id not in kept_orders]
     if plan.options.get("time_limit_s"):
         inp.settings["time_limit_s"] = float(plan.options["time_limit_s"])
+    # staged optimisation (fastest route -> team variants -> search experiments -> final run);
+    # scenario plans keep one run so that their variants stay comparable
+    stage_res, stages = None, None
+    r0 = SettingsResolver(db, plan.tenant_id)
+    if r0.get("planning.strategy") == "staged" and plan.kind == "plan" and not plan.options.get("single_run"):
+        base = inp
+
+        def rebuild(extra: dict[str, Any]) -> PlanningInput:
+            x = build_input(
+                db,
+                plan.tenant_id,
+                start,
+                max(1, days),
+                plan.direction,
+                order_ids=order_ids,
+                scenario={**(plan.scenario or {}), **extra},
+                pins=pins,
+                forced_units=forced_units,
+                reuse=base,
+            )
+            x.settings["time_limit_s"] = base.settings["time_limit_s"]
+            return x
+
+        inp, stage_res, stages = run_stages(
+            db,
+            base,
+            rebuild,
+            progress,
+            max_size=int(r0.get("team.max_size")),
+            staff_count=len(base.staff_ids),
+        )
     pack_check = (
         pack_check
         if pack_check is not None
@@ -127,6 +159,13 @@ def run_plan(
         progress(0.15 + 0.6 * min(attempts, 4) / 5, "Touren werden optimiert …")
         last_round = attempts >= inp.settings["pack_retry_limit"]
         res = solve(inp, db, cap_scale, forbidden, forbidden_assign)
+        if attempts == 0 and stage_res is not None and stages is not None:
+            # a stage result may be better than the final run (both on the same units and stops)
+            final_obj, stage_obj = score(inp, res)["objective"], score(inp, stage_res)["objective"]
+            stages["final_objective"] = final_obj
+            if stage_obj < final_obj:
+                res = stage_res
+                stages["used_stage_result"] = True
         # incompatible plants on the same unit -> forbid the pair and solve again
         violations = set()
         by_unit: dict[str, set[str]] = defaultdict(set)
@@ -193,6 +232,7 @@ def run_plan(
         "forbidden_pairs": len(forbidden),
         "forbidden_assignments": len(forbidden_assign),
         "team_mode": inp.team_mode,
+        "stages": stages,
         # fixed teams that could not work on some days (warnings, never errors)
         "team_issues": team_issue_overview(inp),
     }

@@ -1026,7 +1026,34 @@
       "team_vehicle_replaced": "Team {team} fährt am {days} mit {names}, weil das Standard-Fahrzeug nicht frei ist"
     },
     "unload_window": "Abladen am Betrieb {from}–{to} ({m} min)",
-    "load_window": "Beladen am Betrieb {from}–{to} ({m} min)"
+    "load_window": "Beladen am Betrieb {from}–{to} ({m} min)",
+    "stages": {
+      "title": "So wurde optimiert",
+      "summary": "gewählt: {variant}, Suchverfahren {search}",
+      "help": "Vor dem eigentlichen Lauf wird ein Teil der Rechenzeit in Stufen genutzt: zuerst die schnellste Route über alle Stopps, dann Teameinteilungen im Vergleich, dann gezielte Experimente mit anderen Suchverfahren. Eine andere Variante als die Faustregel wird nur genommen, wenn sie spürbar besser ist. Bewertet wird wie in der Planung: Kosten, nicht eingeplante Aufträge und spätere Tage.",
+      "fastest": "Schnellste Route (nur Fahrzeit, als Referenz): {n} Stopps, {h} h Fahrt, {km} km. Fertiger Plan: {m} Stopps, {final} h Fahrt.",
+      "variant": "Teameinteilung",
+      "cost": "Kosten",
+      "unassigned": "nicht eingeplant",
+      "days": "Tage",
+      "teams": "Teamgrößen je Tag",
+      "chosen": "gewählt",
+      "no_units": "keine Teams möglich",
+      "open": "offen",
+      "search": "Experimente mit anderen Suchverfahren: {list}.",
+      "used_stage": "Das Ergebnis einer Stufe war besser als der letzte Lauf und wurde übernommen.",
+      "variants": {
+        "rule": "Faustregel (alle verfügbaren Personen im Einsatz)",
+        "route_based": "nach der schnellsten Route (nur benötigte Personen)",
+        "size_2": "Teams mit 2 Personen (übrige bleiben im Betrieb)",
+        "size_3": "Teams mit 3 Personen (übrige bleiben im Betrieb)"
+      },
+      "search_methods": {
+        "GUIDED_LOCAL_SEARCH": "Geführte lokale Suche",
+        "TABU_SEARCH": "Tabu-Suche",
+        "SIMULATED_ANNEALING": "Simuliertes Abkühlen"
+      }
+    }
   },
   "scenarios": {
     "description": "Rechnen Sie Varianten eines Plans und vergleichen Sie Dauer, Kosten und Grenzkosten zusätzlicher Ressourcen.",
@@ -1124,7 +1151,21 @@
       "sensitive_behind_heavy": "empfindliche Pflanze direkt vor schwerem Topf",
       "order_blocked": "Ladereihenfolge: Pflanze steht im Weg"
     },
-    "labels": "QR-Etiketten (PDF)"
+    "labels": "QR-Etiketten (PDF)",
+    "ai": {
+      "title": "KI-Ladeanordnung",
+      "error": "Die KI war nicht erreichbar; der Ladeplan kommt aus den Regeln.",
+      "start": "{model} hat eine Anordnung vorgeschlagen; {valid} von {n} Positionen hielten alle Regeln ein und waren der Start. Der Ladeplaner hat danach weiter verbessert.",
+      "rules": "Regeln",
+      "ai_start": "KI als Start",
+      "ok": "in Ordnung",
+      "unplaced": "passt nicht",
+      "violations": "Hinweise",
+      "score": "Punkte (weniger ist besser)",
+      "time": "Zeit",
+      "winner": "Übernommen: {w}.",
+      "checked": "KI-Vorschläge werden nie ungeprüft übernommen: jede Position wird gegen alle Laderegeln geprüft."
+    }
   },
   "driverapp": {
     "title": "Fahrer-App",

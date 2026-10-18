@@ -387,3 +387,37 @@ Team, Abladefenster je Tour und Graphen mit leeren und echten Daten, Fahrer-Erei
 Lernen der Formel); `make check` grün (142 Backend-, 9 Frontend-Tests). **Abnahme:** erfüllt – die
 Abladezeit kommt aus der Formel und ändert sich mit der Pflanzenmenge, die Graphen funktionieren mit
 leeren und mit Demodaten (im Browser geprüft).
+
+## Verbesserungsrunde – Ergänzung T: mehrstufige Tourenoptimierung (2026-10-18)
+
+**Umgesetzt (Wunsch des Produktinhabers)**
+- Einstellung „Optimierung in Stufen“ (Standard): erst die schnellste Route über alle Stopps (nur
+  Fahrzeit), dann Teameinteilungen im Vergleich (Faustregel, nach der schnellsten Route, alle mit 2
+  bzw. 3 Personen), dann andere Suchverfahren; der letzte Lauf behält das volle Zeitbudget.
+- Planungsseite „So wurde optimiert“: Fahrzeit der schnellsten Route gegenüber dem Plan, Varianten
+  mit Kosten, nicht eingeplanten Aufträgen, Tagen und Teamgrößen, Experimente.
+- Gemessen auf Demodaten: gleiche Kosten wie ein Lauf (die bisherige Faustregel war jedes Mal die
+  beste Teameinteilung), nie schlechter, Rechenzeit etwa 1,5-fach (Tabelle in `DECISIONS.md`, D30).
+- Nicht umgesetzt: Experimente über Sprachmodelle (OpenRouter) – Datenschutz, Qualität,
+  Verfügbarkeit (D30).
+
+**Tests:** 2 neue Tests (`test_staged.py`); 500-Stopp-Leistungstest weiterhin grün.
+
+## Verbesserungsrunde – Paket G: KI-Ladeanordnung (2026-10-18)
+
+**Umgesetzt**
+- KI-Aufgabe „Ladeanordnung“ (`ai.model.load_layout`, Prompt Version 1, Testmodell ohne Schlüssel).
+- Lademodus „Regeln“ (Standard), „KI als Start“, „Vergleich“; der Ladeplaner prüft jede
+  vorgeschlagene Position und verbessert weiter; der Ladeplan zeigt, wie viele Positionen gültig
+  waren, und im Vergleich beide Ergebnisse.
+- Vergleichsbericht in `DECISIONS.md` (D31): auf 10 Demo-Touren gleich viele gültige Pläne und
+  Hinweise, Testmodell-Start im Mittel 7 % bessere Punktzahl; Standard bleibt „Regeln“, bis ein
+  echtes Modell mit Schlüssel getestet ist.
+
+**Tests:** 3 neue Tests (`test_packing_ai.py`: Start wird geprüft und ist gültig, ein unsinniger
+Vorschlag wird nie ungeprüft übernommen, Modi „KI als Start“ und „Vergleich“ an einer Demo-Tour).
+
+## Fehlerbehebung: seltene Abstürze der Tourenplanung (2026-10-18)
+- Die Pausenregel übergab OR-Tools die Servicezeiten nach Knoten statt nach internem Index; OR-Tools
+  las dadurch über das Listenende hinaus (falsche Pausenlage, gelegentlich Absturz des Servers).
+  Behoben (D32).

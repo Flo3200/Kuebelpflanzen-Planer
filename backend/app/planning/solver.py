@@ -299,17 +299,25 @@ def _solve_group(
 
     # ---- cost: distance per unit (cents); time costs via span cost
     cost_cb: dict[float, int] = {}
+    fastest = st.get("objective_mode") == "fastest"  # staged optimisation, stage 1: driving time only
     for k, u in enumerate(units):
-        rate = round(u.cost_km * st["w_vehicle"] * 100, 4)
-        if rate not in cost_cb:
-            m = [[int(round(dist[i][j] * rate)) for j in range(N)] for i in range(N)]
-            cost_cb[rate] = routing.RegisterTransitMatrix(m)
-        routing.SetArcCostEvaluatorOfVehicle(cost_cb[rate], k)
-        span = (u.labour_cost_min * st["w_labour"] + u.vehicle_cost_min * st["w_vehicle"]) * 100
-        tdim.SetSpanCostCoefficientForVehicle(max(1, int(round(span))), k)
-        routing.SetFixedCostOfVehicle(
-            int(round((st["unit_fixed"] + u.day_index * st["day_preference"]) * 100)), k
-        )
+        if fastest:
+            rate = round(1 / u.drive_factor, 4)
+            if rate not in cost_cb:
+                m = [[int(round(travel[i][j] * rate * 100)) for j in range(N)] for i in range(N)]
+                cost_cb[rate] = routing.RegisterTransitMatrix(m)
+            routing.SetArcCostEvaluatorOfVehicle(cost_cb[rate], k)
+        else:
+            rate = round(u.cost_km * st["w_vehicle"] * 100, 4)
+            if rate not in cost_cb:
+                m = [[int(round(dist[i][j] * rate)) for j in range(N)] for i in range(N)]
+                cost_cb[rate] = routing.RegisterTransitMatrix(m)
+            routing.SetArcCostEvaluatorOfVehicle(cost_cb[rate], k)
+            span = (u.labour_cost_min * st["w_labour"] + u.vehicle_cost_min * st["w_vehicle"]) * 100
+            tdim.SetSpanCostCoefficientForVehicle(max(1, int(round(span))), k)
+            routing.SetFixedCostOfVehicle(
+                int(round((st["unit_fixed"] + u.day_index * st["day_preference"]) * 100)), k
+            )
         start, end = routing.Start(k), routing.End(k)
         tdim.CumulVar(start).SetRange(u.start, u.end)
         tdim.CumulVar(end).SetMax(u.hard_end)
@@ -320,12 +328,18 @@ def _solve_group(
 
     # ---- breaks (Working Time Act): one break between 3 h and 6 h after the start of work;
     # the solver places it between visits (or after the end of a short day)
+    # OR-Tools reads the visit transits by solver *index* (incl. the start and end index of every
+    # vehicle), not by node: the list must cover every index, otherwise it reads past its end
+    # (wrong break times, occasionally a segmentation fault).
+    n_index = routing.Size() + routing.vehicles()
+    index_node = [manager.IndexToNode(i) for i in range(n_index)]
     for k, u in enumerate(units):
         if u.break_min > 0:
             interval = solver.FixedDurationIntervalVar(
                 u.start + 180, u.start + 360, int(u.break_min), False, f"break-{k}"
             )
-            tdim.SetBreakIntervalsOfVehicle([interval], k, [ceil_min(x) for x in service_of[k]])
+            svc = service_of[k]
+            tdim.SetBreakIntervalsOfVehicle([interval], k, [ceil_min(svc[node]) for node in index_node])
 
     # ---- customer time windows
     for i, s in enumerate(stops, start=1):

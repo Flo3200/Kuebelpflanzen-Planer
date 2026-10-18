@@ -288,9 +288,7 @@ erscheinen nur mit dem Modul. Nichts wurde gelöscht.
   anderen freien Fahrzeug, das jemand im Team fahren darf (Hinweis „vehicle_replaced“, kein Ausfall).
 - Der Verfügbarkeitskalender bewertet Teams je Tag mit denselben Regeln (ohne Solver).
 - Beobachtung: Ein einzelner Testlauf brach mit einem Segmentation fault in OR-Tools
-  (`SolveWithParameters`) bei einer gewöhnlichen Planung ab; zwei Wiederholungen der Planungstests
-  und der folgende Gesamtlauf liefen fehlerfrei. Ursache liegt in der nativen Bibliothek, nicht im
-  Modell; bei erneutem Auftreten OR-Tools-Version prüfen.
+  (`SolveWithParameters`) ab. Ursache gefunden und behoben, siehe D32.
 
 ## D27 – Eigene Kostenpositionen
 - Tabelle `cost_items` (Name, Betrag, Bezug, optional Fahrzeug **oder** Person; ohne = ganzer
@@ -354,3 +352,88 @@ erscheinen nur mit dem Modul. Nichts wurde gelöscht.
   Pflanze sind getrennte Graphen.
 - Genauigkeit: mittlere absolute prozentuale Abweichung je Kalenderwoche der letzten 12 Monate; ohne
   gespeicherte Schätzung (Import, synthetisch) wird mit der aktuellen Formel geschätzt.
+
+## D30 – Mehrstufige Tourenoptimierung, keine LLM-Experimente
+- Wunsch des Produktinhabers: erst die schnellste Route, dann Teameinteilung und gezielte
+  Experimente. Umgesetzt in `app/planning/staged.py`: Vor dem gewohnten Lauf (der sein volles
+  Zeitbudget `planning.time_limit_s` behält) laufen Stufen mit etwa dem halben Budget: schnellste
+  Route ≈ 10 % (Kostenfunktion nur Fahrzeit, keine Lohn-, Fix- oder Tageskosten), Teamvarianten
+  ≈ 30 %, Suchverfahren ≈ 10 % (nur bis `planning.cluster_max_stops`). Ein Plan rechnet damit etwa
+  1,5-mal so lange.
+- Die Teameinteilung ist der variabelste Hebel: Sie wird vor dem Solver festgelegt und der Solver
+  kann sie nicht ändern. Varianten: bisherige Faustregel, „nach der schnellsten Route“ (je Tag die
+  Personenzahl, die die Fahrten der schnellsten Route brauchen), einheitlich 2 und 3 Personen. Bei
+  großen Plänen nur die ersten beiden. Bewertung mit der Zielfunktion der Planung (Kosten mit
+  Gewichten, Fix- und Tageskosten, Strafe für nicht eingeplante Aufträge). Eine andere Variante als
+  die Faustregel wird nur genommen, wenn sie mindestens 3 % besser ist, ein anderes Suchverfahren
+  ab 2 %: Kurze Probeläufe streuen (schon ein einzelner 20-s-Lauf schwankt um etwa 2,5 %).
+- Varianten „2 Personen“/„3 Personen“ und „nach der schnellsten Route“ nutzen genau die genannte
+  Größe (übrige Personen bleiben im Betrieb); die Faustregel verteilt alle verfügbaren Personen.
+- Messung (Demo-Betriebe, 20 s Budget, Kosten des fertigen Plans, nach der Korrektur D32):
+
+  | Betrieb | ein Lauf | in Stufen | gewählt | eingeplant |
+  |---|---|---|---|---|
+  | Grünfink, 100 Aufträge | 2.959,67 € | 2.959,67 € | Faustregel | 44 / 44 |
+  | Lindenhof, 80 Aufträge | 2.278,12 € | 2.278,12 € | Faustregel | 40 / 40 |
+  | Grünfink, 120 Aufträge | 3.870,56 € | 3.870,56 € | Faustregel | 53 / 53 |
+
+  Weniger Personen je Team ließen 25–40 % mehr Aufträge liegen, „nach der schnellsten Route“ lag
+  0,1–0,3 % über der Faustregel. Frühere Läufe schwankten um etwa 2,5 % – zum Teil wegen D32 (der
+  Solver las zufällige Speicherwerte); seitdem rechnet er reproduzierbar. Eine erste Fassung mit
+  geteiltem Budget war in 2 von 3 Fällen teurer und wurde auf „Stufen zusätzlich“ umgestellt.
+  Ergebnis: Auf diesen Daten bringen die Stufen keinen Gewinn, schaden aber nie und legen offen, wie
+  optimiert wurde; sie kosten etwa 50 % mehr Rechenzeit (500-Stopp-Test 102 s bei 60 s Budget).
+  Standard bleibt `staged` (Wunsch des Produktinhabers), `single` spart Rechenzeit. Die Teameinteilung
+  ist ein starker Hebel, die bisherige Faustregel ist auf den Demodaten aber schon die beste Wahl.
+- Stopps werden nur einmal aufbereitet (`build_input(reuse=…)`), Teamvarianten bilden nur die
+  Einheiten neu. Ist ein Stufenergebnis besser als der letzte Lauf (gleiche Einheiten), wird es
+  genommen. Szenarien und Neuplanungen von Szenarien rechnen in einem Lauf.
+- **Nicht umgesetzt: Experimente über Sprachmodelle (z. B. kostenlos über OpenRouter).** Gründe:
+  (1) Datenschutz – Kundenadressen und Auftragsdaten gingen an kostenlose Modelle, deren Anbieter
+  Eingaben oft speichern oder zum Training nutzen; ohne Auftragsverarbeitungsvertrag nicht zulässig.
+  (2) Qualität – Sprachmodelle lösen diese Kombinatorik deutlich schlechter als OR-Tools; sinnvolle
+  Experimente sind solche, die der Optimierer selbst rechnet. (3) Verfügbarkeit – Gratis-Modelle
+  sind stark gedrosselt und wechseln häufig. Ein OpenRouter-Anschluss für die KI-Schicht wäre als
+  eigener Anbieter möglich, ist aber nicht Teil dieser Runde.
+
+## D31 – KI-Ladeanordnung: Vergleichsbericht
+- Neue KI-Aufgabe `load_layout` (Prompt Version 1): Ladereihenfolge, Ausrichtung und Position je
+  Pflanze als JSON. `app/packing/ai_layout.py` macht daraus eine Startlösung (`StartLayout`): Die
+  Reihenfolge der Stopps bleibt Regel, jede vorgeschlagene Position wird mit allen Prüfungen des
+  Packers (`_valid`) getestet und nur dann übernommen; danach sucht das Simulated Annealing frei weiter
+  und behält den Start nur, solange nichts Besseres gefunden wird. KI-Vorschläge werden nie
+  ungeprüft übernommen.
+- `packing.mode`: `rules` (Standard), `ai_start`, `compare` (beide rechnen, gültig vor mehr
+  platzierten Pflanzen vor niedrigerer Punktzahl; beide Ergebnisse im Ladeplan). Die Prüfungen
+  während der Tourenplanung bleiben immer regelbasiert (schnell, keine KI-Kosten je Fahrt). Ist die
+  KI nicht erreichbar, entscheiden die Regeln (`ai_error` im Ladeplan).
+- Vergleich auf 10 Touren zweier Demo-Betriebe (2 s je Tour, Testmodell ohne Schlüssel):
+
+  | | Regeln | KI als Start (Testmodell) |
+  |---|---|---|
+  | gültige Ladepläne | 10 / 10 | 10 / 10 |
+  | nicht platziert | 0 | 0 |
+  | Hinweise (weiche Verstöße) | 14 | 14 |
+  | mittlere Punktzahl (weniger ist besser) | 203,1 | 188,2 |
+  | mittlere Rechenzeit | 0,55 s | 0,52 s |
+  | KI-Kosten | – | 0 € |
+  | besser auf Touren | 1 | 3 (6 gleich) |
+
+  Der Vorteil entsteht bei großen Touren (über 20 Pflanzen), wo der Packer in 2 s nur 2–3
+  Verbesserungsschritte schafft; dort zählt der Start. Er stammt hier vom Testmodell (Reihen nach
+  Ladereihenfolge, schwere zuerst, Platz für die Krone), nicht von einer echten KI; von seinen
+  Positionen hielten je Tour 1–23 alle Regeln ein und wurden übernommen. Entscheidung: Standard bleibt
+  `rules`. Mit API-Schlüssel denselben Vergleich mit einem echten Modell wiederholen; nur wenn er
+  messbar besser ist (gleich viele gültige Pläne, niedrigere Punktzahl, vertretbare Kosten und
+  Zeit), auf `ai_start` umstellen. Unabhängig davon könnte die Reihenfolge „schwere zuerst je Stopp“
+  als zusätzlicher Start der Regeln getestet werden.
+
+## D32 – Fehlerbehebung: Pausen im Solver (Absturz)
+- Seltene Abstürze (Segmentation fault) bei der Tourenplanung kamen aus der Pausenlogik von
+  OR-Tools (`FillPrePostVisitValues`, laut macOS-Absturzbericht). `SetBreakIntervalsOfVehicle(breaks,
+  vehicle, node_visit_transits)` liest die Liste nach dem **internen Index** (`pre_travel(i, j) =
+  node_visit_transit[i]`), einschließlich der Start- und Endindizes aller Fahrzeuge. Übergeben wurde
+  eine Liste nach Knoten: Sie war zu kurz (Lesen über das Ende hinaus – falsche Werte, gelegentlich
+  Absturz) und um einen Platz verschoben (Pausen orientierten sich an der Servicezeit des falschen
+  Stopps). Jetzt wird die Liste über alle Indizes mit `IndexToNode` gebaut. Der Fehler bestand seit
+  Phase 4; die mehrstufige Optimierung machte ihn durch mehr Solver-Läufe sichtbarer.

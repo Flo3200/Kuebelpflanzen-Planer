@@ -209,6 +209,67 @@ function NewPlanModal({ onClose, onCreated }: { onClose: () => void; onCreated: 
   );
 }
 
+/** How the plan was optimised (staged strategy): fastest route, team variants, search experiments. */
+function StagesReport({ stages, drive, planned }: { stages: any; drive: number | undefined; planned: number | undefined }) {
+  if (!stages || stages.skipped || !stages.variants) return null;
+  const sizes = (v: any) =>
+    Object.entries(v.team_sizes ?? {})
+      .slice(0, 3)
+      .map(([d, s]: [string, any]) => `${fmtDate(d).slice(0, 6)} ${s.join("+")}`)
+      .join(" · ");
+  return (
+    <details className="card" style={{ marginTop: 16 }}>
+      <summary style={{ cursor: "pointer" }}>
+        <strong>{t("planning.stages.title")}</strong>
+        <span className="small muted">
+          {" "}
+          · {t("planning.stages.summary", { variant: t(`planning.stages.variants.${stages.chosen}`), search: tMaybe(`planning.stages.search_methods.${stages.chosen_search}`) ?? stages.chosen_search })}
+        </span>
+      </summary>
+      <div className="stack" style={{ marginTop: 12 }}>
+        <p className="small muted">{t("planning.stages.help")}</p>
+        <p className="small">
+          {t("planning.stages.fastest", { h: fmtNumber((stages.fastest?.drive_min ?? 0) / 60, 1), km: fmtNumber(stages.fastest?.distance_km), n: stages.fastest?.stops ?? "–", final: fmtNumber(drive, 1), m: planned ?? "–" })}
+        </p>
+        <div className="table-wrap">
+          <table className="table">
+            <thead>
+              <tr>
+                <th>{t("planning.stages.variant")}</th>
+                <th className="num">{t("planning.stages.cost")}</th>
+                <th className="num">{t("planning.stages.unassigned")}</th>
+                <th className="num">{t("planning.stages.days")}</th>
+                <th>{t("planning.stages.teams")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {stages.variants.map((v: any) => (
+                <tr key={v.key} style={v.key === stages.chosen ? { fontWeight: 600 } : undefined}>
+                  <td>
+                    {t(`planning.stages.variants.${v.key}`)} {v.key === stages.chosen && <Badge tone="green">{t("planning.stages.chosen")}</Badge>}
+                  </td>
+                  <td className="num">{v.cost != null ? fmtMoney(v.cost) : "–"}</td>
+                  <td className="num">{v.unassigned ?? "–"}</td>
+                  <td className="num">{v.days ?? "–"}</td>
+                  <td className="small muted">{v.skipped ? t("planning.stages.no_units") : sizes(v)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {(stages.search ?? []).length > 0 && (
+          <p className="small muted">
+            {t("planning.stages.search", {
+              list: stages.search.map((s: any) => `${tMaybe(`planning.stages.search_methods.${s.metaheuristic}`) ?? s.metaheuristic}: ${fmtMoney(s.cost)}, ${s.unassigned} ${t("planning.stages.open")}`).join(" · "),
+            })}
+            {stages.used_stage_result ? ` ${t("planning.stages.used_stage")}` : ""}
+          </p>
+        )}
+      </div>
+    </details>
+  );
+}
+
 function PlanView({ plan, tab, setTab, onChange }: { plan: any; tab: any; setTab: (t: any) => void; onChange: () => void }) {
   const k = plan.kpis ?? {};
   return (
@@ -219,6 +280,7 @@ function PlanView({ plan, tab, setTab, onChange }: { plan: any; tab: any; setTab
         <Kpi label={t("planning.kpi_cost")} value={fmtMoney(k.total_cost)} sub={k.cost_per_plant != null ? t("planning.kpi_cost_plant", { c: fmtMoney(k.cost_per_plant) }) : undefined} />
         <Kpi label={t("planning.kpi_utilisation")} value={k.utilisation_pct != null ? `${fmtNumber(k.utilisation_pct)} %` : "–"} sub={t("planning.kpi_km", { km: fmtNumber(k.distance_km), ot: fmtMinutes(k.overtime_min) })} />
       </div>
+      <StagesReport stages={plan.solver?.stages} drive={k.drive_hours} planned={k.stops_planned} />
       <Tabs
         value={tab}
         onChange={setTab}
