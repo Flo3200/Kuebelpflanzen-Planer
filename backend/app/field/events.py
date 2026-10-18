@@ -165,7 +165,53 @@ def apply_event(db: Session, actor: Actor, raw: dict[str, Any], settings: Settin
         tour.status = "done"
     if stop is not None and kind in ("loaded", "delivered", "leave"):
         build_measurement(db, tour, stop)
+    if kind == "unload_done":
+        build_unload_measurement(db, tour, ev)
     return ev
+
+
+def build_unload_measurement(db: Session, tour: Tour, done: TourEvent) -> None:
+    """Unloading begins -> finished at the depot = one measurement for the formula "unload"."""
+    from app.models.field import UnloadMeasurement
+    from app.planning.inputs import plant_weight
+    from app.timemodel.estimate import Estimator
+
+    start = db.scalar(
+        select(TourEvent)
+        .where(
+            TourEvent.tour_id == tour.id,
+            TourEvent.kind == "unload_start",
+            TourEvent.voided.is_(False),
+            TourEvent.at <= done.at,
+        )
+        .order_by(TourEvent.at.desc())
+        .limit(1)
+    )
+    if start is None:
+        return
+    minutes = (done.at - start.at).total_seconds() / 60
+    if minutes <= 0 or minutes > 6 * 60:
+        return
+    est = Estimator(db, tour.tenant_id)
+    weights: list[float] = []
+    stops = list(db.scalars(select(TourStop).where(TourStop.tour_id == tour.id)))
+    for st in stops:
+        order = db.get(PickupOrder, st.order_id)
+        if order is not None:
+            weights += [plant_weight(p) for p in est.plants_of(order)]
+    m = db.scalar(select(UnloadMeasurement).where(UnloadMeasurement.tour_id == tour.id))
+    if m is None:
+        m = UnloadMeasurement(tenant_id=tour.tenant_id, tour_id=tour.id, source="app")
+        db.add(m)
+    m.date = tour.date
+    m.team_size = max(1, len(tour.member_ids or []))
+    m.n_plants = len(weights)
+    m.total_weight = round(sum(weights), 1)
+    m.n_stops = max(1, len(stops))
+    m.weights = [round(w, 1) for w in weights]
+    m.minutes = round(minutes, 1)
+    m.predicted_min = tour.unload_min
+    db.flush()
 
 
 def apply_events(db: Session, actor: Actor, events: list[dict[str, Any]]) -> list[dict[str, Any]]:

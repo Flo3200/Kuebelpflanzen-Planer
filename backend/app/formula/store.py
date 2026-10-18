@@ -62,7 +62,7 @@ def validate_expressions(
     plant_vars = {k for k, v in VARIABLES.get(key, {}).items() if v["level"] == "plant"}
     defined_plant: set[str] = set()
     defined_stop: set[str] = set()
-    required = {"time": "duration", "price": "price"}.get(key)
+    required = {"time": "duration", "price": "price", "unload": "unload"}.get(key)
     if required and not any(e.get("name") == required and e.get("level") == "stop" for e in expressions):
         problems.append(
             {

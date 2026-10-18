@@ -34,7 +34,9 @@ EVENT_KINDS = [
     "leave",  # 5. drive on
     "break_start",
     "break_end",
-    "unload",  # back at the depot, unloading
+    "unload",  # back at the depot, unloading (older app versions)
+    "unload_start",  # package F: unloading at the depot begins
+    "unload_done",  # package F: unloading finished -> unloading measurement
     "shift_end",
     "qr_scan",  # QR module: plant scanned at its place in the vehicle
 ]
@@ -115,3 +117,24 @@ class Deviation(IdMixin, TimestampMixin, TenantMixin, Base):
     reported_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     decided_by: Mapped[uuid.UUID | None] = mapped_column(Uuid)
     decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class UnloadMeasurement(IdMixin, TimestampMixin, TenantMixin, Base):
+    """Measured unloading at the depot after one trip (driver app: unloading begins -> finished),
+    the input for fitting the formula "unload" (package F)."""
+
+    __tablename__ = "unload_measurements"
+
+    tour_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid, ForeignKey("tours.id", ondelete="SET NULL"), index=True, unique=True
+    )
+    date: Mapped[date] = mapped_column(Date)
+    source: Mapped[str] = mapped_column(String(12), default="app")  # app | demo | synthetic
+    team_size: Mapped[int] = mapped_column(Integer)
+    n_plants: Mapped[int] = mapped_column(Integer)
+    total_weight: Mapped[float] = mapped_column(Float)
+    n_stops: Mapped[int] = mapped_column(Integer, default=1)
+    weights: Mapped[list[Any]] = mapped_column(default=list)
+    minutes: Mapped[float] = mapped_column(Float)
+    predicted_min: Mapped[float | None] = mapped_column(Float)
+    excluded: Mapped[bool] = mapped_column(Boolean, default=False)

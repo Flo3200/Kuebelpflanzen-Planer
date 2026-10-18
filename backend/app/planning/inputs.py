@@ -29,6 +29,7 @@ from app.settings.service import SettingsResolver
 from app.timemodel.estimate import Estimator, PlantCalc, equipment_info
 from app.timemodel.plantfill import footprint_m2, geometry, volume_m3
 from app.timemodel.teams import EquipmentInfo
+from app.timemodel.unload import UnloadModel
 
 
 def minutes(t: time | None, default: int) -> int:
@@ -832,6 +833,17 @@ def build_input(
             issues=team_issues if mode == "fixed" else None,
             names=names,
         )
+    if direction == "pickup" and units:
+        # package F: the solver works with the unloading time of a typical full trip of each team;
+        # after solving every trip gets its exact window from the formula
+        um = UnloadModel(db, tenant_id, r)
+        all_plants = [p for s in stops for p in s.plants]
+        per_stop = len(all_plants) / max(1, len(stops)) if stops else 3.0
+        avg_w = sum(plant_weight(p) for p in all_plants) / max(1, len(all_plants)) if all_plants else 25.0
+        typical = max(1, int(r.get("pricing.typical_tour_stops")))
+        weights = [avg_w] * max(1, round(per_stop * typical))
+        for u in units:
+            u.unload_min = um.minutes(weights, u.team_size, n_stops=typical, vehicle_id=u.vehicle.id)
     settings = {
         "skip_penalty": float(r.get("planning.skip_penalty")),
         "allow_over_limit": bool(r.get("team.plan_over_limit")),
@@ -889,6 +901,10 @@ def _regular_day_off(team: Team, sw: dict, day: date) -> bool:
     windows = [sw.get(uuid.UUID(str(m)), {}).get(day) for m in team.member_ids or []]
     windows = [w for w in windows if w is not None]
     return bool(windows) and all(not w.available and w.reason in ("weekend", "no_pattern") for w in windows)
+
+
+def plant_weight(p: Plant) -> float:
+    return float(p.weight_measured_kg or p.weight_kg or 0)
 
 
 def fits_geometry(stop: StopIn, unit: Unit) -> bool:

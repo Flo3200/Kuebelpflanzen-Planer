@@ -124,3 +124,23 @@ def synthetic(data: SyntheticIn, actor: CurrentActor, db: DB) -> dict[str, Any]:
         new={"n": out["created"]},
     )
     return out
+
+
+# ----------------------------------------------------------------------------- unloading (package F)
+
+
+@router.get("/unload")
+def unload_fit_proposal(actor: CurrentActor, db: DB) -> dict[str, Any]:
+    """Measured unloading times at the depot and a proposal for the formula "Abladen am Betrieb"."""
+    actor.require("planning.read")
+    from app.learning.unload_fit import proposal
+
+    return proposal(db, actor.require_tenant())
+
+
+@router.post("/unload/adopt")
+def unload_fit_adopt(actor: CurrentActor, db: DB) -> dict[str, Any]:
+    actor.require("model.fit")
+    from app.learning.unload_fit import adopt
+
+    return adopt(db, actor)

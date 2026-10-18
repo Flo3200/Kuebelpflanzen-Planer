@@ -9,11 +9,11 @@ type Expr = { name: string; level: "plant" | "stop"; expr: string };
 type Param = { value: number; learnable: boolean; min?: number; max?: number; unit?: string; scale?: number };
 
 export function FormulasPage() {
-  const { me } = useAuth();
+  const { me, mod } = useAuth();
   const isTenant = !!me?.tenant;
   const qc = useQueryClient();
   const toast = useToast();
-  const [key, setKey] = useState<"time" | "price">("time");
+  const [key, setKey] = useState<"time" | "price" | "unload">("time");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [draft, setDraft] = useState<{ expressions: Expr[]; parameters: Record<string, Param>; note: string } | null>(null);
   const [test, setTest] = useState<any>(null);
@@ -72,7 +72,8 @@ export function FormulasPage() {
             onChange={(k) => (setKey(k), setSelectedId(null), setDraft(null), setTest(null))}
             items={[
               { key: "time", label: t("formulas.key_time") },
-              { key: "price", label: t("formulas.key_price") },
+              { key: "unload", label: t("formulas.key_unload") },
+              ...(mod("customer_billing") || !isTenant ? [{ key: "price" as const, label: t("formulas.key_price") }] : []),
             ]}
           />
         }

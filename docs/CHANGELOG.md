@@ -368,3 +368,22 @@ Bewertungswerkzeug); `make check` grün (138 Backend-, 9 Frontend-Tests). **Abna
 Fahrzeug lässt sich per Chat und per Foto als Entwurf anlegen und bestätigen, Module lassen sich
 mehreren Fahrzeugen zuordnen, die Ladeplanung nutzt das Ergebnis. Mit echten KI-Modellen ist es noch
 nicht erprobt (kein API-Schlüssel hinterlegt).
+
+## Verbesserungsrunde – Paket F: Abladezeit, Graphen und Dashboard (2026-10-18)
+
+**Umgesetzt**
+- Formel „Abladen am Betrieb“ im Formeleditor (Fixzeit + je Pflanze + je kg, durch Teamgröße);
+  Einstellung „Abladezeit: Formel oder feste Minuten“.
+- Planung zeigt je Tour Ankunft am Betrieb und Abladefenster (Zeitachse und Tourliste).
+- Fahrer-App: „Abladen beginnt“ und „Abladen fertig“ mit geplantem Fenster; daraus Messungen und
+  unter „Modellqualität → Abladen am Betrieb“ ein Vorschlag für die Formel.
+- Neues Dashboard: Touren heute/morgen, offene Entwürfe, nicht einplanbare Aufträge mit Grund und
+  Hinweis, Kosten der Woche; Graphen: Touren im Zeitverlauf mit Abladefenstern, Auslastung Personal
+  und Fahrzeuge, Kosten pro Tag, Kosten pro Pflanze, Genauigkeit der Zeitschätzung (alle mit
+  Tabellenansicht).
+
+**Tests:** 4 neue Tests (`test_unload_charts.py`: Abladezeit wächst mit Pflanzen und sinkt mit dem
+Team, Abladefenster je Tour und Graphen mit leeren und echten Daten, Fahrer-Ereignisse als Messung,
+Lernen der Formel); `make check` grün (142 Backend-, 9 Frontend-Tests). **Abnahme:** erfüllt – die
+Abladezeit kommt aus der Formel und ändert sich mit der Pflanzenmenge, die Graphen funktionieren mit
+leeren und mit Demodaten (im Browser geprüft).

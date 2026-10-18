@@ -57,7 +57,18 @@ PRICE_VARIABLES: dict[str, dict[str, Any]] = {
     "team": {"level": "stop", "unit": "Pers."},
 }
 
-VARIABLES = {"time": TIME_VARIABLES, "price": PRICE_VARIABLES}
+# unloading at the depot after a trip (package F); "stop" level = the whole trip
+UNLOAD_VARIABLES: dict[str, dict[str, Any]] = {
+    "weight": {"level": "plant", "unit": "kg"},
+    "height": {"level": "plant", "unit": "cm"},
+    "n_plants": {"level": "stop", "unit": ""},
+    "total_weight": {"level": "stop", "unit": "kg"},
+    "max_weight": {"level": "stop", "unit": "kg"},
+    "team": {"level": "stop", "unit": "Pers."},
+    "n_stops": {"level": "stop", "unit": ""},
+}
+
+VARIABLES = {"time": TIME_VARIABLES, "price": PRICE_VARIABLES, "unload": UNLOAD_VARIABLES}
 
 
 def p(value: float, learnable: bool, lo: float, hi: float, unit: str, scale: float) -> dict[str, Any]:
@@ -114,6 +125,24 @@ DEFAULT_FORMULAS: list[dict[str, Any]] = [
             "h0": p(1.0, True, 0.0, 30.0, "min", 1.0),
             "h1": p(0.02, True, 0.0, 1.0, "min/kg", 0.02),
             "t_plant": p(0.5, True, 0.0, 10.0, "min", 0.5),
+        },
+    },
+    {
+        "key": "unload",
+        "tier": 1,
+        "name": "Abladen am Betrieb",
+        "description": "Fixzeit pro Fahrt + Zeit je Pflanze und je kg, geteilt durch die Teamgröße.",
+        "expressions": [
+            {
+                "name": "unload",
+                "level": "stop",
+                "expr": "u_fixed + (u_plant * n_plants + u_kg * total_weight) / team",
+            },
+        ],
+        "parameters": {
+            "u_fixed": p(8.0, True, 0.0, 60.0, "min", 4.0),
+            "u_plant": p(1.5, True, 0.0, 15.0, "min", 1.0),
+            "u_kg": p(0.02, True, 0.0, 0.5, "min/kg", 0.02),
         },
     },
     {

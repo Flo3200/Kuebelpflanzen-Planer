@@ -43,7 +43,7 @@ export function ModelPage() {
   const qc = useQueryClient();
   const toast = useToast();
   const auth = useAuth();
-  const [tab, setTab] = useState<"fits" | "measurements">("fits");
+  const [tab, setTab] = useState<"fits" | "unload" | "measurements">("fits");
   const [jobId, setJobId] = useState<string | null>(null);
   const fits = useQuery({ queryKey: ["fits"], queryFn: () => api.get<Fit[]>("/api/learning/fits") });
   const job = useQuery({
@@ -114,9 +114,11 @@ export function ModelPage() {
         onChange={setTab}
         items={[
           { key: "fits", label: t("model.tab_fits") },
+          { key: "unload", label: t("model.tab_unload") },
           { key: "measurements", label: t("model.tab_measurements") },
         ]}
       />
+      {tab === "unload" && <UnloadFit canFit={!!canFit} />}
       {tab === "fits" && (
         <>
           {fits.isLoading && <Spinner />}
@@ -479,6 +481,65 @@ function Measurements({ canFit }: { canFit: boolean }) {
           </tbody>
         </table>
       </div>
+    </Card>
+  );
+}
+
+
+/** Unloading at the depot (package F): measured times from the driver app and a proposal for the
+ * formula "Abladen am Betrieb"; adopting creates a new formula version. */
+function UnloadFit({ canFit }: { canFit: boolean }) {
+  const qc = useQueryClient();
+  const toast = useToast();
+  const q = useQuery({ queryKey: ["unload-fit"], queryFn: () => api.get<any>("/api/learning/unload") });
+  const p = q.data;
+  if (!p) return null;
+  const adopt = async () => {
+    try {
+      const r = await api.post<any>("/api/learning/unload/adopt");
+      qc.invalidateQueries({ queryKey: ["unload-fit"] });
+      qc.invalidateQueries({ queryKey: ["formulas"] });
+      toast({ text: t("model.unload_adopted", { v: r.adopted_version }) });
+    } catch (e) {
+      toast({ text: (e as Error).message, tone: "error" });
+    }
+  };
+  return (
+    <Card title={t("model.unload_title")}>
+      <p className="small muted">{t("model.unload_help", { name: p.formula?.name, v: p.formula?.version })}</p>
+      {!p.proposed && <p className="small">{t("model.unload_too_few", { n: p.n, min: p.min ?? 5 })}</p>}
+      <div className="table-wrap">
+        <table className="table">
+          <thead>
+            <tr>
+              <th>{t("model.parameter")}</th>
+              <th className="num">{t("model.current")}</th>
+              {p.proposed && <th className="num">{t("model.proposed")}</th>}
+            </tr>
+          </thead>
+          <tbody>
+            {Object.entries(p.parameters ?? {}).map(([k, v]: [string, any]) => (
+              <tr key={k}>
+                <td className="mono">{k}</td>
+                <td className="num">
+                  {fmtNumber(v.current, 3)} {v.unit}
+                </td>
+                {p.proposed && <td className="num">{p.proposed[k] != null ? `${fmtNumber(p.proposed[k], 3)} ${v.unit ?? ""}` : "–"}</td>}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {p.proposed && (
+        <div className="row between" style={{ marginTop: 12 }}>
+          <span className="small">{t("model.unload_error", { n: p.n, before: fmtNumber(p.mae_before, 1), after: fmtNumber(p.mae_after, 1) })}</span>
+          {canFit && (
+            <button className="btn" onClick={adopt}>
+              {t("model.unload_adopt")}
+            </button>
+          )}
+        </div>
+      )}
     </Card>
   );
 }

@@ -185,6 +185,9 @@ def tour_dict(t: Tour, stops: list[dict[str, Any]], vehicle_name: str | None = N
         "changed_at": t.changed_at,
         "load_status": t.load_status,
         "load_message": t.load_message,
+        "depot_start_min": t.depot_start_min,
+        "depot_end_min": t.depot_end_min,
+        "unload_min": t.unload_min,
         "unit": {
             k: t.unit.get(k)
             for k in (

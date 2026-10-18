@@ -70,6 +70,10 @@ class Tour(IdMixin, TimestampMixin, TenantMixin, Base):
     changed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     load_status: Mapped[str] = mapped_column(String(12), default="unknown")  # unknown | ok | failed
     load_message: Mapped[str | None] = mapped_column(Text)
+    # package F: depot window after the trip (pickup: unloading; return: loading before the trip)
+    depot_start_min: Mapped[int | None] = mapped_column(Integer)
+    depot_end_min: Mapped[int | None] = mapped_column(Integer)
+    unload_min: Mapped[float | None] = mapped_column(Float)
 
 
 class TourStop(IdMixin, TenantMixin, Base):

@@ -74,7 +74,8 @@
     "payment_failed": "Die Zahlung konnte nicht gestartet werden: {detail}",
     "cost_item_scope": "Eine Kostenposition gehört entweder zu einem Fahrzeug, zu einer Person oder zum ganzen Betrieb.",
     "vehicle_draft_incomplete": "Für die Planung fehlen noch Angaben: {fields}. Bitte im Chat ergänzen oder im Entwurf eintragen.",
-    "combination_invalid": "Ein Anhänger lässt sich nur einem Zugfahrzeug zuordnen."
+    "combination_invalid": "Ein Anhänger lässt sich nur einem Zugfahrzeug zuordnen.",
+    "unload_fit_too_few": "Zu wenige Ablade-Messungen ({n}); mindestens {min} nötig."
   },
   "origins": {
     "default": "Systemstandard",
@@ -389,8 +390,8 @@
       "help": "Späteste Rückkehr zum Betrieb ohne Überstunden."
     },
     "planning.unload_min": {
-      "label": "Abladezeit am Betrieb",
-      "help": "Zeit zum Ausladen, wenn ein Fahrzeug zwischendurch zum Betrieb zurückkehrt."
+      "label": "Feste Abladezeit",
+      "help": "Nur bei „Abladezeit: feste Minuten“ oder wenn die Formel nicht rechnen kann."
     },
     "planning.break_after_6h_min": {
       "label": "Pause ab 6 Stunden",
@@ -807,6 +808,14 @@
     "ai.model.vehicle_chat": {
       "label": "Modell: Fahrzeug per Chat",
       "help": "KI-Modell, das aus Ihrer Beschreibung ein Fahrzeug anlegt oder ändert und bei Lücken nachfragt."
+    },
+    "planning.unload_mode": {
+      "label": "Abladezeit",
+      "help": "Formel: aus der Formel „Abladen am Betrieb“ (Fixzeit + je Pflanze + je kg, geteilt durch das Team; im Formeleditor einstellbar und aus Messungen lernbar). Fest: immer die feste Abladezeit.",
+      "choices": {
+        "formula": "aus der Formel",
+        "fixed": "feste Minuten"
+      }
     }
   },
   "fields": {
@@ -1807,6 +1816,14 @@
     "self_cost": {
       "label": "Selbstkosten",
       "help": "geschätzte Selbstkosten mit Gemeinkostenzuschlag"
+    },
+    "max_weight": {
+      "label": "schwerste Pflanze",
+      "help": "Gewicht der schwersten Pflanze der Fahrt (kg)"
+    },
+    "n_stops": {
+      "label": "Stopps",
+      "help": "Anzahl Stopps der Fahrt"
     }
   },
   "packing": {

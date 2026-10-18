@@ -44,6 +44,15 @@ stehen in den Formularen eingeklappt unter „Weitere Angaben“.
 - **Agent**: ein KI-Agent mit Token und begrenzten Rechten (siehe „Agenten“).
 - **Kunde**: nur der Kundenzugang mit den eigenen Aufträgen (Anmeldung über einen persönlichen Link).
 
+## Übersicht (Dashboard)
+
+Die Startseite zeigt die Touren von heute und morgen (mit Abladezeiten), offene Entwürfe
+(Posteingang und Fahrzeuge), nicht einplanbare Aufträge mit Grund und Lösungshinweis und die
+Logistikkosten der Woche. Darunter stehen Graphen: Touren im Zeitverlauf mit den Abladefenstern
+(und wie viele Fahrzeuge gleichzeitig am Betrieb abladen), Auslastung von Personal und Fahrzeugen je
+Tag, Kosten pro Tag und pro Pflanze sowie die Genauigkeit der Zeitschätzung je Woche. Jeder Graph
+lässt sich als Tabelle anzeigen. Lager, Angebote und Rechnungen erscheinen nur mit ihren Modulen.
+
 ## Einstellungen und Ebenen
 
 Fast jeder Wert ist eine Einstellung mit Standardwert. Werte gelten in Ebenen:
@@ -180,6 +189,16 @@ mit diesen Teams. Kann ein Team an einem Tag nicht fahren, ist das eine **Warnun
 Fehler; ein Plan entsteht immer. Stopps, die kein Team übernehmen kann, stehen unter „Nicht
 eingeplant“ mit Grund, benötigter Personenzahl und einem Hinweis, welches Team oder welche Person
 das Problem lösen würde (z. B. „Team Nord um 1 Person ergänzen; frei: Lea Roth“).
+
+### Abladen am Betrieb
+
+Wie lange das Abladen nach einer Fahrt dauert, berechnet die Formel **„Abladen am Betrieb“**
+(Formeleditor, Reiter „Abladen“): Fixzeit + Zeit je Pflanze + Zeit je kg, geteilt durch die
+Teamgröße. Mehr Pflanzen bedeuten also ein längeres Abladefenster. Mit `planning.unload_mode = fixed`
+gilt stattdessen die feste Abladezeit. Die Planung zeigt je Tour die Ankunft am Betrieb und das
+Abladefenster. In der Fahrer-App gibt es dafür „Abladen beginnt“ und „Abladen fertig“. Aus diesen
+Messungen schlägt „Modellqualität → Abladen am Betrieb“ neue Formelwerte vor; Übernehmen erzeugt
+eine neue, rücknehmbare Formelversion.
 
 ## Ladeplanung (3D)
 

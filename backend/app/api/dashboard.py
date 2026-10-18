@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, timedelta
 from typing import Any
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 
 from app.api.deps import DB, CurrentActor
 from app.api.stats import tenant_counts
@@ -35,4 +35,23 @@ def dashboard(actor: CurrentActor, db: DB) -> dict[str, Any]:
         from app.api.dashboard_ext import extend
 
         extend(db, tid, out)
+        from app.api.dashboard_charts import logistics_overview
+
+        out["logistics"] = logistics_overview(db, tid)
     return out
+
+
+@router.get("/api/dashboard/charts")
+def dashboard_charts(
+    actor: CurrentActor,
+    db: DB,
+    start: date | None = None,
+    days: int = Query(14, ge=1, le=92),
+    day: date | None = None,
+) -> dict[str, Any]:
+    """Utilisation, costs per day and plant, tours of one day with unloading windows, accuracy."""
+    tid = actor.require_tenant()
+    actor.require("tenant.view")
+    from app.api.dashboard_charts import charts
+
+    return charts(db, tid, start or date.today() - timedelta(days=date.today().weekday()), days, day)

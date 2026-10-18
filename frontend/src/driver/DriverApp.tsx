@@ -298,6 +298,9 @@ function TourScreen() {
   const evs = tourEvents(tour, day.queued);
   const has = (k: string) => evs.some((e) => e.kind === k);
   const nextStop = tour.stops.find((s) => !stopProgress(evs, s.id).leave);
+  // unloading at the depot (package F): last "begins" and the "finished" after it
+  const unloadStart = [...evs].reverse().find((e) => e.kind === "unload_start")?.at;
+  const unloadDone = unloadStart ? evs.find((e) => e.kind === "unload_done" && e.at >= unloadStart)?.at : undefined;
   return (
     <div className="d-stack">
       <Link to="/fahrer" className="d-back">
@@ -360,10 +363,25 @@ function TourScreen() {
           </Link>
         );
       })}
+      {!tour.stops.some((s) => s.order?.direction === "return") && (
+        <div className="d-card">
+          <div className="d-card-title">{t("driverapp.unload_title")}</div>
+          <div className="d-muted">
+            {tour.depot_start_min != null && tour.depot_end_min != null ? t("driverapp.unload_planned", { from: hm(tour.depot_start_min), to: hm(tour.depot_end_min) }) : ""}
+            {unloadStart ? ` · ${t("driverapp.unload_since", { at: clock(unloadStart) })}` : ""}
+            {unloadDone ? ` · ✓ ${clock(unloadDone)}` : ""}
+          </div>
+          <div className="d-grid2" style={{ marginTop: 8 }}>
+            <button className="d-btn big" disabled={!!unloadStart && !unloadDone} onClick={() => void addEvent({ tour_id: tour.id, kind: "unload_start" })}>
+              {t("driverapp.kinds.unload_start")}
+            </button>
+            <button className="d-btn big primary" disabled={!unloadStart || !!unloadDone} onClick={() => void addEvent({ tour_id: tour.id, kind: "unload_done" })}>
+              {t("driverapp.kinds.unload_done")}
+            </button>
+          </div>
+        </div>
+      )}
       <div className="d-grid2">
-        <button className="d-btn big" onClick={() => void addEvent({ tour_id: tour.id, kind: "unload" })}>
-          {t("driverapp.kinds.unload")}
-        </button>
         <button className="d-btn big" onClick={() => window.confirm(t("driverapp.end_confirm")) && void addEvent({ tour_id: tour.id, kind: "shift_end" })}>
           {t("driverapp.kinds.shift_end")}
         </button>

@@ -333,3 +333,24 @@ erscheinen nur mit dem Modul. Nichts wurde gelöscht.
 - Bewertungswerkzeug: Testsätze haben eine KI-Funktion (`photo_analysis`, `vehicle_photo`,
   `vehicle_chat`) und Einträge optional mit Text; ein Testsatz „Fahrzeug per Chat – Beispiele“ wird
   angelegt (Foto-Testsätze brauchen echte Fotos und legt der Admin an).
+
+## D29 – Abladezeit per Formel, Graphen und Dashboard
+- Neue Formel `unload` (Stufe 1, „Abladen am Betrieb“): `u_fixed + (u_plant · n_plants + u_kg ·
+  total_weight) / team`, Variablen je Fahrt (Pflanzen, Gewicht, schwerste Pflanze, Team, Stopps).
+  `planning.unload_mode` (`formula` Standard, `fixed`) – fest oder bei Rechenfehler gilt
+  `planning.unload_min`.
+- Der Solver arbeitet mit einer Schätzung je Einheit für eine typische volle Fahrt
+  (durchschnittliche Pflanzen je Stopp × `pricing.typical_tour_stops`, Teamgröße der Einheit). Nach
+  dem Lösen erhält jede Fahrt ihr genaues Abladefenster (`tours.depot_start_min/-end_min/unload_min`);
+  bei Rücklieferungen ist es das Beladen vor der Fahrt. Die letzte Fahrt des Tages war bisher ohne
+  Abladezeit; das Fenster wird jetzt angezeigt, die Arbeitszeitprüfung bleibt unverändert.
+- Fahrer-App: „Abladen beginnt“/„Abladen fertig“ (Tour-Ereignisse `unload_start`/`unload_done`) →
+  `unload_measurements` (eine je Tour). Anpassung wie bei der Zeitformel (Huber, Regularisierung zum
+  bisherigen Wert, nur so viele Parameter wie Messungen tragen, ab 5 Messungen), Übernahme als neue
+  Formelversion (Quelle `fit`).
+- Graphen mit recharts bzw. HTML-Zeitachse; Farben als Tokens `--chart-1…4` (feste Reihenfolge,
+  hell/dunkel geprüft: Farbsehschwäche-Abstand ≥ 8, im hellen Modus zwei Farben < 3:1 Kontrast →
+  jeder Graph hat eine Tabellenansicht und Tooltips). Eine Achse je Graph; Kosten pro Tag und pro
+  Pflanze sind getrennte Graphen.
+- Genauigkeit: mittlere absolute prozentuale Abweichung je Kalenderwoche der letzten 12 Monate; ohne
+  gespeicherte Schätzung (Import, synthetisch) wird mit der aktuellen Formel geschätzt.

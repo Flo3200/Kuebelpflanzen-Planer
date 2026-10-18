@@ -94,10 +94,19 @@
   --space-7: 48px;
   --sidebar-width: 248px;
   color-scheme: light;
+  /* charts: categorical slots in fixed order (validated: CVD and contrast, see DECISIONS D29) */
+  --chart-1: #2a78d6;
+  --chart-2: #eb6834;
+  --chart-3: #1baf7a;
+  --chart-4: #eda100;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
+    --chart-1: #3987e5;
+    --chart-2: #d95926;
+    --chart-3: #199e70;
+    --chart-4: #c98500;
     --bg: #0f1712;
     --surface: #16211a;
     --surface-2: #1b2820;
@@ -134,6 +143,10 @@
 }
 
 :root[data-theme="dark"] {
+  --chart-1: #3987e5;
+  --chart-2: #d95926;
+  --chart-3: #199e70;
+  --chart-4: #c98500;
   --bg: #0f1712;
   --surface: #16211a;
   --surface-2: #1b2820;

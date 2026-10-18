@@ -215,6 +215,8 @@ def tour_package(db, tour: Tour) -> dict[str, Any]:
         "status": tour.status,
         "start_min": tour.start_min,
         "end_min": tour.end_min,
+        "depot_start_min": tour.depot_start_min,
+        "depot_end_min": tour.depot_end_min,
         "breaks": tour.breaks,
         "distance_km": tour.distance_km,
         "vehicle": {"name": vehicle.name, "plate": vehicle.plate}

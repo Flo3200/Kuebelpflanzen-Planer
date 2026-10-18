@@ -357,7 +357,24 @@
     "next_tours": "Nächste Touren",
     "no_tours": "Noch keine Touren geplant.",
     "stops": "{n} Stopps",
-    "planned_tours": "Geplante Touren"
+    "planned_tours": "Geplante Touren",
+    "intro_logistics": "Touren von heute und morgen, offene Entwürfe, was sich nicht einplanen ließ, und die Kosten der Woche.",
+    "season_plants": "Diese Saison: {n} Pflanzen, {done} abgeholt.",
+    "tours_today": "Touren heute",
+    "tours_tomorrow": "morgen {n}",
+    "drafts_orders": "{n} Aufträge",
+    "drafts_vehicles": "{n} Fahrzeuge",
+    "unplanned": "Nicht eingeplant",
+    "unplanned_title": "Nicht einplanbare Aufträge",
+    "all_planned": "Alles eingeplant.",
+    "week_costs": "Kosten dieser Woche",
+    "per_plant": "{c} pro Pflanze ({n} Pflanzen)",
+    "week_no_tours": "keine Touren diese Woche",
+    "today": "Heute",
+    "tomorrow": "Morgen",
+    "no_tours_day": "Keine Touren.",
+    "unload_at": "Abladen {from}–{to}",
+    "more": "… und {n} weitere"
   },
   "orders": {
     "status": {
@@ -851,7 +868,8 @@
     "var_name": "Variable",
     "var_meaning": "Bedeutung",
     "functions": "Funktionen",
-    "syntax_help": "Grundrechenarten + − * / %, Potenz ^, Vergleiche < <= > >= == !=, and/or/not, if(Bedingung, dann, sonst). Ausdrücke „pro Pflanze“ werden für jede Pflanze berechnet; im Stopp-Ausdruck stehen sie in sum_plants(…), max_plants(…), min_plants(…), avg_plants(…)."
+    "syntax_help": "Grundrechenarten + − * / %, Potenz ^, Vergleiche < <= > >= == !=, and/or/not, if(Bedingung, dann, sonst). Ausdrücke „pro Pflanze“ werden für jede Pflanze berechnet; im Stopp-Ausdruck stehen sie in sum_plants(…), max_plants(…), min_plants(…), avg_plants(…).",
+    "key_unload": "Abladen"
   },
   "fits": {
     "status": {
@@ -1006,7 +1024,9 @@
       "team_no_members": "Team {team} hat keine Mitglieder",
       "team_no_staff_today": "Team {team}: niemand verfügbar am {days}",
       "team_vehicle_replaced": "Team {team} fährt am {days} mit {names}, weil das Standard-Fahrzeug nicht frei ist"
-    }
+    },
+    "unload_window": "Abladen am Betrieb {from}–{to} ({m} min)",
+    "load_window": "Beladen am Betrieb {from}–{to} ({m} min)"
   },
   "scenarios": {
     "description": "Rechnen Sie Varianten eines Plans und vergleichen Sie Dauer, Kosten und Grenzkosten zusätzlicher Ressourcen.",
@@ -1156,7 +1176,9 @@
       "unload": "Zurück im Betrieb – Abladen",
       "shift_end": "Schicht beenden",
       "qr_scan": "QR-Scan",
-      "delivered": "Abgestellt"
+      "delivered": "Abgestellt",
+      "unload_start": "Abladen beginnt",
+      "unload_done": "Abladen fertig"
     },
     "loaded_photo": "Eingeladen – Foto aufnehmen",
     "with_photo": "mit Foto",
@@ -1227,7 +1249,10 @@
     "delivered_photo": "Abgestellt – Foto aufnehmen",
     "return_stop": "Rücklieferung",
     "storage": "Lager: {name}",
-    "load_from_storage": "Rücklieferung: vor der Abfahrt im Lager beladen – zuerst, was zuletzt ausgeliefert wird."
+    "load_from_storage": "Rücklieferung: vor der Abfahrt im Lager beladen – zuerst, was zuletzt ausgeliefert wird.",
+    "unload_title": "Abladen am Betrieb",
+    "unload_planned": "geplant {from}–{to}",
+    "unload_since": "seit {at}"
   },
   "model": {
     "title": "Modellqualität",
@@ -1347,7 +1372,17 @@
       "synthetic": "Testdaten"
     },
     "experiment": "Experiment",
-    "deviations_n": "{n} Meldung(en)"
+    "deviations_n": "{n} Meldung(en)",
+    "tab_unload": "Abladen am Betrieb",
+    "unload_title": "Abladezeit lernen",
+    "unload_help": "Die Fahrer-App erfasst „Abladen beginnt“ und „Abladen fertig“ am Betrieb. Daraus schlägt die App neue Werte für die Formel „{name}“ (Version {v}) vor. Übernehmen erzeugt eine neue Formelversion, die sich im Formeleditor zurücknehmen lässt.",
+    "unload_too_few": "Bisher {n} Ablade-Messungen; ein Vorschlag entsteht ab {min}.",
+    "unload_error": "{n} Messungen · mittlerer Fehler {before} → {after} min",
+    "unload_adopt": "Vorschlag übernehmen",
+    "unload_adopted": "Neue Formelversion {v} ist aktiv.",
+    "parameter": "Wert",
+    "current": "bisher",
+    "proposed": "Vorschlag"
   },
   "deviations": {
     "title": "Meldungen",
@@ -1751,5 +1786,33 @@
     "open_drafts": "Offene Fahrzeug-Entwürfe",
     "unnamed": "ohne Namen",
     "continue": "Weiter bearbeiten"
+  },
+  "charts": {
+    "as_table": "Als Tabelle",
+    "as_chart": "Als Diagramm",
+    "no_data": "Noch keine Daten – sobald ein Plan aktiv ist, erscheinen hier Werte.",
+    "utilisation": "Auslastung Personal und Fahrzeuge",
+    "utilisation_help": "Anteil der verfügbaren Personen und Fahrzeuge, die laut aktivem Plan auf Tour sind.",
+    "staff": "Personal",
+    "vehicles": "Fahrzeuge",
+    "cost": "Kosten",
+    "plants": "Pflanzen",
+    "cost_per_day": "Logistikkosten pro Tag",
+    "cost_per_plant": "Kosten pro Pflanze",
+    "cost_per_plant_short": "pro Pflanze",
+    "accuracy": "Genauigkeit der Zeitschätzung",
+    "accuracy_help": "Mittlere Abweichung der geschätzten von der gemessenen Dauer vor Ort, je Kalenderwoche (letzte 12 Monate).",
+    "week": "Woche",
+    "error": "Abweichung",
+    "measurements": "Messungen",
+    "timeline": "Touren im Zeitverlauf und Abladefenster",
+    "vehicle": "Fahrzeug",
+    "on_tour": "unterwegs",
+    "unloading": "Abladen am Betrieb",
+    "stops": "Stopps",
+    "at_depot": "gleichzeitig am Betrieb",
+    "vehicles_unloading": "{n} Fahrzeug(e) beim Abladen",
+    "max_parallel": "höchstens {n} Fahrzeuge gleichzeitig beim Abladen",
+    "no_measurements": "Noch keine Messungen aus der Fahrer-App (Ankunft bis Eingeladen)."
   }
 }

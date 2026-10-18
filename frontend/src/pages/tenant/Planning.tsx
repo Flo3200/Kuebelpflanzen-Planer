@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { hintText } from "./hints";
 import { Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CircleMarker, MapContainer, Polyline, TileLayer, Tooltip, useMap } from "react-leaflet";
@@ -386,6 +387,15 @@ function Timeline({ plan, onChange }: { plan: any; onChange: () => void }) {
                   {tr.breaks.map((b: any, i: number) => (
                     <div key={i} title={t("planning.break")} style={{ position: "absolute", left: pct(b.start), width: width(b.start, b.end), top: 4, bottom: 4, background: "repeating-linear-gradient(45deg, var(--surface-3), var(--surface-3) 4px, transparent 4px, transparent 8px)", borderRadius: 4 }} />
                   ))}
+                  {tr.depot_start_min != null && tr.depot_end_min != null && (
+                    <div
+                      title={t(plan.direction === "return" ? "planning.load_window" : "planning.unload_window", { from: hm(tr.depot_start_min), to: hm(tr.depot_end_min), m: Math.round(tr.unload_min ?? 0) })}
+                      style={{
+                        position: "absolute", left: pct(tr.depot_start_min), width: width(tr.depot_start_min, tr.depot_end_min), top: 10, bottom: 10, minWidth: 4,
+                        background: "repeating-linear-gradient(135deg, var(--accent), var(--accent) 3px, var(--accent-soft) 3px, var(--accent-soft) 6px)", borderRadius: 4,
+                      }}
+                    />
+                  )}
                   {tr.stops.map((s: any) => (
                     <div
                       key={s.id}
@@ -428,6 +438,11 @@ function ToursList({ plan, onChange }: { plan: any; onChange: () => void }) {
               <span style={{ width: 12, height: 12, borderRadius: 3, background: tr.color, display: "inline-block" }} />
               <strong>{fmtDate(tr.date)}</strong>
               <span>{tr.label}</span>
+              {tr.depot_start_min != null && (
+                <span className="small muted">
+                  {t(plan.direction === "return" ? "planning.load_window" : "planning.unload_window", { from: hm(tr.depot_start_min), to: hm(tr.depot_end_min), m: Math.round(tr.unload_min ?? 0) })}
+                </span>
+              )}
               {tr.trip_no > 1 && <Badge>{t("planning.trip", { n: tr.trip_no })}</Badge>}
               {tr.changed_at && <Badge tone="amber">{t("planning.changed")}</Badge>}
             </div>
@@ -524,10 +539,6 @@ function ToursList({ plan, onChange }: { plan: any; onChange: () => void }) {
   );
 }
 
-/** A hint {code, params} for an unplanned stop or a fixed team (package D), translated. */
-export function hintText(h: { code: string; params: Record<string, any> }): string {
-  return tMaybe(`planning.hints.${h.code}`, h.params) ?? h.code;
-}
 
 function TeamIssues({ plan }: { plan: any }) {
   const issues: any[] = plan.solver?.team_issues ?? [];

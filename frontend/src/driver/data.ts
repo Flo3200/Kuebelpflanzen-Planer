@@ -79,6 +79,8 @@ export interface DTour {
   color: string;
   status: string;
   start_min: number;
+  depot_start_min?: number | null;
+  depot_end_min?: number | null;
   end_min: number;
   breaks: { start: number; end: number }[];
   distance_km: number;

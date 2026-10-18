@@ -16,13 +16,14 @@ from app.fleet.layout import module_vehicles
 from app.models.orders import PickupOrder, Plant
 from app.models.planning import Plan, Tour, TourStop
 from app.planning.hints import explain, team_issue_overview
-from app.planning.inputs import PlanningInput, build_input
+from app.planning.inputs import PlanningInput, build_input, plant_weight
 from app.planning.solver import SolvedTrip, SolveResult, solve
 from app.routing.provider import cached_matrix
 from app.settings.service import SettingsResolver
 from app.timemodel.costitems import allocate_to_stops
 from app.timemodel.costitems import load_items as load_cost_items
 from app.timemodel.costitems import trip_costs as trip_cost_items
+from app.timemodel.unload import UnloadModel
 
 PALETTE = [
     "#2b5139",
@@ -249,6 +250,7 @@ def write_results(
     for mod, vehicles in module_vehicles(db, plan.tenant_id).items():
         for vid in vehicles:
             modules_by_vehicle[vid].add(mod)
+    unload = UnloadModel(db, plan.tenant_id, r)
     units_per_day: dict[date, int] = defaultdict(int)
     for k in {t.unit.key: t.unit.date for t in res.trips}.values():
         units_per_day[k] += 1
@@ -293,6 +295,20 @@ def write_results(
                 module_ids=modules_by_vehicle[unit.vehicle.id]
                 | (modules_by_vehicle[unit.trailer.id] if unit.trailer else set()),
             )
+            if inp.direction == "pickup":
+                # exact unloading window after the trip (formula with the plants of this trip)
+                weights = [plant_weight(p) for s in trip.stops for p in s.stop.plants]
+                unload_min = unload.minutes(
+                    weights,
+                    unit.team_size,
+                    n_stops=len(trip.stops),
+                    heights=[float(p.total_height_cm or 0) for s in trip.stops for p in s.stop.plants],
+                    vehicle_id=unit.vehicle.id,
+                )
+                depot = (trip.end, int(round(trip.end + unload_min)))
+            else:  # spring return: loading at the depot before the trip
+                unload_min = trip.unload_min or unit.unload_min
+                depot = (int(round(trip.start - unload_min)), trip.start)
             shares = allocate_to_stops(
                 custom_lines, [len(s.stop.plants) for s in trip.stops], [c["direct"] for c in costs_per_stop]
             )
@@ -351,6 +367,9 @@ def write_results(
                     ],
                 },
                 warnings=[],
+                depot_start_min=depot[0],
+                depot_end_min=depot[1],
+                unload_min=round(unload_min, 1),
                 load_status=("ok" if pack and pack["ok"] else "failed" if pack else "unknown"),
                 load_message=pack.get("message") if pack else None,
             )
@@ -597,6 +616,18 @@ def evaluate_tour(db: Session, tour: Tour) -> None:
         }
     )
     tour.load = load
+    plan = db.get(Plan, tour.plan_id)
+    if plan is not None and plan.direction == "pickup":
+        all_plants = [p for o in orders for p in est.plants_of(o)]
+        tour.unload_min = UnloadModel(db, tour.tenant_id, est.resolver).minutes(
+            [plant_weight(p) for p in all_plants],
+            team,
+            n_stops=len(stops),
+            heights=[float(p.total_height_cm or 0) for p in all_plants],
+            vehicle_id=unit.get("vehicle_id"),
+        )
+        tour.depot_start_min = tour.end_min
+        tour.depot_end_min = int(round(tour.end_min + tour.unload_min))
     if weight > unit.get("cap_weight", 1e9):
         tour.warnings = tour.warnings + ["overweight"]
     if area > unit.get("cap_area", 1e9):

@@ -359,6 +359,16 @@ SETTINGS: tuple[SettingDef, ...] = (
     # --- planning -------------------------------------------------------------------
     _s("planning.day_start", "time", "07:00", "planning", levels=(*PT, "staff", "vehicle"), important=True),
     _s("planning.day_end", "time", "17:30", "planning", levels=(*PT, "staff", "vehicle"), important=True),
+    # package F: unloading time from the formula "unload" (fixed minutes only as fallback/choice)
+    _s(
+        "planning.unload_mode",
+        "enum",
+        "formula",
+        "planning",
+        levels=(*PT, "vehicle"),
+        choices=("formula", "fixed"),
+        important=True,
+    ),
     _s("planning.unload_min", "float", 20.0, "planning", levels=(*PT, "vehicle"), unit="min", min=0, max=240),
     _s("planning.load_min", "float", 25.0, "planning", levels=(*PT, "vehicle"), unit="min", min=0, max=240),
     _s("planning.break_after_6h_min", "float", 30.0, "planning", unit="min", min=0, max=120),
