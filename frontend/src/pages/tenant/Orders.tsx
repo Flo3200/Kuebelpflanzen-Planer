@@ -216,10 +216,56 @@ export function CustomerDetailPage() {
 
 // ----------------------------------------------------------------------------- orders
 
+function ReturnsModal({ onClose, onDone }: { onClose: () => void; onDone: () => void }) {
+  const qc = useQueryClient();
+  const toast = useToast();
+  const year = new Date().getMonth() >= 6 ? new Date().getFullYear() + 1 : new Date().getFullYear();
+  const [form, setForm] = useState({ earliest_date: `${year}-04-01`, latest_date: `${year}-05-31` });
+  const [busy, setBusy] = useState(false);
+  const submit = async () => {
+    setBusy(true);
+    try {
+      const r = await api.post<any>("/api/orders/returns", form);
+      toast({ text: t("returns.created", { n: r.created, existing: r.existing }) });
+      qc.invalidateQueries({ queryKey: ["orders"] });
+      onDone();
+    } catch (e) {
+      toast({ text: (e as Error).message, tone: "error" });
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <Modal
+      title={t("returns.create")}
+      onClose={onClose}
+      footer={
+        <button className="btn" onClick={submit} disabled={busy}>
+          {t("returns.create_now")}
+        </button>
+      }
+    >
+      <p className="small muted">{t("returns.create_help")}</p>
+      <div className="grid cols-2">
+        <div className="field">
+          <label htmlFor="ret-from">{t("returns.from")}</label>
+          <input id="ret-from" type="date" className="input" value={form.earliest_date} onChange={(e) => setForm({ ...form, earliest_date: e.target.value })} />
+        </div>
+        <div className="field">
+          <label htmlFor="ret-to">{t("returns.to")}</label>
+          <input id="ret-to" type="date" className="input" value={form.latest_date} onChange={(e) => setForm({ ...form, latest_date: e.target.value })} />
+        </div>
+      </div>
+      <p className="xs muted">{t("returns.frost_hint")}</p>
+    </Modal>
+  );
+}
+
 export function OrdersPage() {
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<string>("");
   const [direction, setDirection] = useState<string>("pickup");
+  const [returnsOpen, setReturnsOpen] = useState(false);
   const navigate = useNavigate();
   const list = useQuery({
     queryKey: ["orders", q, status, direction],
@@ -254,9 +300,13 @@ export function OrdersPage() {
               ))}
             </select>
             <input className="input" style={{ width: 220 }} placeholder={t("common.search")} value={q} onChange={(e) => setQ(e.target.value)} aria-label={t("common.search")} />
+            <button className="btn secondary" onClick={() => setReturnsOpen(true)}>
+              {t("returns.create")}
+            </button>
           </>
         }
       />
+      {returnsOpen && <ReturnsModal onClose={() => setReturnsOpen(false)} onDone={() => (setReturnsOpen(false), setDirection("return"))} />}
       {list.isLoading && <Spinner />}
       {list.data && list.data.length === 0 && <Empty title={t("orders.none")} text={t("orders.empty_text")} />}
       {list.data && list.data.length > 0 && (

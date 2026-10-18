@@ -13,7 +13,7 @@ describe("translations", () => {
   });
 
   it("has a German text for every driver event kind and deviation kind", () => {
-    const kinds = ["shift_start", "depart", "arrive", "carry_start", "plant_done", "loaded", "leave", "break_start", "break_end", "unload", "shift_end", "qr_scan"];
+    const kinds = ["shift_start", "depart", "arrive", "carry_start", "plant_done", "loaded", "delivered", "leave", "break_start", "break_end", "unload", "shift_end", "qr_scan"];
     for (const k of kinds) expect(tMaybe(`driverapp.kinds.${k}`)).toBeTruthy();
     for (const k of ["plant_heavier", "plant_bigger", "path_different", "customer_absent", "damage", "other"]) {
       expect(tMaybe(`driverapp.deviation.${k}`)).toBeTruthy();

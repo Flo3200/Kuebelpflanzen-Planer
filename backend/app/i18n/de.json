@@ -99,7 +99,8 @@
     "driver": "Fahrer-App",
     "billing": "Plattform-Abrechnung",
     "agents": "Agenten-Zugänge",
-    "weight": "Gewichtsschätzung"
+    "weight": "Gewichtsschätzung",
+    "returns": "Rücklieferung im Frühjahr"
   },
   "settings": {
     "general.season_start_month": {
@@ -709,6 +710,44 @@
     "costs.small_business": {
       "label": "Kleinunternehmerregelung (eigene Rechnungen)",
       "help": "Wenn aktiv, weisen Rechnungen an Ihre Kunden keine Umsatzsteuer aus (§ 19 UStG)."
+    },
+    "planning.load_min": {
+      "label": "Beladen im Betrieb je Fahrt (Rücklieferung)",
+      "help": "Zeit, um die Pflanzen einer Fahrt im Lager zu holen und einzuladen, bevor die Fahrt beginnt."
+    },
+    "returns.frost_rule": {
+      "label": "Frostregel",
+      "help": "Ab wann Pflanzen zurückgebracht werden dürfen: nur frostempfindliche erst nach dem Stichtag, alle erst nach dem Stichtag, oder keine Regel.",
+      "choices": {
+        "frost_sensitive": "nur frostempfindliche nach dem Stichtag",
+        "all": "alle nach dem Stichtag",
+        "off": "keine Regel"
+      }
+    },
+    "returns.frost_safe_date": {
+      "label": "Frostsicherer Stichtag (MM-TT)",
+      "help": "Frühestes Datum für frostempfindliche Pflanzen, z. B. 05-15 für die Eisheiligen."
+    },
+    "returns.time_factor": {
+      "label": "Zeitfaktor Rücklieferung",
+      "help": "Dauer vor Ort im Verhältnis zur Abholung (Aufstellen statt Holen). 1,0 = gleich lang."
+    },
+    "returns.price_mode": {
+      "label": "Preis der Rücklieferung",
+      "help": "Eigener Preis nach der Preisformel, im Preis der Abholung enthalten (0 €) oder Preisformel mal Faktor.",
+      "choices": {
+        "separate": "eigener Preis",
+        "included": "im Abholpreis enthalten",
+        "factor": "Preisformel × Faktor"
+      }
+    },
+    "returns.price_factor": {
+      "label": "Preisfaktor Rücklieferung",
+      "help": "Wird verwendet, wenn der Preis der Rücklieferung „Faktor“ ist."
+    },
+    "returns.default_window_days": {
+      "label": "Zeitraum für Rücklieferungen (Tage)",
+      "help": "Länge des Zeitraums, der beim Anlegen der Rücklieferungen vorgeschlagen wird."
     }
   },
   "fields": {
@@ -1442,7 +1481,8 @@
     "path_end": "Weg: Ende (Fahrzeug)",
     "pickup_proof": "Abholnachweis",
     "damage": "Schaden",
-    "other": "Sonstiges"
+    "other": "Sonstiges",
+    "delivery_proof": "Abgabenachweis"
   },
   "formula_vars": {
     "weight": {

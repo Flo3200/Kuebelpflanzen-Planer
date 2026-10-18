@@ -52,7 +52,7 @@ def owner(field_tenant, make_client):
     return api
 
 
-def _samples(tid, n, seed, noise=0.12, outliers=0.03, true_staff=None):
+def _samples(tid, n, seed, noise=0.12, outliers=0.03, true_staff=None, team_extra=(0, 0, 0, 1, 1, 2)):
     with session_scope(RlsContext(tenant_id=tid)) as db:
         db.execute(delete(Measurement).where(Measurement.tenant_id == tid))
         g = generate(
@@ -64,6 +64,7 @@ def _samples(tid, n, seed, noise=0.12, outliers=0.03, true_staff=None):
             outlier_share=outliers,
             seed=seed,
             true_staff=true_staff,
+            team_extra=team_extra,
         )
         est = Estimator(db, tid)
         samples = prepare_samples(db, tid, est)
@@ -97,8 +98,9 @@ def test_fit_recovers_true_parameters(field_tenant):
 
 def test_personal_factors_found_with_precise_measurements(field_tenant):
     """Each person changes the team speed only by a share, so personal factors need precise data:
-    with 5 % noise and a weak prior the error is clearly smaller than assuming 1.0 for everyone."""
-    g, samples, formula = _samples(field_tenant[0], n=220, seed=6, noise=0.05, outliers=0)
+    with 5 % noise, small teams and a weak prior they are found again closely."""
+    # teams of exactly the required size: light plants are carried alone, so each person shows clearly
+    g, samples, formula = _samples(field_tenant[0], n=260, seed=6, noise=0.05, outliers=0, team_extra=(0,))
     out = fit_params(samples, formula, FitConfig(loss="huber", staff_prior_n=1))
     err_fit = statistics.mean(abs(out.staff[k] - g["true_staff"][k]) for k in out.staff)
     err_one = statistics.mean(abs(1.0 - g["true_staff"][k]) for k in out.staff)

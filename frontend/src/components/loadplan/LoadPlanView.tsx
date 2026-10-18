@@ -74,7 +74,13 @@ function violationText(v: string): string {
   return code === "sensitive_behind_heavy" || code === "order_blocked" ? `${text} (#${ref})` : text;
 }
 
-export function LoadPlanView(props: { tour: TourHead; plan: LoadPlanPayload | null; compact?: boolean; actions?: React.ReactNode }) {
+export function LoadPlanView(props: {
+  tour: TourHead;
+  plan: LoadPlanPayload | null;
+  compact?: boolean;
+  actions?: React.ReactNode;
+  notes?: Record<string, string>; // extra line per plant, e.g. its place in the storage
+}) {
   const { tour, plan } = props;
   const [view, setView] = useState<"3d" | "top" | "steps">(props.compact ? "steps" : "top");
   const [step, setStep] = useState<number | null>(null);
@@ -148,6 +154,7 @@ export function LoadPlanView(props: { tour: TourHead; plan: LoadPlanPayload | nu
           </strong>{" "}
           · {t("loadplan.from_stop", { n: current.stop_position, number: stopsByPos.get(current.stop_position)?.number ?? "" })}
           <div>{current.instruction}</div>
+          {props.notes?.[current.plant_id] && <div className="small">{props.notes[current.plant_id]}</div>}
           {current.secure && <Badge tone="amber">{t("loadplan.secure")}</Badge>}
         </div>
       )}
@@ -173,6 +180,7 @@ export function LoadPlanView(props: { tour: TourHead; plan: LoadPlanPayload | nu
                       <strong>{p.label}</strong> <span className="xs muted">· {fmtNumber(p.dims.weight)} kg · {t(`loadplan.orientation.${p.orientation}`)}</span>
                     </div>
                     <div className="small">{p.instruction}</div>
+                    {props.notes?.[p.plant_id] && <div className="small muted">{props.notes[p.plant_id]}</div>}
                   </div>
                 </li>
               ))}

@@ -92,6 +92,6 @@ class TourStop(IdMixin, TenantMixin, Base):
     experiment: Mapped[bool] = mapped_column(Boolean, default=False)
     status: Mapped[str] = mapped_column(
         String(12), default="planned"
-    )  # planned | arrived | carrying | loaded | done | skipped
+    )  # planned | arrived | carrying | loaded | delivered | done | skipped
     costs: Mapped[dict[str, Any]] = mapped_column(default=dict)
     warnings: Mapped[list[Any]] = mapped_column(default=list)

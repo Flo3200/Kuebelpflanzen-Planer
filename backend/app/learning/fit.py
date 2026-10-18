@@ -99,8 +99,9 @@ def fit_params(
     kp, ks = len(names), len(staff_ids)
     if not used or kp + ks == 0:
         return FitOutcome(dict(base), [], {}, {}, {}, dict(staff_n), message="nothing to fit")
-    lo = np.array([float(meta[k].get("min", -np.inf)) for k in names] + [0.3] * ks)
-    hi = np.array([float(meta[k].get("max", np.inf)) for k in names] + [3.0] * ks)
+    # personal factors: realistic range (half to double the average speed)
+    lo = np.array([float(meta[k].get("min", -np.inf)) for k in names] + [0.5] * ks)
+    hi = np.array([float(meta[k].get("max", np.inf)) for k in names] + [2.0] * ks)
     x0 = np.array([base[k] for k in names] + [1.0] * ks)
     eps = 1e-9
     x0 = np.clip(x0, lo + eps, hi - eps)
@@ -166,6 +167,26 @@ def fit_params(
     x = x0
     nfev = 0
     res = None
+    if cfg.loss == "huber":
+        # robust from the start (built-in Huber loss), so a few outliers cannot pull the fit into a
+        # bad local optimum before the exact reweighting below takes over
+        res = least_squares(
+            residuals,
+            x,
+            bounds=(lo, hi),
+            x_scale=x_scale,
+            method="trf",
+            jac_sparsity=sparsity,
+            loss="huber",
+            f_scale=cfg.huber_delta,
+            max_nfev=200,
+            xtol=1e-6,
+            ftol=1e-6,
+        )
+        x = res.x
+        nfev += res.nfev
+        r = np.abs(raw_residuals(x))
+        w = np.where(r <= cfg.huber_delta, 1.0, cfg.huber_delta / np.maximum(r, 1e-9))
     rounds = cfg.irls_rounds if cfg.loss == "huber" else 1
     for _ in range(rounds):
         res = least_squares(

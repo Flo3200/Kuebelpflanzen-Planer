@@ -35,6 +35,7 @@ def generate(
     seed: int = 1,
     start: date | None = None,
     tier: int = 1,
+    team_extra: tuple[int, ...] = (0, 0, 0, 1, 1, 2),
 ) -> dict[str, Any]:
     rng = random.Random(seed)
     formula = load_active(db, tenant_id, "time", tier)
@@ -82,7 +83,7 @@ def generate(
             continue
         need = max(c.crew.crew for c in calcs)
         # varied team sizes (as in experiment mode) so the effect of the team can be learned
-        team = min(max_size, need + rng.choice([0, 0, 0, 1, 1, 2]))
+        team = min(max_size, need + rng.choice(team_extra))
         members = rng.sample(staff, k=min(team, len(staff))) if staff else []
         speed = sum(true_staff.get(m, 1.0) for m in members) / max(1, len(members))
         true = est.stop_duration(calcs, team, speed, params)

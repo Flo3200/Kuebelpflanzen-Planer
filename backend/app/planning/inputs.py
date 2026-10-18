@@ -222,6 +222,7 @@ class PlanningInput:
     estimator: Estimator
     shared_equipment: list[EquipmentInfo]
     settings: dict[str, Any]
+    direction: str = "pickup"
 
 
 # ----------------------------------------------------------------------------------- resources
@@ -476,6 +477,29 @@ def stable_fraction(key: str) -> float:
     return int(hashlib.sha256(key.encode()).hexdigest()[:8], 16) / 0xFFFFFFFF
 
 
+def frost_safe_from(r: SettingsResolver, plants: list[Plant], first_day: date, est: Estimator) -> date | None:
+    """Earliest return date because of frost (setting returns.frost_rule / returns.frost_safe_date)."""
+    rule = r.get("returns.frost_rule")
+    if rule == "off":
+        return None
+    if rule == "frost_sensitive":
+        sensitive = False
+        for p in plants:
+            sp = est.species_of(p)
+            if p.frost_sensitive or (
+                p.frost_sensitive is None and sp is not None and sp.frost_sensitivity == "tender"
+            ):
+                sensitive = True
+                break
+        if not sensitive:
+            return None
+    try:
+        month, day = (int(x) for x in str(r.get("returns.frost_safe_date")).split("-"))
+        return date(first_day.year, month, day)
+    except ValueError:
+        return None
+
+
 def build_input(
     db: Session,
     tenant_id: uuid.UUID,
@@ -548,13 +572,23 @@ def build_input(
                 overlap_area += g.total_h * width / 10000
             else:
                 overlap_area += footprint_m2(p, ov)
+        frost_lo = frost_safe_from(r, plants, dates[0], est) if direction == "return" else None
         if order.fixed_date:
             allowed: set[date] | None = {order.fixed_date}
+            if frost_lo and order.fixed_date < frost_lo:
+                unplannable.append({"order_id": str(order.id), "number": order.number, "reason": "frost"})
+                continue
         else:
             lo = order.earliest_date or dates[0]
             hi = order.latest_date or dates[-1]
             if hi < dates[0]:
                 lo, hi = dates[0], dates[-1]  # overdue: any day, high priority
+            if frost_lo and frost_lo > lo:
+                lo = frost_lo  # frost-sensitive plants only after the frost-safe date
+                if lo > dates[-1]:
+                    unplannable.append({"order_id": str(order.id), "number": order.number, "reason": "frost"})
+                    continue
+                hi = max(hi, lo)
             allowed = {d for d in dates if lo <= d <= hi} or None
             if allowed is None and lo > dates[-1]:
                 unplannable.append(
@@ -618,6 +652,12 @@ def build_input(
     )
     r.prefetch("vehicle", [v.id for v in vrows])
     vehicles_base = {str(v.id): vehicle_in(db, r, v, shared, all_eq) for v in vrows}
+    if direction == "return":
+        # spring return: the depot time of a trip is loading (before it), not unloading (after it)
+        vehicles_base = {
+            vid: replace(v, unload_min=float(r.get("planning.load_min", ("vehicle", uuid.UUID(vid)))))
+            for vid, v in vehicles_base.items()
+        }
     for vid in scenario.get("remove_vehicle_ids", []):
         vehicles_base.pop(str(vid), None)
     for n, vid in enumerate(scenario.get("add_vehicles_like", [])):
@@ -741,6 +781,7 @@ def build_input(
         "quantile_factor": est.quantile_factor,
     }
     return PlanningInput(
+        direction=direction,
         tenant_id=tenant_id,
         depot=depot,
         dates=dates,

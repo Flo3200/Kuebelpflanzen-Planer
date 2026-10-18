@@ -63,6 +63,7 @@ class DemoOptions:
     orders_per_tenant: int = 100
     staff_per_tenant: int = 10
     measurements: bool = True
+    returns: bool = True
     tenants: list[dict[str, Any]] = field(default_factory=lambda: list(DEMO_TENANTS))
 
 

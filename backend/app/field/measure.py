@@ -1,6 +1,7 @@
 """Measurements from driver events.
 
-Per stop: arrival -> carrying begins = fixed time, carrying begins -> loaded = carrying time,
+Per stop: arrival -> carrying begins = fixed time, carrying begins -> loaded (pickup) or
+delivered (return) = carrying time,
 arrival -> loaded = on-site duration (what the time formula predicts). Breaks that fall into
 an interval are subtracted. Drive time = arrival minus the previous departure (leave, depart,
 shift start or unloading). With per-plant events the time of each plant is kept as well.
@@ -58,7 +59,7 @@ def build_measurement(db: Session, tour: Tour, stop: TourStop) -> Measurement | 
     mine = [e for e in events if e.stop_id == stop.id]
     arrive = next((e for e in mine if e.kind == "arrive"), None)
     carry = next((e for e in mine if e.kind == "carry_start"), None)
-    loaded = next((e for e in reversed(mine) if e.kind == "loaded"), None)
+    loaded = next((e for e in reversed(mine) if e.kind in ("loaded", "delivered")), None)
     leave = next((e for e in reversed(mine) if e.kind == "leave"), None)
     end = loaded or leave
     existing = db.scalar(select(Measurement).where(Measurement.stop_id == stop.id))

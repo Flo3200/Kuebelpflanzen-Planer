@@ -103,7 +103,9 @@ class ServiceCache:
             warnings = ("exceeds_team_limit",)
         if unit.team_size < crew:
             return ServiceInfo(False, 0, 0, crew, "team_too_small")
-        duration = est.stop_duration(calcs, unit.team_size, unit.carry_speed)
+        duration = est.stop_duration(calcs, unit.team_size, unit.carry_speed) * est.direction_factor(
+            stop.order
+        )
         service = duration * self.inp.settings["quantile_factor"] + self.inp.settings["parking_min"]
         return ServiceInfo(True, service, duration, crew, None, warnings)
 
@@ -265,6 +267,9 @@ def _solve_group(
     solver = routing.solver()
 
     # ---- time per unit profile
+    # spring return: the vehicle is loaded at the depot before each trip (depot time = loading);
+    # pickup: it is unloaded at the depot between trips (depot time = unloading)
+    load_first = inp.direction == "return"
     time_cb: dict[tuple, int] = {}
     service_of: list[list[float]] = []
     vehicle_time_cb: list[int] = []
@@ -272,13 +277,15 @@ def _solve_group(
         # service depends only on the team profile, so units with equal teams share one matrix;
         # reload nodes of other units are never visited by this unit (allowed vehicles)
         svc = [0.0] * N
+        if load_first:
+            svc[0] = u.unload_min  # loading at the depot before the first trip
         for i, s in enumerate(stops, start=1):
             info = cache.get(s, u)
             svc[i] = info.service_min if info.feasible else 0.0
         for r_i in range(R):
             svc[1 + S + r_i] = u.unload_min
         service_of.append(svc)
-        key = (u.profile_key(inp.shared_equipment), round(u.drive_factor, 3), u.unload_min)
+        key = (u.profile_key(inp.shared_equipment), round(u.drive_factor, 3), u.unload_min, svc[0])
         if key not in time_cb:
             df = u.drive_factor
             m = [
@@ -433,7 +440,7 @@ def _solve_group(
         cur: list[SolvedStop] = []
         trip_start = seq[0][1]
         dist_sum = drive_sum = 0.0
-        prev_node, prev_dep = seq[0][0], seq[0][1]
+        prev_node, prev_dep = seq[0][0], seq[0][1] + svc[0]
         for node, cum in seq[1:]:
             tr = travel[prev_node][node] / u.drive_factor
             dk = dist[prev_node][node]
@@ -470,14 +477,18 @@ def _solve_group(
                             arrival,
                             round(dist_sum, 2),
                             round(drive_sum, 1),
-                            svc[node] if node > S else 0.0,
+                            0.0 if load_first else (svc[node] if node > S else 0.0),
                         )
                     )
                     trip_no += 1
                 cur = []
                 dist_sum = drive_sum = 0.0
-                trip_start = cum + (svc[node] if node > S else 0)
-                prev_dep = trip_start
+                if load_first:
+                    trip_start = cum  # the next trip begins with loading
+                    prev_dep = cum + (svc[node] if node > S else 0)
+                else:
+                    trip_start = cum + (svc[node] if node > S else 0)
+                    prev_dep = trip_start
             prev_node = node
         if k in break_at:
             b = break_at[k]

@@ -340,6 +340,7 @@ function TourScreen() {
           {t("driverapp.load_plan")}
         </Link>
       </div>
+      {tour.stops.some((s) => s.order?.direction === "return") && <div className="d-alert">{t("driverapp.load_from_storage")}</div>}
       <h2 className="d-h2">{t("driverapp.stops")}</h2>
       {tour.stops.map((s) => {
         const p = stopProgress(evs, s.id);
@@ -405,12 +406,15 @@ function StopScreen() {
   if (!tour || !stop) return <Missing />;
   const evs = tourEvents(tour, day.queued);
   const p = stopProgress(evs, stop.id);
+  const isReturn = stop.order?.direction === "return";
+  // pickup: everything loaded into the vehicle; spring return: everything set down at the customer
+  const proof = isReturn ? "delivered" : "loaded";
   const plantDone = new Set(evs.filter((e) => e.stop_id === stop.id && e.kind === "plant_done").map((e) => e.plant_id));
-  const next = !p.arrive ? "arrive" : !p.carry_start ? "carry_start" : !p.loaded ? "loaded" : !p.leave ? "leave" : null;
+  const next = !p.arrive ? "arrive" : !p.carry_start ? "carry_start" : !p[proof] ? proof : !p.leave ? "leave" : null;
   const ev = (kind: string, extra: Record<string, unknown> = {}) => addEvent({ tour_id: tour.id, stop_id: stop.id, kind, ...extra });
   const loadedWithPhoto = async (f: File) => {
-    const photo_client_id = await addPhoto(f, { stop_id: stop.id, kind: "pickup_proof" });
-    await ev("loaded", { photo_client_id });
+    const photo_client_id = await addPhoto(f, { stop_id: stop.id, kind: isReturn ? "delivery_proof" : "pickup_proof" });
+    await ev(proof, { photo_client_id });
   };
   const leave = async () => {
     await ev("leave");
@@ -428,6 +432,7 @@ function StopScreen() {
         <div className="d-card-title">
           {stop.position}. {stop.customer?.name}
         </div>
+        {isReturn && <div className="d-flags"><span>{t("driverapp.return_stop")}</span></div>}
         {a && (
           <div>
             {a.street}, {a.postal_code} {a.city}
@@ -454,7 +459,7 @@ function StopScreen() {
       </div>
 
       <div className="d-steps">
-        {(["arrive", "carry_start", "loaded", "leave"] as const).map((k, i) => {
+        {(["arrive", "carry_start", proof, "leave"] as const).map((k, i) => {
           const done = p[k];
           const isNext = next === k;
           if (done)
@@ -469,13 +474,13 @@ function StopScreen() {
                 {i + 1}. {t(`driverapp.kinds.${k}`)}
               </div>
             );
-          if (k === "loaded")
+          if (k === proof)
             return me.settings.require_pickup_photo ? (
-              <PhotoButton key={k} primary label={`${i + 1}. ${t("driverapp.loaded_photo")}`} onPhoto={(f) => void loadedWithPhoto(f)} />
+              <PhotoButton key={k} primary label={`${i + 1}. ${t(isReturn ? "driverapp.delivered_photo" : "driverapp.loaded_photo")}`} onPhoto={(f) => void loadedWithPhoto(f)} />
             ) : (
               <div key={k} className="d-grid2">
-                <button className="d-btn primary big" onClick={() => void ev("loaded")}>
-                  {i + 1}. {t("driverapp.kinds.loaded")}
+                <button className="d-btn primary big" onClick={() => void ev(proof)}>
+                  {i + 1}. {t(`driverapp.kinds.${proof}`)}
                 </button>
                 <PhotoButton label={t("driverapp.with_photo")} onPhoto={(f) => void loadedWithPhoto(f)} />
               </div>
@@ -521,6 +526,7 @@ function StopScreen() {
                 {pl.can_tilt === false && <span>{t("driverapp.no_tilt")}</span>}
               </div>
               {pl.notes && <div>{pl.notes}</div>}
+              {isReturn && pl.storage && <div className="d-muted">{t("driverapp.storage", { name: pl.storage })}</div>}
             </div>
           </div>
           {pl.photos.length > 0 && (
@@ -642,9 +648,19 @@ function LoadScreen() {
           {msg && <div className="d-alert">{msg}</div>}
         </div>
       )}
-      <LoadPlanView tour={tour.load.tour} plan={tour.load.plan} compact />
+      <LoadPlanView tour={tour.load.tour} plan={tour.load.plan} compact notes={storageNotes(tour)} />
     </div>
   );
+}
+
+/** Spring return: where each plant waits in the storage (shown while loading at the depot). */
+function storageNotes(tour: DTour): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const s of tour.stops) {
+    if (s.order?.direction !== "return") continue;
+    for (const p of s.plants) if (p.storage) out[p.id] = t("driverapp.storage", { name: p.storage });
+  }
+  return out;
 }
 
 function NumberEntry({ onEnter }: { onEnter: (n: string) => void }) {

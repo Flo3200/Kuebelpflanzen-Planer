@@ -299,6 +299,7 @@ SETTINGS: tuple[SettingDef, ...] = (
     _s("planning.day_start", "time", "07:00", "planning", levels=(*PT, "staff", "vehicle"), important=True),
     _s("planning.day_end", "time", "17:30", "planning", levels=(*PT, "staff", "vehicle"), important=True),
     _s("planning.unload_min", "float", 20.0, "planning", levels=(*PT, "vehicle"), unit="min", min=0, max=240),
+    _s("planning.load_min", "float", 25.0, "planning", levels=(*PT, "vehicle"), unit="min", min=0, max=240),
     _s("planning.break_after_6h_min", "float", 30.0, "planning", unit="min", min=0, max=120),
     _s("planning.break_after_9h_min", "float", 45.0, "planning", unit="min", min=0, max=120),
     _s("planning.max_trips_per_day", "int", 3, "planning", levels=(*PT, "vehicle"), unit="", min=1, max=8),
@@ -405,6 +406,20 @@ SETTINGS: tuple[SettingDef, ...] = (
         levels=P,
     ),
     _s("billing.payment_days", "int", 14, "billing", levels=P, unit="Tage", min=0, max=90),
+    # --- spring return ---------------------------------------------------------------
+    _s(
+        "returns.frost_rule",
+        "enum",
+        "frost_sensitive",
+        "returns",
+        choices=("frost_sensitive", "all", "off"),
+        important=True,
+    ),
+    _s("returns.frost_safe_date", "str", "05-15", "returns", important=True),
+    _s("returns.time_factor", "float", 1.0, "returns", unit="×", min=0.3, max=3.0),
+    _s("returns.price_mode", "enum", "separate", "returns", choices=("separate", "included", "factor")),
+    _s("returns.price_factor", "float", 0.8, "returns", unit="×", min=0, max=3.0),
+    _s("returns.default_window_days", "int", 42, "returns", unit="Tage", min=1, max=180),
     # --- agents --------------------------------------------------------------------
     _s("agents.token_days", "int", 30, "agents", unit="Tage", min=1, max=365),
     _s("agents.rate_per_min", "int", 120, "agents", unit="/min", min=1, max=10000),

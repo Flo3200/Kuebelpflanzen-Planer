@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from typing import Any
 
 from fastapi import APIRouter, Query
@@ -421,18 +421,16 @@ def delete_order(order_id: uuid.UUID, actor: CurrentActor, db: DB) -> dict[str, 
     return {"ok": True}
 
 
-@router.post("/api/orders/{order_id}/return", status_code=201, tags=["order"])
-def create_return(order_id: uuid.UUID, actor: CurrentActor, db: DB) -> dict[str, Any]:
-    """Spring return: a new order in direction 'return' that reuses plants and paths of the pickup."""
-    actor.require("orders.write")
-    pickup = get_order(db, actor, order_id)
-    if pickup.direction != "pickup":
-        raise AppError("errors.validation")
+def make_return(
+    db: Session, actor: Actor, pickup: PickupOrder, earliest: date | None = None, latest: date | None = None
+) -> tuple[PickupOrder, bool]:
+    """Spring return of a pickup: reuses plants and paths, keeps the customer's time windows
+    (without fixed dates). Returns (order, created)."""
     existing = db.scalar(
         select(PickupOrder).where(PickupOrder.return_of_id == pickup.id, PickupOrder.deleted_at.is_(None))
     )
     if existing is not None:
-        return order_detail(db, actor, existing)
+        return existing, False
     ret = new_order(
         db,
         actor,
@@ -445,10 +443,75 @@ def create_return(order_id: uuid.UUID, actor: CurrentActor, db: DB) -> dict[str,
         },
     )
     ret.return_of_id = pickup.id
+    ret.time_windows = [w for w in (pickup.time_windows or []) if not w.get("date")]
+    ret.earliest_date = earliest
+    ret.latest_date = latest
     ret.status = "confirmed"
     db.flush()
     _after_order_change(db, actor, ret, {})
+    return ret, True
+
+
+@router.post("/api/orders/{order_id}/return", status_code=201, tags=["order"])
+def create_return(order_id: uuid.UUID, actor: CurrentActor, db: DB) -> dict[str, Any]:
+    """Spring return: a new order in direction 'return' that reuses plants and paths of the pickup."""
+    actor.require("orders.write")
+    pickup = get_order(db, actor, order_id)
+    if pickup.direction != "pickup":
+        raise AppError("errors.validation")
+    ret, _created = make_return(db, actor, pickup)
     return order_detail(db, actor, ret)
+
+
+class ReturnsIn(BaseModel):
+    earliest_date: date
+    latest_date: date | None = None
+    statuses: list[str] = ["picked_up", "stored"]
+    season: int | None = None
+    order_ids: list[uuid.UUID] | None = None
+
+
+@router.post("/api/orders/returns", tags=["order"])
+def create_returns(data: ReturnsIn, actor: CurrentActor, db: DB) -> dict[str, Any]:
+    """Spring: returns for all stored pickups (or the given ones) at once, in one date range."""
+    actor.require("orders.write")
+    tid = actor.require_tenant()
+    days = int(SettingsResolver(db, tid).get("returns.default_window_days"))
+    latest = data.latest_date or data.earliest_date + timedelta(days=days)
+    if latest < data.earliest_date:
+        raise AppError("errors.validation")
+    statuses = [x for x in data.statuses if x in ("confirmed", "planned", "picked_up", "stored")] or [
+        "picked_up",
+        "stored",
+    ]
+    q = select(PickupOrder).where(
+        PickupOrder.tenant_id == tid,
+        PickupOrder.deleted_at.is_(None),
+        PickupOrder.direction == "pickup",
+        PickupOrder.status.in_(statuses),
+    )
+    if data.season:
+        q = q.where(PickupOrder.season == data.season)
+    if data.order_ids:
+        q = q.where(PickupOrder.id.in_(data.order_ids))
+    created, existing = [], 0
+    for pickup in db.scalars(q.order_by(PickupOrder.number)):
+        ret, new = make_return(db, actor, pickup, data.earliest_date, latest)
+        if new:
+            created.append(ret.number)
+        else:
+            existing += 1
+    if created:
+        from app.api.planning import mark_needs_replan
+
+        mark_needs_replan(db, tid, f"returns:{len(created)}", "return")
+    return {
+        "created": len(created),
+        "numbers": created,
+        "existing": existing,
+        "earliest_date": data.earliest_date,
+        "latest_date": latest,
+    }
 
 
 # ----------------------------------------------------------------------------- plants

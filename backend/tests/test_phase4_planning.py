@@ -154,7 +154,9 @@ def test_plan_100_orders_all_constraints_hold(owner, demo_tenant):
             list(
                 db.scalars(
                     select(PickupOrder).where(
-                        PickupOrder.tenant_id == tid, PickupOrder.status.in_(("confirmed", "planned"))
+                        PickupOrder.tenant_id == tid,
+                        PickupOrder.direction == "pickup",
+                        PickupOrder.status.in_(("confirmed", "planned")),
                     )
                 )
             )

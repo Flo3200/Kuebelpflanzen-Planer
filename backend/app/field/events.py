@@ -18,9 +18,24 @@ from app.models.packing import LoadPlacement, LoadPlan
 from app.models.planning import Tour, TourStop
 from app.settings.service import SettingsResolver
 
-STOP_KINDS = {"arrive", "carry_start", "plant_done", "loaded", "leave", "qr_scan"}
-STOP_STATUS = {"arrive": "arrived", "carry_start": "carrying", "loaded": "loaded", "leave": "done"}
-STATUS_RANK = {"planned": 0, "arrived": 1, "carrying": 2, "loaded": 3, "done": 4, "skipped": 4}
+STOP_KINDS = {"arrive", "carry_start", "plant_done", "loaded", "delivered", "leave", "qr_scan"}
+STOP_STATUS = {
+    "arrive": "arrived",
+    "carry_start": "carrying",
+    "loaded": "loaded",
+    "delivered": "delivered",
+    "leave": "done",
+}
+STATUS_RANK = {
+    "planned": 0,
+    "arrived": 1,
+    "carrying": 2,
+    "loaded": 3,
+    "delivered": 3,
+    "done": 4,
+    "skipped": 4,
+}
+PROOF_KINDS = ("loaded", "delivered")
 
 
 class EventError(Exception):
@@ -99,7 +114,7 @@ def apply_event(db: Session, actor: Actor, raw: dict[str, Any], settings: Settin
     photo = photo or photo_by_client_id(db, actor.tenant_id, raw.get("photo_client_id"))
     if photo is not None and photo.tenant_id != actor.tenant_id:
         photo = None
-    if kind == "loaded" and bool(settings.get("driver.require_pickup_photo")) and photo is None:
+    if kind in PROOF_KINDS and bool(settings.get("driver.require_pickup_photo")) and photo is None:
         raise EventError("errors.event_photo_required")
     ev = TourEvent(
         tenant_id=actor.tenant_id,
@@ -125,10 +140,14 @@ def apply_event(db: Session, actor: Actor, raw: dict[str, Any], settings: Settin
         new = STOP_STATUS[kind]
         if STATUS_RANK.get(new, 0) >= STATUS_RANK.get(stop.status, 0):
             stop.status = new
-        if kind in ("loaded", "leave"):
+        if kind in ("loaded", "delivered", "leave"):
             order = db.get(PickupOrder, stop.order_id)
             if order is not None and order.status in ("planned", "confirmed"):
                 order.status = "picked_up" if order.direction == "pickup" else "returned"
+                if order.direction == "return" and order.return_of_id:
+                    pickup = db.get(PickupOrder, order.return_of_id)
+                    if pickup is not None and pickup.status in ("picked_up", "stored"):
+                        pickup.status = "returned"  # the plants are back home
     if photo is not None and stop is not None:
         photo.stop_id = photo.stop_id or stop.id
         photo.order_id = photo.order_id or stop.order_id
@@ -144,7 +163,7 @@ def apply_event(db: Session, actor: Actor, raw: dict[str, Any], settings: Settin
                 place.loaded_at = at
     if kind == "shift_end":
         tour.status = "done"
-    if stop is not None and kind in ("loaded", "leave"):
+    if stop is not None and kind in ("loaded", "delivered", "leave"):
         build_measurement(db, tour, stop)
     return ev
 

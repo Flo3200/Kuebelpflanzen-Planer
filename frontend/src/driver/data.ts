@@ -23,6 +23,7 @@ export interface DPlant {
   sensitive: boolean | null;
   must_secure: boolean;
   notes: string | null;
+  storage?: string | null;
   photos: { id: string; url: string; kind: string }[];
 }
 

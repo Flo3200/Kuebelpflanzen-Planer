@@ -29,7 +29,8 @@ EVENT_KINDS = [
     "arrive",  # 1. arrival at the customer
     "carry_start",  # 2. carrying begins
     "plant_done",  # 3. (optional) one plant is in the vehicle
-    "loaded",  # 4. everything loaded, with mandatory photo
+    "loaded",  # 4. everything loaded, with mandatory photo (pickup)
+    "delivered",  # 4. everything set down at the customer, with photo (spring return)
     "leave",  # 5. drive on
     "break_start",
     "break_end",

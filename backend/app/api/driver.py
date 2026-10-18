@@ -19,7 +19,7 @@ from app.core.context import Actor
 from app.core.errors import AppError, NotFound
 from app.field.events import apply_events, can_use_tour, photo_by_client_id
 from app.models.field import DEVIATION_KINDS, Deviation, TourEvent
-from app.models.masterdata import Species, StaffMember, Vehicle
+from app.models.masterdata import Species, StaffMember, StorageArea, Vehicle
 from app.models.orders import AccessPath, Address, Customer, PathSegment, Photo, PickupOrder, Plant
 from app.models.planning import Plan, Tour, TourStop
 from app.packing.store import load_plan_dict
@@ -74,6 +74,13 @@ def _photos(db, **where) -> list[dict[str, Any]]:
     ]
 
 
+def _storage_name(db, area_id) -> str | None:
+    if area_id is None:
+        return None
+    a = db.get(StorageArea, area_id)
+    return a.name if a else None
+
+
 def stop_package(db, stop: TourStop) -> dict[str, Any]:
     order = db.get(PickupOrder, stop.order_id)
     customer = db.get(Customer, order.customer_id) if order else None
@@ -105,6 +112,7 @@ def stop_package(db, stop: TourStop) -> dict[str, Any]:
                 "sensitive": p.sensitive,
                 "must_secure": p.must_secure,
                 "notes": p.notes,
+                "storage": _storage_name(db, p.storage_area_id),
                 "photos": _photos(db, plant_id=p.id),
             }
         )
@@ -174,7 +182,8 @@ def stop_package(db, stop: TourStop) -> dict[str, Any]:
         "plants": plants,
         "paths": paths,
         "equipment": sorted({p["equipment"] for p in plants if p.get("equipment")}),
-        "proof_photos": _photos(db, stop_id=stop.id, kind="pickup_proof"),
+        "proof_photos": _photos(db, stop_id=stop.id, kind="pickup_proof")
+        + _photos(db, stop_id=stop.id, kind="delivery_proof"),
     }
 
 
@@ -303,7 +312,7 @@ async def upload(
     raw = await file.read()
     if len(raw) > get_config().max_upload_mb * 1024 * 1024:
         raise AppError("errors.file_too_large", status_code=413)
-    if kind not in ("pickup_proof", "damage", "path_segment", "plant_front", "other"):
+    if kind not in ("pickup_proof", "delivery_proof", "damage", "path_segment", "plant_front", "other"):
         kind = "other"
     photo = save_photo(
         db,

@@ -269,6 +269,7 @@ PHOTO_KINDS = [
     "path_segment",
     "path_end",
     "pickup_proof",
+    "delivery_proof",
     "damage",
     "other",
 ]

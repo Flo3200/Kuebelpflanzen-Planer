@@ -195,6 +195,7 @@ function NewPlanModal({ onClose, onCreated }: { onClose: () => void; onCreated: 
             <option value="pickup">{t("orders.direction.pickup")}</option>
             <option value="return">{t("orders.direction.return")}</option>
           </select>
+          {form.direction === "return" && <p className="xs muted">{t("returns.plan_hint")}</p>}
         </div>
         <div className="field">
           <label htmlFor="pl-limit">{t("planning.time_limit")}</label>

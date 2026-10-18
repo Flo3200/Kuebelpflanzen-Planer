@@ -31,12 +31,13 @@ class Sample:
     used: bool = True  # False: excluded (outlier, customer absent) - shown, not fitted
     exclude_reason: str | None = None
     extra: dict[str, Any] = field(default_factory=dict)
+    factor: float = 1.0  # spring return: returns.time_factor
 
     def predict(self, formula: CompiledFormula, params: dict[str, float], speed: float = 1.0) -> float:
         out = formula.run(
             {**self.stop_vars, "speed": max(0.1, speed)}, [dict(p) for p in self.plants], params
         )
-        return max(0.0, float(out["duration"]))
+        return max(0.0, float(out["duration"])) * self.factor
 
     def plant_work(
         self, formula: CompiledFormula, params: dict[str, float], speed: float = 1.0
@@ -123,7 +124,8 @@ def prepare_samples(
                 experiment=m.experiment,
                 used=used,
                 exclude_reason=reason if not used else None,
-                extra={"source": m.source, "date": str(m.date)},
+                extra={"source": m.source, "date": str(m.date), "direction": order.direction},
+                factor=est.direction_factor(order),
             )
         )
     return out

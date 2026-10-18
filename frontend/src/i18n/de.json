@@ -914,7 +914,8 @@
       "no_units": "kein Personal/Fahrzeug verfügbar",
       "pinned_unit_unavailable": "fixiertes Team nicht verfügbar",
       "manual": "von Hand herausgenommen",
-      "load_plan": "passt laut Ladeplan in kein Fahrzeug"
+      "load_plan": "passt laut Ladeplan in kein Fahrzeug",
+      "frost": "frostempfindlich – erst nach dem frostsicheren Stichtag"
     },
     "reason_help": {
       "no_capacity": "Mehr Tage, Personal oder Fahrzeuge einplanen, oder Szenarien vergleichen.",
@@ -1086,7 +1087,8 @@
       "break_end": "Pause Ende",
       "unload": "Zurück im Betrieb – Abladen",
       "shift_end": "Schicht beenden",
-      "qr_scan": "QR-Scan"
+      "qr_scan": "QR-Scan",
+      "delivered": "Abgestellt"
     },
     "loaded_photo": "Eingeladen – Foto aufnehmen",
     "with_photo": "mit Foto",
@@ -1153,7 +1155,11 @@
     "photos_n": "{n} Foto(s)",
     "send_report": "Meldung senden",
     "report_offline": "Ohne Verbindung wird die Meldung gespeichert und später gesendet.",
-    "not_found": "Nicht gefunden – vielleicht wurde der Plan geändert."
+    "not_found": "Nicht gefunden – vielleicht wurde der Plan geändert.",
+    "delivered_photo": "Abgestellt – Foto aufnehmen",
+    "return_stop": "Rücklieferung",
+    "storage": "Lager: {name}",
+    "load_from_storage": "Rücklieferung: vor der Abfahrt im Lager beladen – zuerst, was zuletzt ausgeliefert wird."
   },
   "model": {
     "title": "Modellqualität",
@@ -1472,5 +1478,15 @@
     "erase": "Daten löschen",
     "erase_q": "Alle personenbezogenen Daten dieses Kunden löschen (Name, Kontakt, Adresse, Fotos, Angebote)? Rechnungen bleiben wegen der Aufbewahrungspflicht. Das lässt sich nicht rückgängig machen.",
     "erased": "Personenbezogene Daten gelöscht."
+  },
+  "returns": {
+    "create": "Rücklieferungen anlegen",
+    "create_now": "Anlegen",
+    "create_help": "Für alle abgeholten und eingelagerten Aufträge ohne Rücklieferung wird eine Rücklieferung angelegt – mit Pflanzen, Wegen und Zeitfenstern der Abholung. Bereits vorhandene bleiben unverändert.",
+    "from": "frühestens",
+    "to": "spätestens",
+    "frost_hint": "Frostempfindliche Pflanzen plant die Tourenplanung erst ab dem frostsicheren Stichtag (Einstellungen → Rücklieferung).",
+    "created": "{n} Rücklieferung(en) angelegt, {existing} gab es schon.",
+    "plan_hint": "Rücklieferung: Beladen im Betrieb vor jeder Fahrt, frostempfindliche Pflanzen erst ab dem Stichtag, Ladeplan mit dem ersten Stopp an der Tür."
   }
 }

@@ -114,6 +114,8 @@ class Estimator:
         self.avg_hourly_cost = sum(rates) / len(rates) if rates else self.hourly_cost(None)
         self.species: dict[uuid.UUID, Species] = {}
         self.routing = provider_for(r)
+        # spring return: setting plants down at the customer may take longer or shorter
+        self.return_factor = float(r.get("returns.time_factor"))
         q = float(r.get("time.planning_quantile"))
         self.sigma = float(r.get("time.error_sigma"))
         self.quantile_factor = math.exp(NormalDist().inv_cdf(q) * self.sigma) if 0 < q < 1 else 1.0
@@ -278,13 +280,18 @@ class Estimator:
             c.vars["work"] = p.get("work")
         return max(0.0, float(out["duration"]))
 
+    def direction_factor(self, order: PickupOrder) -> float:
+        return self.return_factor if order.direction == "return" else 1.0
+
     def stop_estimate(
-        self, calcs: list[PlantCalc], *, min_team: int | None = None, speed: float = 1.0
+        self, calcs: list[PlantCalc], *, min_team: int | None = None, speed: float = 1.0, factor: float = 1.0
     ) -> dict[str, Any]:
         max_crew = max((c.crew.crew for c in calcs), default=1)
         team = max(max_crew, min_team or int(self.resolver.get("team.min_size_per_stop")))
         max_size = max(team, int(self.resolver.get("team.max_size")))
-        durations = {m: round(self.stop_duration(calcs, m, speed), 2) for m in range(team, max_size + 1)}
+        durations = {
+            m: round(self.stop_duration(calcs, m, speed) * factor, 2) for m in range(team, max_size + 1)
+        }
         duration = durations[team]
         return {
             "team_size": team,
@@ -315,7 +322,7 @@ class Estimator:
             if not c.plant.weight_kg and not c.plant.weight_measured_kg:
                 warnings.append(f"no_weight:{c.plant.number}")
         try:
-            stop = self.stop_estimate(calcs)
+            stop = self.stop_estimate(calcs, factor=self.direction_factor(order))
         except FormulaError as exc:
             return {"error": f"{exc.code}: {exc.detail}", "computed_at": datetime.now(UTC).isoformat()}
         address = self.db.get(Address, order.address_id)
@@ -442,6 +449,12 @@ class Estimator:
             value = float(self.price_formula.run(variables, [])["price"])
         except FormulaError as exc:
             return {"error": f"{exc.code}: {exc.detail}"}
+        if order.direction == "return":
+            mode = r.get("returns.price_mode", cust)
+            if mode == "included":
+                value = 0.0  # the return is part of the pickup / overwintering price
+            elif mode == "factor":
+                value *= float(r.get("returns.price_factor", cust))
         step = float(r.get("pricing.rounding"))
         if step > 0:
             value = round(value / step) * step
