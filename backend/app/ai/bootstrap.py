@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.ai.functions import DEFAULT_PROMPTS
@@ -65,21 +65,24 @@ def seed_ai(db: Session) -> None:
             for m in entry["models"]:
                 db.add(AIModel(provider_id=provider.id, price_currency="USD", **m))
     for function, prompt in DEFAULT_PROMPTS.items():
-        exists = db.scalar(
-            select(PromptTemplate.id)
-            .where(PromptTemplate.tenant_id.is_(None), PromptTemplate.function == function)
-            .limit(1)
+        # a newer default prompt becomes a new global version; versions the admin made stay and win
+        # while they are newer, older ones remain in the history (prompts are versioned, never edited)
+        version = int(prompt.get("version", 1))
+        latest = db.scalar(
+            select(func.max(PromptTemplate.version)).where(
+                PromptTemplate.tenant_id.is_(None), PromptTemplate.function == function
+            )
         )
-        if exists is None:
+        if latest is None or latest < version:
             db.add(
                 PromptTemplate(
                     tenant_id=None,
                     function=function,
-                    version=1,
+                    version=version,
                     system=prompt["system"],
                     instructions=prompt["instructions"],
                     active=True,
-                    note="Standard",
+                    note="Standard" if version == 1 else f"Standard (Version {version})",
                 )
             )
     db.flush()

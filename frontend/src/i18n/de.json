@@ -91,7 +91,8 @@
     "acting_as": "Ansicht als Betrieb",
     "teams": "Teams",
     "ai_tenant": "KI-Nutzung",
-    "deviations": "Meldungen"
+    "deviations": "Meldungen",
+    "species_kb": "Wissensbasis Pflanzenarten"
   },
   "login": {
     "title": "Willkommen zurück",
@@ -258,7 +259,22 @@
       "master": "Stammdaten",
       "address": "Anschrift und Standort",
       "contact": "Kontakt",
-      "billing": "Abrechnung"
+      "billing": "Abrechnung",
+      "skills": "Fähigkeiten",
+      "cargo": "Laderaum",
+      "axles": "Achsen",
+      "trailer": "Anhänger",
+      "effect": "Wirkung",
+      "shape": "Form",
+      "weight": "Gewicht",
+      "handling": "Umgang",
+      "privacy": "Datenschutz",
+      "geo": "Koordinaten",
+      "hints": "Hinweise",
+      "order": "Auftrag",
+      "timing": "Termin",
+      "pot": "Topf",
+      "crown": "Krone und Höhe"
     }
   },
   "errors": {
@@ -272,7 +288,7 @@
     "tags_placeholder": "durch Komma getrennt",
     "add_window": "Zeitfenster hinzufügen",
     "more": "Weitere Angaben",
-    "more_hint": "{n} Felder, die keine Berechnung braucht ({filled} ausgefüllt)"
+    "more_hint": "{n} Felder für Sonderfälle ({filled} ausgefüllt)"
   },
   "stats": {
     "users": "Benutzer",
@@ -637,7 +653,9 @@
       "pot_height_cm": "Topfhöhe (cm)",
       "crown_width_cm": "Kronenbreite (cm)",
       "crown_height_cm": "Kronenhöhe (cm)",
-      "weight_kg": "Gewicht (kg)"
+      "weight_kg": "Gewicht (kg)",
+      "frost_sensitive": "Frostempfindlich",
+      "can_tilt": "Darf gekippt werden"
     },
     "confirmed": "Entwurf bestätigt: Auftrag {number}",
     "draft": "Entwurf",
@@ -654,7 +672,7 @@
     "follow_up": "Vorschlag für eine Rückfrage"
   },
   "species": {
-    "admin_description": "Globaler Pflanzenarten-Katalog. Betriebe können einzelne Werte für sich überschreiben.",
+    "admin_description": "Interne Wissensbasis mit Standardwerten je Pflanzenart. Betriebe sehen sie nicht: Die KI bestimmt Art und Eigenschaften jeder Pflanze und speichert sie an der Pflanze; was sie offen lässt, kommt von hier.",
     "description": "Katalog der Pflanzenarten mit Standardwerten für Dichte, Gewicht und Umgang. Ändern Sie eine globale Art, entsteht eine eigene Fassung für Ihren Betrieb.",
     "new": "Neue Pflanzenart",
     "global": "global",

@@ -1,9 +1,11 @@
-"""Complete missing plant values from species defaults and settings; estimate the weight.
+"""Complete missing plant values from the knowledge base and settings; estimate the weight.
 
 Every value that is filled in here is listed in plant.estimated_fields so the UI can mark it
 as "geschätzt". Values entered by people or confirmed from AI drafts are never overwritten.
+Species properties live on the plant (package B): missing ones are copied from the internal
+knowledge base once (app/timemodel/knowledge.py); the calculations read only the plant.
 
-Weight model (all coefficients are settings or species attributes):
+Weight model (all coefficients are settings or plant attributes):
   pot volume  V_pot = π (d/2)² h · taper     (square: l · w · h)         [litres]
   soil        V_pot · fill · soil_kg_per_l
   pot itself  V_pot · material_kg_per_l[material]
@@ -23,6 +25,7 @@ from sqlalchemy.orm import Session
 from app.models.masterdata import Species
 from app.models.orders import Plant
 from app.settings.service import SettingsResolver
+from app.timemodel.knowledge import DEFAULTS, fill_from_knowledge, species_for_plant, typical_height
 
 
 @dataclass
@@ -75,9 +78,10 @@ def complete_plant(
     db: Session, plant: Plant, resolver: SettingsResolver, species: Species | None = None
 ) -> Plant:
     """Fill missing values in place; recompute weight unless it was entered or measured."""
-    if species is None and plant.species_id:
-        species = db.get(Species, plant.species_id)
+    if species is None:
+        species = species_for_plant(db, plant)
     estimated: set[str] = set(plant.estimated_fields or [])
+    fill_from_knowledge(db, plant, estimated, species)
 
     if plant.pot_shape == "square":
         if plant.pot_length_cm is None and plant.pot_diameter_cm is not None:
@@ -90,9 +94,7 @@ def complete_plant(
     _set(plant, "pot_height_cm", round(d * 0.9, 1), estimated)
     _set(plant, "pot_material", "plastic", estimated)
 
-    crown_shape = species.crown_shape if species else "sphere"
-    _set(plant, "crown_shape", crown_shape, estimated)
-    typical = species.typical_height_cm if species and species.typical_height_cm else None
+    typical = typical_height(species)
     if plant.total_height_cm is None and plant.crown_height_cm is not None:
         _set(
             plant,
@@ -114,20 +116,9 @@ def complete_plant(
         estimated,
     )
     _set(plant, "crown_width_cm", round(d * resolver.get("weight.default_crown_ratio"), 1), estimated)
-    _set(plant, "crown_density", species.crown_density if species else 0.5, estimated)
-    _set(plant, "compressibility", species.compressibility if species else 0.3, estimated)
-    if plant.can_tilt is None:
-        plant.can_tilt = bool(species.can_tilt) if species else False
-        estimated.add("can_tilt")
-    if plant.sensitive is None:
-        plant.sensitive = bool(species.sensitive) if species else False
-        estimated.add("sensitive")
-    if plant.frost_sensitive is None:
-        plant.frost_sensitive = (species.frost_sensitivity == "tender") if species else False
-        estimated.add("frost_sensitive")
 
     if plant.weight_kg is None or "weight_kg" in estimated:
-        weight, uncertainty = estimate_weight(plant, resolver, species, estimated)
+        weight, uncertainty = estimate_weight(plant, resolver, estimated)
         plant.weight_kg = round(weight, 1)
         plant.weight_uncertainty_kg = round(uncertainty, 1)
         estimated.add("weight_kg")
@@ -135,9 +126,7 @@ def complete_plant(
     return plant
 
 
-def estimate_weight(
-    plant: Plant, resolver: SettingsResolver, species: Species | None, estimated: set[str]
-) -> tuple[float, float]:
+def estimate_weight(plant: Plant, resolver: SettingsResolver, estimated: set[str]) -> tuple[float, float]:
     taper = resolver.get("weight.pot_taper")
     fill = resolver.get("weight.pot_fill")
     vol = pot_volume_l(
@@ -148,9 +137,9 @@ def estimate_weight(
         plant.pot_height_cm or 0,
         taper,
     )
-    soil_density = species.soil_kg_per_l if species else 1.3
-    plant_density = species.plant_kg_per_l if species else 0.03
-    trunk = species.trunk_kg_per_m if species else 1.5
+    soil_density = plant.soil_kg_per_l if plant.soil_kg_per_l is not None else DEFAULTS["soil_kg_per_l"]
+    plant_density = plant.plant_kg_per_l if plant.plant_kg_per_l is not None else DEFAULTS["plant_kg_per_l"]
+    trunk = plant.trunk_kg_per_m if plant.trunk_kg_per_m is not None else DEFAULTS["trunk_kg_per_m"]
     materials = resolver.get("weight.pot_material_kg_per_l") or {}
     pot_factor = float(materials.get(plant.pot_material or "plastic", 0.1))
     crown_v = crown_volume_l(

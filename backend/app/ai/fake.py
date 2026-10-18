@@ -13,6 +13,9 @@ from typing import Any
 
 from app.ai.providers import AIRequest, AIResponse, ChatTurn
 
+# species properties the AI returns per plant (see app/timemodel/knowledge.AI_TRAITS)
+TRAIT_KEYS = ("compressibility", "tip_tendency", "can_tilt", "frost_sensitive", "sensitive")
+
 NUMBER_WORDS = {
     "ein": 1,
     "eine": 1,
@@ -124,6 +127,7 @@ class FakeProvider:
 
         earliest, latest, date_conf = self._dates(low, today)
         plants = self._plants(text, species_names)
+        self._traits(plants, ctx.get("species_traits") or {}, low)
         path = self._path(low, floor)
 
         missing: list[str] = []
@@ -259,6 +263,18 @@ class FakeProvider:
             start, end = {"anfang": (1, 10), "mitte": (10, 20), "ende": (20, 28)}[m.group(1)]
             return mk(start, mo), mk(end, mo), 0.6
         return None, None, 0.0
+
+    @staticmethod
+    def _traits(plants: list[dict[str, Any]], known: dict[str, dict[str, Any]], low: str) -> None:
+        """Species properties: from the catalog (moderate confidence) or stated in the message."""
+        frost_said = re.search(r"frostempfindlich|verträgt(?: \w+)? keinen frost|nicht winterhart", low)
+        for p in plants:
+            name = (p.get("species") or {}).get("value")
+            traits = known.get(name) if name else None
+            for key in TRAIT_KEYS:
+                p[key] = v(traits[key], 0.55) if traits and traits.get(key) is not None else v(None, 0)
+            if frost_said:
+                p["frost_sensitive"] = v(True, 0.9)
 
     def _plants(self, text: str, species_names: list[str]) -> list[dict[str, Any]]:
         out: list[dict[str, Any]] = []
@@ -497,6 +513,7 @@ class FakeProvider:
                 "pot_shape": nothing,
                 "pot_material": nothing,
                 "weight_kg": nothing,
+                **{k: nothing for k in TRAIT_KEYS},
             },
             "path": {
                 "length_m": nothing,

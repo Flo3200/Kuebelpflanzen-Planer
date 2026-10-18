@@ -395,6 +395,8 @@ def customers_and_orders(
                 order_id=order.id,
                 number=next_number(db, tenant.id, "plant"),
                 species_id=sp.id,
+                species_name=sp.name,
+                species_source="ai",
                 access_path_id=path.id,
                 pot_shape=shape,
                 pot_diameter_cm=round(d) if shape == "round" else None,

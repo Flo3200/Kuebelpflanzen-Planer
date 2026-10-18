@@ -24,7 +24,6 @@ from app.core.modules import module_enabled, module_states, require_module
 from app.jobs.queue import enqueue
 from app.models.core import Tenant
 from app.models.formulas import Quote
-from app.models.masterdata import Species
 from app.models.orders import Address, Customer, Photo, PickupOrder, Plant
 from app.models.platform import Invoice, Payment
 from app.payments.providers import provider_for, verify_stripe_signature
@@ -168,14 +167,13 @@ def order_view(db, actor: Actor, o: PickupOrder, full: bool = False) -> dict[str
         for p in db.scalars(
             select(Plant).where(Plant.order_id == source, Plant.deleted_at.is_(None)).order_by(Plant.number)
         ):
-            sp = db.get(Species, p.species_id) if p.species_id else None
             g = geometry(p)
             photos = _photos(db, plant_id=p.id)
             plants.append(
                 {
                     "id": p.id,
                     "number": p.number,
-                    "name": sp.name if sp else (p.label or ""),
+                    "name": p.species_name or p.label or "",
                     "height": round(g.total_h),
                     "pot_d": round(g.pot_d),
                     "photos": photos,

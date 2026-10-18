@@ -36,7 +36,7 @@ stehen in den Formularen eingeklappt unter „Weitere Angaben“.
 
 ## Rollen
 
-- **Admin** (Plattform): legt Betriebe an, pflegt globale Formeln, Pflanzenarten, KI-Modelle,
+- **Admin** (Plattform): legt Betriebe an, pflegt globale Formeln, die Wissensbasis der Pflanzenarten, KI-Modelle,
   Plattform-Einstellungen und die Abrechnung der Betriebe.
 - **Inhaber/in**: alles im eigenen Betrieb, auch Benutzer, Abrechnung und Agenten.
 - **Disposition**: Aufträge, Planung, Stammdaten – ohne Benutzer, Abrechnung und Agenten.
@@ -85,7 +85,7 @@ Wichtige Gruppen:
 - **Aufträge**: Abholung (Herbst) oder Rücklieferung (Frühjahr), Zeitfenster, frühestes und
   spätestes Datum, Mindestteam, Status (Entwurf, bestätigt, geplant, abgeholt, eingelagert,
   zurückgebracht, storniert).
-- **Pflanzen**: Art, Topfform und -maße, Kronenform und -maße, Höhe, Gewicht (geschätzt oder
+- **Pflanzen**: Art (bestimmt die KI; Betriebe pflegen keine Artenliste), Kippgefahr, Topfform und -maße, Kronenform und -maße, Höhe, Gewicht (geschätzt oder
   gewogen), kippbar, empfindlich, sichern, Unverträglichkeiten, benötigte Hilfsmittel.
 - **Wege**: Abschnitte (eben, Treppe, Rampe, Tür, Aufzug, Engstelle) mit Länge, Stufen,
   Breite, Belag und Steigung – sie bestimmen Tragezeit und Teamgröße.
@@ -94,6 +94,16 @@ Wichtige Gruppen:
   entstehen echte Daten.
 - **Foto-Set**: Pro Pflanze frontal und seitlich mit A4-Blatt als Maßstab, schräg von oben, Topf;
   für den Weg eine lückenlose Bildfolge. Die KI prüft Vollständigkeit und schätzt Maße.
+
+## Pflanzenarten im Hintergrund
+
+Betriebe pflegen keine Pflanzenarten. Bei Foto-Auswertung und Nachrichtenerfassung bestimmt die KI
+die Art jeder Pflanze und ihre Eigenschaften für Transport und Überwinterung – Frostempfindlichkeit,
+kippbar, empfindlich, Stauchbarkeit, Kippgefahr – jeweils mit Sicherheit, und speichert sie an der
+Pflanze. Was die KI offen lässt oder nur unsicher weiß, kommt aus der internen **Wissensbasis**
+(Standardwerte je Art, gepflegt vom Admin), dazu die Werte für die Gewichtsschätzung (Erde, Krone,
+Stamm). Solche Werte sind „geschätzt“ markiert; ein Mensch kann jeden Wert an der Pflanze ändern.
+Gewichtsschätzung, Ladeplanung (Kippgefahr), Frostregel und Kalibrierung lesen nur die Pflanze.
 
 ## Zeitmodell und Formeln
 

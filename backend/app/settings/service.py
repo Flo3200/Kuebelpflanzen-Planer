@@ -29,7 +29,7 @@ OBJECT_WRITE_PERMISSION = {
     "staff": "staff.write",
     "vehicle": "fleet.write",
     "equipment": "fleet.write",
-    "species": "species.write",
+    "species": "platform.species",  # knowledge base, admin only
     "plant": "orders.write",
     "customer": "customers.write",
     "tour": "planning.write",

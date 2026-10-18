@@ -213,8 +213,8 @@ def visible_species(db: Session, tenant_id: uuid.UUID | None) -> list[Species]:
 
 @router.get("/api/species", tags=["species"])
 def list_species(actor: CurrentActor, db: DB, q: str | None = None) -> list[dict[str, Any]]:
-    if actor.tenant_id is not None:
-        actor.require("orders.read")
+    """Internal knowledge base of plant species (admin only since the species moved to the plant)."""
+    actor.require("platform.species")
     rows = visible_species(db, actor.tenant_id)
     if q:
         ql = q.lower()
@@ -230,6 +230,7 @@ def list_species(actor: CurrentActor, db: DB, q: str | None = None) -> list[dict
 
 @router.get("/api/species/{species_id}", tags=["species"])
 def get_species(species_id: uuid.UUID, actor: CurrentActor, db: DB) -> dict[str, Any]:
+    actor.require("platform.species")
     row = db.get(Species, species_id)
     if row is None or (row.tenant_id is not None and row.tenant_id != actor.tenant_id):
         raise NotFound()
@@ -237,7 +238,8 @@ def get_species(species_id: uuid.UUID, actor: CurrentActor, db: DB) -> dict[str,
 
 
 def _species_perm(actor: Actor) -> None:
-    actor.require("species.write" if actor.tenant_id is not None else "platform.species")
+    # tenants no longer maintain species: the AI stores species and properties on the plant
+    actor.require("platform.species")
 
 
 @router.post("/api/species", status_code=201, tags=["species"])

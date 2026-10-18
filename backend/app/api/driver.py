@@ -20,7 +20,7 @@ from app.core.errors import AppError, NotFound
 from app.core.modules import module_enabled
 from app.field.events import apply_events, can_use_tour, photo_by_client_id
 from app.models.field import DEVIATION_KINDS, Deviation, TourEvent
-from app.models.masterdata import Species, StaffMember, StorageArea, Vehicle
+from app.models.masterdata import StaffMember, StorageArea, Vehicle
 from app.models.orders import AccessPath, Address, Customer, PathSegment, Photo, PickupOrder, Plant
 from app.models.planning import Plan, Tour, TourStop
 from app.packing.store import load_plan_dict
@@ -94,14 +94,13 @@ def stop_package(db, stop: TourStop) -> dict[str, Any]:
     for p in db.scalars(
         select(Plant).where(Plant.order_id == source, Plant.deleted_at.is_(None)).order_by(Plant.number)
     ):
-        sp = db.get(Species, p.species_id) if p.species_id else None
         g = geometry(p)
         c = crew.get(str(p.id), {})
         plants.append(
             {
                 "id": p.id,
                 "number": p.number,
-                "name": sp.name if sp else (p.label or ""),
+                "name": p.species_name or p.label or "",
                 "label": p.label,
                 "pot_d": round(g.pot_d),
                 "pot_h": round(g.pot_h),

@@ -30,7 +30,6 @@ export function tenantRoutes() {
     <Route key="vehicles" path="fahrzeuge" element={<VehiclesPage />} />,
     <Route key="equipment" path="hilfsmittel" element={<EquipmentPage />} />,
     <Route key="availability" path="verfuegbarkeit" element={<AvailabilityPage />} />,
-    <Route key="species" path="pflanzenarten" element={<SpeciesPage />} />,
     <Route key="storage" path="lager" element={<StoragePage />} />,
     <Route key="ai" path="ki" element={<TenantAIPage />} />,
     <Route key="pricing" path="preise" element={<PricingPage />} />,

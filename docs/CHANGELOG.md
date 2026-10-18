@@ -296,3 +296,23 @@ eingeklappte Felder); bestehende Tests schalten die Module ein, die sie brauchen
 (120 Backend-Tests, 9 Frontend-Tests). **Abnahme:** erfüllt – ein neuer Betrieb sieht nur
 Logistik-Funktionen (`test_new_tenant_has_only_logistics`), Masken zeigen nur Felder mit
 Berechnungsbezug, jedes Modul ist an und aus getestet.
+
+## Verbesserungsrunde – Paket B: Pflanzenarten im Hintergrund (2026-10-18)
+
+**Umgesetzt**
+- Die Seite „Pflanzenarten“ ist für Betriebe entfernt; der Admin pflegt sie als „Wissensbasis
+  Pflanzenarten“. Die API und Einstellungen der Ebene Pflanzenart sind nur noch für den Admin.
+- Pflanzen haben eine Art als Text, Kippgefahr und Gewichtsbeiwerte; die KI bestimmt Art und
+  Eigenschaften (Frost, kippbar, empfindlich, Stauchbarkeit, Kippgefahr) mit Sicherheitswert,
+  fehlende Werte kommen aus der Wissensbasis. Prompts für Nachrichtenerfassung und Foto-Auswertung
+  in Version 2; das Testmodell nutzt die Wissensbasis und erkennt „frostempfindlich“ im Text.
+- Gewichtsschätzung, Kalibrierung, Ladeplanung, Frostregel, Etiketten, Fahrer-App und Kundenzugang
+  lesen die Art und die Eigenschaften der Pflanze.
+- Posteingang zeigt je Pflanze zusätzlich „Frostempfindlich“ und „Darf gekippt werden“.
+- Migration kopiert die Werte der bisherigen Art an jede Pflanze (umkehrbar).
+- Formulare: fehlende Gruppenüberschriften (Topf, Krone, Gewicht, Umgang …) ergänzt.
+
+**Tests:** 4 neue Tests (`test_species_background.py`: Wissensbasis nur Admin, Eigenschaften aus der
+Wissensbasis, Gewicht und Frostregel aus der Pflanze, KI-Erfassung mit Art und Sicherheit);
+`make check` grün (124 Backend-, 9 Frontend-Tests). **Abnahme:** erfüllt – Pflanzen erhalten ohne
+Artverwaltung alle nötigen Eigenschaften, alle betroffenen Tests grün.

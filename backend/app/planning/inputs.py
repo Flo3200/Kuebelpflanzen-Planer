@@ -483,15 +483,8 @@ def frost_safe_from(r: SettingsResolver, plants: list[Plant], first_day: date, e
     if rule == "off":
         return None
     if rule == "frost_sensitive":
-        sensitive = False
-        for p in plants:
-            sp = est.species_of(p)
-            if p.frost_sensitive or (
-                p.frost_sensitive is None and sp is not None and sp.frost_sensitivity == "tender"
-            ):
-                sensitive = True
-                break
-        if not sensitive:
+        # the plant carries its frost sensitivity (from the AI or the knowledge base, package B)
+        if not any(p.frost_sensitive for p in plants):
             return None
     try:
         month, day = (int(x) for x in str(r.get("returns.frost_safe_date")).split("-"))

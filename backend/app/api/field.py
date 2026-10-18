@@ -190,7 +190,6 @@ def decide(deviation_id: uuid.UUID, data: DecisionIn, actor: CurrentActor, db: D
 
 
 def _labels_for_orders(db, orders: list[PickupOrder], extra: dict[uuid.UUID, str] | None = None):
-    from app.models.masterdata import Species
     from app.models.orders import Customer
     from app.pdf.labels import Label
 
@@ -201,12 +200,11 @@ def _labels_for_orders(db, orders: list[PickupOrder], extra: dict[uuid.UUID, str
         for p in db.scalars(
             select(Plant).where(Plant.order_id == source, Plant.deleted_at.is_(None)).order_by(Plant.number)
         ):
-            sp = db.get(Species, p.species_id) if p.species_id else None
             out.append(
                 Label(
                     str(p.id),
                     p.number,
-                    sp.name if sp else (p.label or ""),
+                    p.species_name or p.label or "",
                     customer.name if customer else "",
                     o.number,
                     (extra or {}).get(o.id, ""),

@@ -111,7 +111,7 @@ abgeschaltet, Tabellen bleiben, Migrationen sind umkehrbar.
 | Paket | Inhalt | Stand |
 |---|---|---|
 | A | Fokus Logistik, Modul-Schalter, schlanke Eingaben | abgeschlossen |
-| B | Pflanzenarten im Hintergrund | offen |
+| B | Pflanzenarten im Hintergrund | abgeschlossen |
 | D | Teams durch den Unternehmer | offen |
 | E | Eigene Kostenpositionen, reine Logistikkosten | offen |
 | C | Fahrzeuge per Foto und Chat, Module (Regale, Einbauten, Anhänger) | offen |

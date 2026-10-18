@@ -22,6 +22,7 @@ from app.models.masterdata import Species
 from app.models.orders import Address, Customer, Draft, Photo, PickupOrder, Plant, StoredFile
 from app.settings.service import SettingsResolver
 from app.storage.backend import get_storage
+from app.timemodel import knowledge
 
 REQUIRED_FIELDS = ("customer.name", "address.street", "address.postal_code", "address.city")
 
@@ -62,35 +63,57 @@ def _photo_context(photos: list[Photo]) -> list[dict[str, Any]]:
 
 
 def species_names(db: Session, tenant_id: uuid.UUID) -> list[str]:
-    from app.api.masterdata import visible_species
-
-    names: list[str] = []
-    for s in visible_species(db, tenant_id):
-        names.append(s.name)
-        names += [str(a) for a in (s.aliases or [])]
-    return names
+    return knowledge.names(db, tenant_id)
 
 
 def match_species(db: Session, tenant_id: uuid.UUID, name: str | None) -> Species | None:
-    if not name:
-        return None
-    from app.api.masterdata import visible_species
+    return knowledge.match(db, tenant_id, name)
 
-    low = name.lower().strip()
-    best = None
-    for s in visible_species(db, tenant_id):
-        candidates = [s.name, s.botanical_name or "", *[str(a) for a in (s.aliases or [])]]
-        for c in candidates:
-            c = c.lower()
-            if not c:
-                continue
-            if c == low:
-                return s
-            if best is None and (
-                low.startswith(c[: max(4, len(c) - 2)]) or c.startswith(low[: max(4, len(low) - 2)])
-            ):
-                best = s
-    return best
+
+def species_traits(db: Session, tenant_id: uuid.UUID) -> dict[str, dict[str, Any]]:
+    """Knowledge-base properties per species name (context for the test model)."""
+    out: dict[str, dict[str, Any]] = {}
+    for s in knowledge.catalog(db, tenant_id):
+        traits = knowledge.traits_of(s)
+        for n in (s.name, *[str(a) for a in (s.aliases or [])]):
+            out[n] = traits
+    return out
+
+
+def apply_traits(plant: Plant, node: dict[str, Any], threshold: float) -> list[str]:
+    """Species and properties from an AI result onto a plant; weak values are left to the knowledge base.
+
+    A value is taken when the plant has none yet or only an estimate; values below half the review
+    threshold are ignored, values below the threshold stay marked as estimated.
+    """
+    changed: list[str] = []
+    estimated = set(plant.estimated_fields or [])
+    conf_map = dict(plant.field_confidence or {})
+    for src, field in (("species", "species_name"), *[(t, t) for t in knowledge.AI_TRAITS]):
+        item = node.get(src) if isinstance(node.get(src), dict) else None
+        if not item:
+            continue
+        val, conf = item.get("value"), float(item.get("confidence") or 0)
+        if val is None or conf < threshold * 0.5:
+            continue
+        current = getattr(plant, field)
+        if current is not None and field not in estimated and field in conf_map and conf <= conf_map[field]:
+            continue  # a person or a surer result set it
+        if current is not None and field not in estimated and field not in conf_map:
+            continue  # entered by a person
+        setattr(plant, field, val)
+        conf_map[field] = conf
+        if conf < threshold:
+            estimated.add(field)
+        else:
+            estimated.discard(field)
+        changed.append(field)
+    if "species_name" in changed:
+        plant.species_id = None  # looked up again in the knowledge base
+        plant.species_source = "ai"
+    plant.field_confidence = conf_map
+    plant.estimated_fields = sorted(estimated)
+    return changed
 
 
 def flatten_confidence(extracted: dict[str, Any]) -> dict[str, float]:
@@ -127,6 +150,7 @@ def process_draft(
     )
     context = {
         "species_names": species_names(db, tenant_id),
+        "species_traits": species_traits(db, tenant_id),
         "today": date.today().isoformat(),
         "photo_count": len(photos),
         "message": draft.source_text,
@@ -148,7 +172,12 @@ def process_draft(
         _merge_analysis(extracted, analysis)
     threshold = float(resolver.get("photos.min_confidence"))
     conf = flatten_confidence(extracted)
-    review = [k for k, c in conf.items() if c < threshold and _is_set(extracted, k)]
+    # species properties are background values (knowledge base as fallback), not review fields
+    review = [
+        k
+        for k, c in conf.items()
+        if c < threshold and _is_set(extracted, k) and k.rsplit(".", 1)[-1] not in knowledge.AI_TRAITS
+    ]
     review += [k for k in REQUIRED_FIELDS if conf.get(k, 0) == 0]
     draft.extracted = extracted
     draft.confidence = conf
@@ -193,6 +222,7 @@ def _merge_analysis(extracted: dict[str, Any], analysis: dict[str, Any]) -> None
             "pot_height_cm": "pot_height_cm",
             "weight_kg": "weight_kg",
             "species": "species",
+            **{t: t for t in knowledge.AI_TRAITS},
         }
         for src, dst in mapping.items():
             new = pa.get(src) or {}
@@ -282,6 +312,7 @@ def apply_analysis_to_plant(
                 [field] if conf < threshold else []
             )
             changed.append(field)
+    changed += apply_traits(plant, pa, threshold)
     if changed:
         complete_plant(db, plant, SettingsResolver(db, plant.tenant_id))
     return changed
@@ -360,6 +391,7 @@ def confirm_draft(
     if draft.status not in ("review", "new", "failed"):
         raise AppError("errors.draft_not_pending")
     tid = actor.require_tenant()
+    threshold = float(SettingsResolver(db, tid).get("photos.min_confidence"))
     data = extracted if extracted is not None else draft.extracted
     c, a, o = data.get("customer") or {}, data.get("address") or {}, data.get("order") or {}
     name = _value(c.get("name"))
@@ -440,10 +472,8 @@ def confirm_draft(
     plants_created: list[Plant] = []
     for p in data.get("plants") or []:
         count = int(_value(p.get("count")) or 1)
-        species = match_species(db, tid, _value(p.get("species")))
         values = {
             "label": _value(p.get("label")),
-            "species_id": species.id if species else None,
             "pot_diameter_cm": _value(p.get("pot_diameter_cm")),
             "pot_height_cm": _value(p.get("pot_height_cm")),
             "total_height_cm": _value(p.get("total_height_cm")),
@@ -458,7 +488,10 @@ def confirm_draft(
             vals = dict(values)
             if count > 1 and vals["label"]:
                 vals["label"] = f"{vals['label']} {i + 1}/{count}"
-            plants_created.append(create_plant(db, actor, order, vals, confidence=conf, path_id=path.id))
+            plant = create_plant(
+                db, actor, order, vals, confidence=conf, path_id=path.id, traits=p, threshold=threshold
+            )
+            plants_created.append(plant)
     # move the photos from the draft to the order (and to the plant if there is exactly one)
     for photo in db.scalars(select(Photo).where(Photo.draft_id == draft.id)):
         photo.order_id = order.id

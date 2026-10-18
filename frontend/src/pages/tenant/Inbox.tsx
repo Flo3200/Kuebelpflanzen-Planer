@@ -171,9 +171,9 @@ const SECTIONS: { key: string; fields: [string, "text" | "number" | "bool" | "da
   { key: "order", fields: [["earliest_date", "date"], ["latest_date", "date"], ["notes", "text"]] },
   { key: "path", fields: [["length_m", "number"], ["steps", "number"], ["height_m", "number"], ["min_width_cm", "number"], ["elevator", "bool"], ["surface", "text"], ["description", "text"]] },
 ];
-const PLANT_FIELDS: [string, "text" | "number"][] = [
+const PLANT_FIELDS: [string, "text" | "number" | "bool"][] = [
   ["species", "text"], ["count", "number"], ["label", "text"], ["total_height_cm", "number"], ["pot_diameter_cm", "number"],
-  ["pot_height_cm", "number"], ["crown_width_cm", "number"], ["weight_kg", "number"], ["notes", "text"],
+  ["pot_height_cm", "number"], ["crown_width_cm", "number"], ["weight_kg", "number"], ["frost_sensitive", "bool"], ["can_tilt", "bool"], ["notes", "text"],
 ];
 
 function ValueField(props: { id: string; label: string; vf: VF | undefined; kind: string; review: boolean; threshold: number; onChange: (v: VF) => void }) {

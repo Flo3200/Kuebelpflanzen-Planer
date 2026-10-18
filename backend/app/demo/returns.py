@@ -44,10 +44,9 @@ def returns(db, tenant, rng, options, report, spec) -> None:
         o.status = "stored"
         for p in db.scalars(select(Plant).where(Plant.order_id == o.id, Plant.deleted_at.is_(None))):
             p.status = "stored"
+            # half-hardy plants (frost_sensitive False) prefer the warm area as well
             sp = db.get(Species, p.species_id) if p.species_id else None
-            sensitive = p.frost_sensitive or (
-                p.frost_sensitive is None and sp is not None and sp.frost_sensitivity != "hardy"
-            )
+            sensitive = bool(p.frost_sensitive) or (sp is not None and sp.frost_sensitivity != "hardy")
             pool = warm if sensitive else cold
             if pool:
                 p.storage_area_id = rng.choice(pool).id

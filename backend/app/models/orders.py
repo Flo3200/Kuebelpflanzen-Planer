@@ -187,10 +187,14 @@ class Plant(IdMixin, TimestampMixin, SoftDeleteMixin, TenantMixin, Base):
     )
     number: Mapped[int] = mapped_column(Integer, info={"readonly": True, "list": True, "optional": True})
     label: Mapped[str | None] = mapped_column(String(120), info={"group": "master", "list": True})
+    # species as named by the AI or a person; the properties below are stored on the plant itself
+    species_name: Mapped[str | None] = mapped_column(String(160), info={"group": "master", "list": True})
+    # link into the internal knowledge base (admin only), set when the name matches an entry
     species_id: Mapped[uuid.UUID | None] = mapped_column(
-        Uuid,
-        ForeignKey("species.id", ondelete="SET NULL"),
-        info={"group": "master", "fk": "species", "list": True},
+        Uuid, ForeignKey("species.id", ondelete="SET NULL"), info={"readonly": True}
+    )
+    species_source: Mapped[str | None] = mapped_column(
+        String(20), info={"readonly": True, "enum": ["ai", "knowledge", "person", "migrated"]}
     )
     access_path_id: Mapped[uuid.UUID | None] = mapped_column(
         Uuid, ForeignKey("access_paths.id", ondelete="SET NULL"), info={"group": "master"}
@@ -227,8 +231,19 @@ class Plant(IdMixin, TimestampMixin, SoftDeleteMixin, TenantMixin, Base):
         Float, info={"advanced": True, "group": "weight", "unit": "kg"}
     )
     weight_measured_kg: Mapped[float | None] = mapped_column(Float, info={"group": "weight", "unit": "kg"})
+    # weight model coefficients (from the AI or the knowledge base)
+    soil_kg_per_l: Mapped[float | None] = mapped_column(
+        Float, info={"advanced": True, "group": "weight", "unit": "kg/l", "min": 0.2, "max": 2.5}
+    )
+    plant_kg_per_l: Mapped[float | None] = mapped_column(
+        Float, info={"advanced": True, "group": "weight", "unit": "kg/l", "min": 0, "max": 1}
+    )
+    trunk_kg_per_m: Mapped[float | None] = mapped_column(
+        Float, info={"advanced": True, "group": "weight", "unit": "kg/m", "min": 0, "max": 100}
+    )
     # handling
     can_tilt: Mapped[bool | None] = mapped_column(Boolean, info={"group": "handling"})
+    tip_tendency: Mapped[float | None] = mapped_column(Float, info={"group": "handling", "min": 0, "max": 1})
     must_secure: Mapped[bool] = mapped_column(Boolean, default=False, info={"group": "handling"})
     sensitive: Mapped[bool | None] = mapped_column(Boolean, info={"group": "handling"})
     frost_sensitive: Mapped[bool | None] = mapped_column(Boolean, info={"group": "handling"})

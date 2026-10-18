@@ -16,7 +16,6 @@ from sqlalchemy import select
 
 from app.core.db import RlsContext, session_scope
 from app.models.field import Measurement
-from app.models.masterdata import Species
 from app.models.orders import PickupOrder, Plant
 from app.models.planning import Tour, TourStop
 from tests.helpers import set_modules
@@ -59,11 +58,7 @@ def _returns(tid):
 
 
 def _is_sensitive(db, p: Plant) -> bool:
-    sp = db.get(Species, p.species_id) if p.species_id else None
-    return bool(
-        p.frost_sensitive
-        or (p.frost_sensitive is None and sp is not None and sp.frost_sensitivity == "tender")
-    )
+    return bool(p.frost_sensitive)  # the plant carries the value (package B)
 
 
 def test_demo_has_stored_pickups_and_returns(demo):

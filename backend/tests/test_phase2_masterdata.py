@@ -64,22 +64,17 @@ def test_staff_vehicle_equipment_crud_and_isolation(new_tenant):
     )
 
 
-def test_species_global_and_override(admin, new_tenant):
+def test_species_knowledge_base_is_admin_only(admin, new_tenant):
     _, a = new_tenant()
-    _, b = new_tenant()
-    olive = next(s for s in a.get("/api/species").json() if s["name"] == "Olivenbaum")
+    olive = next(s for s in admin.get("/api/species").json() if s["name"] == "Olivenbaum")
     assert olive["is_global"]
-    over = a.patch(f"/api/species/{olive['id']}", json={"plant_kg_per_l": 0.05}).json()
-    assert over["is_override"] and not over["is_global"] and over["plant_kg_per_l"] == 0.05
-    names_a = [s for s in a.get("/api/species").json() if s["name"] == "Olivenbaum"]
-    assert len(names_a) == 1 and names_a[0]["id"] == over["id"]
-    # B still sees the global entry
-    assert next(s for s in b.get("/api/species").json() if s["name"] == "Olivenbaum")["id"] == olive["id"]
-    # resetting the override returns to the global value
-    a.delete(f"/api/species/{over['id']}")
-    assert next(s for s in a.get("/api/species").json() if s["name"] == "Olivenbaum")["id"] == olive["id"]
-    # tenants cannot delete global species
-    a.delete(f"/api/species/{olive['id']}", expect=404)
+    # since package B tenants no longer see or change species (the plant carries the values)
+    a.get("/api/species", expect=403)
+    a.patch(f"/api/species/{olive['id']}", expect=403, json={"plant_kg_per_l": 0.05})
+    a.delete(f"/api/species/{olive['id']}", expect=403)
+    # the admin maintains the knowledge base
+    upd = admin.patch(f"/api/species/{olive['id']}", json={"notes": "geprüft"}).json()
+    assert upd["notes"] == "geprüft" and upd["id"] == olive["id"]
 
 
 def test_availability_calendar(new_tenant):
@@ -137,11 +132,10 @@ def test_orders_plants_paths_and_estimates(new_tenant):
     o = a.post("/api/orders", expect=201, json={"customer_id": c["id"], "address_id": addr["id"]}).json()
     oid = o["order"]["id"]
     assert o["order"]["number"].startswith("A-")
-    olive = next(s for s in a.get("/api/species").json() if s["name"] == "Olivenbaum")
     p = a.post(
         f"/api/orders/{oid}/plants",
         expect=201,
-        json={"species_id": olive["id"], "pot_diameter_cm": 60, "pot_height_cm": 55},
+        json={"species_name": "Olivenbaum", "pot_diameter_cm": 60, "pot_height_cm": 55},
     ).json()
     # weight is estimated from pot volume and species; plausible range for a 60 cm pot
     assert 90 < p["weight_kg"] < 250, p["weight_kg"]

@@ -25,6 +25,17 @@ def obj(props: dict[str, Any]) -> dict[str, Any]:
     return {"type": "object", "properties": props, "required": list(props), "additionalProperties": False}
 
 
+def plant_traits() -> dict[str, Any]:
+    """Properties the AI determines per plant (package B); stored on the plant with their confidence."""
+    return {
+        "frost_sensitive": vf("boolean"),
+        "can_tilt": vf("boolean"),
+        "sensitive": vf("boolean"),
+        "compressibility": vf("number"),
+        "tip_tendency": vf("number"),
+    }
+
+
 INTAKE_SCHEMA = obj(
     {
         "customer": obj(
@@ -53,6 +64,7 @@ INTAKE_SCHEMA = obj(
                     "total_height_cm": vf("number"),
                     "crown_width_cm": vf("number"),
                     "weight_kg": vf("number"),
+                    **plant_traits(),
                     "location": vf("string"),
                     "notes": vf("string"),
                 }
@@ -111,6 +123,7 @@ PHOTO_ANALYSIS_SCHEMA = obj(
                 "pot_shape": vf("string"),
                 "pot_material": vf("string"),
                 "weight_kg": vf("number"),
+                **plant_traits(),
             }
         ),
         "path": obj(
@@ -135,8 +148,19 @@ SCHEMAS = {
     "photo_analysis": PHOTO_ANALYSIS_SCHEMA,
 }
 
-DEFAULT_PROMPTS: dict[str, dict[str, str]] = {
+TRAIT_RULES = (
+    "- Bestimme je Pflanze die Art (deutscher Name, möglichst wie im mitgelieferten Katalog) und ihre "
+    "Eigenschaften für Transport und Überwinterung: frost_sensitive (verträgt keinen Frost, z. B. Zitrus, "
+    "Bougainvillea, Engelstrompete), can_tilt (darf zum Transport schräg gelegt werden), sensitive "
+    "(empfindliche Blätter oder Blüten), compressibility (0 = starre Krone, 1 = Krone lässt sich stark "
+    "zusammendrücken) und tip_tendency (0 = steht sicher, 1 = kippt leicht, z. B. hohe schmale Pflanzen in "
+    "kleinen Töpfen). Leite sie aus Art, Fotos und Beschreibung ab und gib eine ehrliche Sicherheit an; "
+    "was nicht ableitbar ist, ist null.\n"
+)
+
+DEFAULT_PROMPTS: dict[str, dict[str, Any]] = {
     "message_intake": {
+        "version": 2,
         "system": (
             "Du unterstützt eine Gärtnerei, die im Herbst Kübelpflanzen bei Kunden abholt, überwintert und im "
             "Frühjahr zurückbringt. Du liest weitergeleitete Kundennachrichten (E-Mail, Chat, Sprachnachricht als "
@@ -149,7 +173,8 @@ DEFAULT_PROMPTS: dict[str, dict[str, str]] = {
             "- Maße in Zentimetern, Gewichte in Kilogramm, Weglängen in Metern. Rechne Angaben wie „1,80 m“ um.\n"
             "- Mehrere gleiche Pflanzen: ein Eintrag mit count.\n"
             "- Pflanzenarten auf Deutsch, möglichst wie im mitgelieferten Katalog benannt.\n"
-            "- Weglänge und Gewicht sind meist unsicher: niedrige Sicherheit, wenn nicht ausdrücklich genannt.\n"
+            + TRAIT_RULES
+            + "- Weglänge und Gewicht sind meist unsicher: niedrige Sicherheit, wenn nicht ausdrücklich genannt.\n"
             "- missing: kurze deutsche Stichworte, was für die Planung fehlt.\n"
             "- follow_up_message: eine freundliche, kurze Rückfrage an den Kunden auf Deutsch (Sie-Form), die nach "
             "den fehlenden Angaben bzw. Fotos fragt; leer, wenn nichts fehlt."
@@ -170,11 +195,13 @@ DEFAULT_PROMPTS: dict[str, dict[str, str]] = {
         "instructions": "Antworte als JSON nach dem vorgegebenen Schema.",
     },
     "photo_analysis": {
+        "version": 2,
         "system": (
             "Du schätzt aus Fotos die Maße von Kübelpflanzen und die Eigenschaften des Wegs. Ein A4-Blatt "
             "(21,0 × 29,7 cm) am Stamm dient als Maßstab; wenn eine lokale Erkennung den Maßstab (cm pro Pixel) "
             "mitliefert, nutze ihn. Gib zu jedem Wert eine Sicherheit zwischen 0 und 1 an. Gewicht nur schätzen, "
-            "wenn der Topf gut erkennbar ist; Erde wiegt etwa 1,2–1,6 kg pro Liter. Unbekanntes ist null."
+            "wenn der Topf gut erkennbar ist; Erde wiegt etwa 1,2–1,6 kg pro Liter. Unbekanntes ist null.\n"
+            + TRAIT_RULES
         ),
         "instructions": "Antworte als JSON nach dem vorgegebenen Schema.",
     },

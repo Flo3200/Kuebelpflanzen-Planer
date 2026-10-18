@@ -15,6 +15,7 @@ from app.models.planning import Tour, TourStop
 from app.packing.geometry import Box, PlantItem, Shelf, Space
 from app.packing.packer import Packer, PackResult, PackSettings
 from app.settings.service import SettingsResolver
+from app.timemodel.knowledge import DEFAULTS
 from app.timemodel.plantfill import geometry
 
 
@@ -92,7 +93,7 @@ def plant_item(
         number=plant.number,
         order_id=order_id,
         stop_position=stop_position,
-        label=f"#{plant.number} {sp.name if sp else (plant.label or t('packing.plant'))}",
+        label=f"#{plant.number} {plant.species_name or plant.label or t('packing.plant')}",
         weight=float(plant.weight_measured_kg or plant.weight_kg or 0),
         pot_shape=g.pot_shape,
         pot_d=g.pot_d,
@@ -110,7 +111,7 @@ def plant_item(
         tilt_max_deg=float(r.get("packing.tilt_angle_deg", *chain)),
         sensitive=bool(plant.sensitive),
         must_secure=bool(plant.must_secure),
-        tip_tendency=sp.tip_tendency if sp else 0.3,
+        tip_tendency=plant.tip_tendency if plant.tip_tendency is not None else DEFAULTS["tip_tendency"],
     )
 
 

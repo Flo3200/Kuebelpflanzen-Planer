@@ -18,11 +18,9 @@ from app.core.numbering import next_number
 from app.jobs.queue import enqueue, run_now
 from app.models.core import Tenant
 from app.models.formulas import Quote
-from app.models.masterdata import Species
 from app.models.orders import Address, Customer, PickupOrder, Plant
 from app.pdf.quote import quote_lines, render_quote
 from app.settings.service import SettingsResolver, set_value
-from app.timemodel.estimate import Estimator
 from app.timemodel.service import refresh_order_estimate
 
 router = APIRouter(tags=["estimates"])
@@ -125,16 +123,13 @@ def create_quote(order_id: uuid.UUID, actor: CurrentActor, db: DB) -> dict[str, 
     number_text = f"AN-{year}-{next_number(db, order.tenant_id, f'quote-{year}'):04d}"
     source = order.return_of_id or order.id
     plants = []
-    for p, sname in db.execute(
-        select(Plant, Species.name)
-        .outerjoin(Species, Species.id == Plant.species_id)
-        .where(Plant.order_id == source, Plant.deleted_at.is_(None))
-        .order_by(Plant.number)
-    ).all():
+    for p in db.scalars(
+        select(Plant).where(Plant.order_id == source, Plant.deleted_at.is_(None)).order_by(Plant.number)
+    ):
         plants.append(
             {
                 "number": p.number,
-                "display": " ".join(x for x in (sname, p.label) if x) or "Pflanze",
+                "display": " ".join(x for x in (p.species_name, p.label) if x) or "Pflanze",
                 "total_height_cm": p.total_height_cm,
                 "pot_diameter_cm": p.pot_diameter_cm,
                 "weight_kg": p.weight_kg,
@@ -225,9 +220,8 @@ def weight_calibration(actor: CurrentActor, db: DB) -> dict[str, Any]:
     from app.timemodel.plantfill import estimate_weight
 
     pairs = []
-    est = Estimator(db, tid)
     for p in rows:
-        e, _ = estimate_weight(p, resolver, est.species_of(p), set(p.estimated_fields or []))
+        e, _ = estimate_weight(p, resolver, set(p.estimated_fields or []))
         if e > 0:
             pairs.append((e, float(p.weight_measured_kg)))
     if len(pairs) < 3:
@@ -263,11 +257,10 @@ def apply_weight_calibration(actor: CurrentActor, db: DB) -> dict[str, Any]:
     resolver = SettingsResolver(db, actor.tenant_id)
     from app.timemodel.plantfill import complete_plant
 
-    est = Estimator(db, actor.tenant_id)
     for p in db.scalars(select(Plant).where(Plant.tenant_id == actor.tenant_id, Plant.deleted_at.is_(None))):
         if "weight_kg" in (p.estimated_fields or []):
             p.weight_kg = None
-            complete_plant(db, p, resolver, est.species_of(p))
+            complete_plant(db, p, resolver)
     from app.timemodel.service import schedule_refresh
 
     schedule_refresh(db, actor.tenant_id)

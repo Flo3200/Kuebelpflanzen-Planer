@@ -68,17 +68,11 @@ def load_plan_dict(db: Session, tour: Tour) -> dict[str, Any] | None:
             .order_by(LoadPlacement.sequence)
         )
     )
-    from app.models.masterdata import Species
-
     ids = [r.plant_id for r in rows] + [uuid.UUID(u["plant_id"]) for u in plan.unplaced or []]
     names: dict[uuid.UUID, tuple[int, str]] = {}
     if ids:
-        for p, species in db.execute(
-            select(Plant, Species.name)
-            .outerjoin(Species, Species.id == Plant.species_id)
-            .where(Plant.id.in_(ids))
-        ).all():
-            names[p.id] = (p.number, f"#{p.number} {species or p.label or t('packing.plant')}")
+        for p in db.scalars(select(Plant).where(Plant.id.in_(ids))):
+            names[p.id] = (p.number, f"#{p.number} {p.species_name or p.label or t('packing.plant')}")
     unplaced = [
         {**u, "label": names.get(uuid.UUID(u["plant_id"]), (None, f"#{u.get('number')}"))[1]}
         for u in plan.unplaced or []

@@ -252,3 +252,23 @@ erscheinen nur mit dem Modul. Nichts wurde gelöscht.
 | Pflanze | kippbar, sichern, empfindlich, frostempfindlich | Ladeplanung, Frostregel | sichtbar |
 | Pflanze | Unsicherheit Gewicht, nicht stapelbar (immer so), feste Teamgröße, Hilfsmittel, Notizen | selten/nie | Weitere Angaben |
 | Pflanze | Lagerplatz | Lager | Modul Lager |
+
+## D25 – Pflanzenarten als interne Wissensbasis
+- Die Art steht als Text an der Pflanze (`species_name`, Quelle `species_source`: KI, Wissensbasis,
+  von Hand, migriert). `species_id` verweist nur noch intern auf den passenden Eintrag der
+  Wissensbasis (Name, botanischer Name oder Alias) und ist nicht mehr schreibbar.
+- Eigenschaften an der Pflanze: Frost, kippbar, empfindlich, Stauchbarkeit, Kronendichte, Kippgefahr
+  (`tip_tendency`, neu) und die Gewichtsbeiwerte Erde/Krone/Stamm (neu). Die KI liefert Art und die
+  Eigenschaften je Pflanze mit Sicherheit (Prompts `message_intake` und `photo_analysis` Version 2).
+  Werte unter der halben Prüfschwelle (`photos.min_confidence`) werden verworfen, Werte unter der
+  Schwelle bleiben „geschätzt“; fehlende Werte kopiert `complete_plant` einmal aus der Wissensbasis
+  (`app/timemodel/knowledge.py`), sonst aus festen Standardwerten. Eigenschaften sind keine
+  Prüffelder des Posteingangs (Hintergrundwerte), Frost und „kippbar“ sind dort aber sichtbar.
+- Rechnungen lesen nur die Pflanze: Gewichtsschätzung und Kalibrierung, Kippgefahr im Packer,
+  Frostregel der Rücklieferung (`frost_sensitive`; „halbhart“ gilt wie bisher nicht als empfindlich).
+- `/api/species` und Einstellungen der Ebene „Pflanzenart“ nur noch für den Admin
+  (`platform.species`). Frühere Überschreibungen von Betrieben bleiben für deren Wissensbasis gültig.
+- Neue Default-Prompts werden als neue globale Version angelegt, wenn die neueste vorhandene globale
+  Version älter ist; eigene neuere Versionen des Admins bleiben vorrangig.
+- Migration `b7c41e2f9a10` kopiert Name, Gewichtsbeiwerte und Kippgefahr der Art an jede Pflanze und
+  füllt nur neue Spalten, Downgrade entfernt sie wieder (geprüft mit 674 Demo-Pflanzen hin und zurück).

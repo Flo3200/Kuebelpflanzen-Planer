@@ -1257,7 +1257,7 @@
         "help": "z. B. „Olive links neben der Tür“"
       },
       "species_id": {
-        "label": "Pflanzenart"
+        "label": "Eintrag in der Wissensbasis"
       },
       "pot_shape": {
         "label": "Topfform"
@@ -1339,6 +1339,26 @@
       },
       "notes": {
         "label": "Notizen"
+      },
+      "species_name": {
+        "label": "Art",
+        "help": "Bestimmt die KI aus Fotos und Nachricht; Eigenschaften, die sie offen lässt, kommen aus der internen Wissensbasis."
+      },
+      "species_source": {
+        "label": "Art bestimmt durch"
+      },
+      "tip_tendency": {
+        "label": "Kippgefahr",
+        "help": "0 = steht sicher, 1 = kippt leicht. Kippgefährdete Pflanzen stehen beim Laden an der Wand oder werden gesichert."
+      },
+      "soil_kg_per_l": {
+        "label": "Erde (Gewicht je Liter)"
+      },
+      "plant_kg_per_l": {
+        "label": "Pflanze (Gewicht je Liter Krone)"
+      },
+      "trunk_kg_per_m": {
+        "label": "Stamm (Gewicht je Meter)"
       }
     },
     "segment": {
@@ -1477,7 +1497,11 @@
     "tiles": "Fliesen",
     "gravel": "Kies",
     "lawn": "Rasen",
-    "soil": "Erde"
+    "soil": "Erde",
+    "plant.species_source.ai": "KI",
+    "plant.species_source.knowledge": "Wissensbasis",
+    "plant.species_source.person": "von Hand",
+    "plant.species_source.migrated": "aus der früheren Artenliste"
   },
   "permissions": {
     "platform.tenants": "Betriebe verwalten",
@@ -1503,7 +1527,7 @@
     "orders.read": "Aufträge ansehen",
     "orders.write": "Aufträge und Pflanzen bearbeiten",
     "drafts.write": "Entwürfe anlegen und bestätigen",
-    "species.write": "Pflanzenarten anpassen",
+    "species.write": "Pflanzenarten anpassen (entfällt: Arten pflegt nur noch der Admin)",
     "formulas.write": "Formeln anpassen",
     "pricing.write": "Preise und Angebote",
     "planning.read": "Planung ansehen",

@@ -25,7 +25,6 @@ from app.core import audit
 from app.core.context import Actor
 from app.core.errors import AppError, NotFound
 from app.core.numbering import next_number
-from app.models.masterdata import Species
 from app.models.orders import (
     AccessPath,
     Address,
@@ -37,6 +36,7 @@ from app.models.orders import (
 )
 from app.settings.chains import CHAIN_BUILDERS
 from app.settings.service import SettingsResolver
+from app.timemodel.knowledge import TRAITS
 from app.timemodel.plantfill import complete_plant
 
 router = APIRouter()
@@ -149,10 +149,9 @@ def order_paths(db: Session, order: PickupOrder) -> list[tuple[AccessPath, list[
     return out
 
 
-def plant_dict(p: Plant, species_name: str | None = None) -> dict[str, Any]:
+def plant_dict(p: Plant) -> dict[str, Any]:
     d = row_dict(PLANT, p)
-    d["species_name"] = species_name
-    d["display_name"] = f"#{p.number} {p.label or species_name or ''}".strip()
+    d["display_name"] = f"#{p.number} {p.label or p.species_name or ''}".strip()
     return d
 
 
@@ -307,12 +306,6 @@ def order_detail(db: Session, actor: Actor, order: PickupOrder) -> dict[str, Any
     customer = db.get(Customer, order.customer_id)
     address = db.get(Address, order.address_id)
     plants = order_plants(db, order)
-    species_ids = {p.species_id for p in plants if p.species_id}
-    names = (
-        {s.id: s.name for s in db.scalars(select(Species).where(Species.id.in_(species_ids)))}
-        if species_ids
-        else {}
-    )
     paths = order_paths(db, order)
     photos = list(
         db.scalars(
@@ -327,7 +320,7 @@ def order_detail(db: Session, actor: Actor, order: PickupOrder) -> dict[str, Any
         "order": row_dict(ORDER, order) | {"estimate": order.estimate},
         "customer": row_dict(CUSTOMER, customer) if customer else None,
         "address": row_dict(ADDRESS, address) if address else None,
-        "plants": [plant_dict(p, names.get(p.species_id)) for p in plants],
+        "plants": [plant_dict(p) for p in plants],
         "paths": [
             {
                 **row_dict(PATH, p),
@@ -521,10 +514,6 @@ def create_returns(data: ReturnsIn, actor: CurrentActor, db: DB) -> dict[str, An
 # ----------------------------------------------------------------------------- plants
 
 
-def _species_for(db: Session, species_id: uuid.UUID | None) -> Species | None:
-    return db.get(Species, species_id) if species_id else None
-
-
 @router.post("/api/orders/{order_id}/plants", status_code=201, tags=["plant"])
 def add_plant(order_id: uuid.UUID, data: PlantCreate, actor: CurrentActor, db: DB) -> dict[str, Any]:  # type: ignore[valid-type]
     actor.require("orders.write")
@@ -532,8 +521,7 @@ def add_plant(order_id: uuid.UUID, data: PlantCreate, actor: CurrentActor, db: D
     values = data.model_dump(exclude_unset=True)  # type: ignore[attr-defined]
     plant = create_plant(db, actor, order, values)
     _after_order_change(db, actor, order, {})
-    species = _species_for(db, plant.species_id)
-    return plant_dict(plant, species.name if species else None)
+    return plant_dict(plant)
 
 
 def create_plant(
@@ -544,7 +532,10 @@ def create_plant(
     *,
     confidence: dict[str, float] | None = None,
     path_id: uuid.UUID | None = None,
+    traits: dict[str, Any] | None = None,
+    threshold: float = 0.6,
 ) -> Plant:
+    """New plant; `traits` is an AI result whose species and properties are stored on the plant."""
     check_foreign_keys(db, PLANT, values)
     plant = Plant(
         tenant_id=order.tenant_id,
@@ -555,6 +546,12 @@ def create_plant(
         incompatible_with=[],
     )
     apply_values(PLANT, plant, values)
+    if traits:
+        from app.ai.intake import apply_traits
+
+        apply_traits(plant, traits, threshold)
+    if plant.species_name and not plant.species_source:
+        plant.species_source = "person"
     plant.number = next_number(db, order.tenant_id, "plant")
     if path_id is None:
         first = db.scalar(
@@ -567,7 +564,7 @@ def create_plant(
     plant.access_path_id = path_id
     db.add(plant)
     db.flush()
-    complete_plant(db, plant, SettingsResolver(db, order.tenant_id), _species_for(db, plant.species_id))
+    complete_plant(db, plant, SettingsResolver(db, order.tenant_id))
     audit.record(
         db,
         actor,
@@ -590,18 +587,14 @@ def list_plants(
     limit: int = Query(2000, le=10000),
 ) -> list[dict[str, Any]]:
     actor.require("orders.read")
-    stmt = (
-        select(Plant, Species.name)
-        .outerjoin(Species, Species.id == Plant.species_id)
-        .where(Plant.tenant_id == actor.require_tenant(), Plant.deleted_at.is_(None))
-    )
+    stmt = select(Plant).where(Plant.tenant_id == actor.require_tenant(), Plant.deleted_at.is_(None))
     if order_id:
         stmt = stmt.where(Plant.order_id == order_id)
     if status:
         stmt = stmt.where(Plant.status == status)
     if q:
-        stmt = stmt.where(or_(Plant.label.ilike(f"%{q}%"), Species.name.ilike(f"%{q}%")))
-    return [plant_dict(p, n) for p, n in db.execute(stmt.order_by(Plant.number).limit(limit)).all()]
+        stmt = stmt.where(or_(Plant.label.ilike(f"%{q}%"), Plant.species_name.ilike(f"%{q}%")))
+    return [plant_dict(p) for p in db.scalars(stmt.order_by(Plant.number).limit(limit))]
 
 
 def _get_plant(db: Session, actor: Actor, plant_id: uuid.UUID) -> Plant:
@@ -614,9 +607,7 @@ def _get_plant(db: Session, actor: Actor, plant_id: uuid.UUID) -> Plant:
 @router.get("/api/plants/{plant_id}", tags=["plant"])
 def get_plant(plant_id: uuid.UUID, actor: CurrentActor, db: DB) -> dict[str, Any]:
     actor.require("orders.read")
-    plant = _get_plant(db, actor, plant_id)
-    species = _species_for(db, plant.species_id)
-    return plant_dict(plant, species.name if species else None)
+    return plant_dict(_get_plant(db, actor, plant_id))
 
 
 @router.patch("/api/plants/{plant_id}", tags=["plant"])
@@ -628,16 +619,11 @@ def update_plant(plant_id: uuid.UUID, data: PlantUpdate, actor: CurrentActor, db
     changes = apply_values(PLANT, plant, values)
     # values set by a person are no longer estimates
     plant.estimated_fields = [f for f in (plant.estimated_fields or []) if f not in values]
-    if "species_id" in changes:
-        # re-derive species-dependent defaults that were only estimates
-        for f in (
-            "crown_shape",
-            "crown_density",
-            "compressibility",
-            "can_tilt",
-            "sensitive",
-            "frost_sensitive",
-        ):
+    if "species_name" in changes:
+        # a new species name: look it up again and re-derive properties that were only estimates
+        plant.species_id = None
+        plant.species_source = "person"
+        for f in TRAITS:
             if f in (plant.estimated_fields or []):
                 setattr(plant, f, None)
     if changes and "weight_kg" not in values and "weight_kg" in (plant.estimated_fields or []):
@@ -659,8 +645,7 @@ def update_plant(plant_id: uuid.UUID, data: PlantUpdate, actor: CurrentActor, db
     order = db.get(PickupOrder, plant.order_id)
     if order:
         _after_order_change(db, actor, order, changes)
-    species = _species_for(db, plant.species_id)
-    return plant_dict(plant, species.name if species else None)
+    return plant_dict(plant)
 
 
 @router.delete("/api/plants/{plant_id}", tags=["plant"])
