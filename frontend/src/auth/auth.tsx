@@ -10,6 +10,8 @@ export type Me = {
   permissions: string[];
   tenant: { id: string; name: string; slug: string } | null;
   acting_as_tenant: boolean;
+  /** optional modules of the tenant (storage, customer_billing, portal, payments); off = hidden */
+  modules?: Record<string, boolean>;
   mfa_setup_required: boolean;
 };
 
@@ -17,6 +19,8 @@ type AuthState = {
   me: Me | null;
   loading: boolean;
   has: (perm: string) => boolean;
+  /** true if the optional module is on (unknown modules and the platform view count as on) */
+  mod: (name: string) => boolean;
   refresh: () => Promise<void>;
   logout: () => Promise<void>;
 };
@@ -43,6 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     me,
     loading: query.isLoading,
     has: (perm) => !!me?.permissions.includes(perm),
+    mod: (name) => me?.modules?.[name] ?? true,
     refresh: async () => {
       await qc.invalidateQueries();
     },

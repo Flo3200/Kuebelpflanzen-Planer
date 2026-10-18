@@ -13,6 +13,7 @@ from app.api.deps import DB, CurrentActor
 from app.api.files import store_file
 from app.core import audit
 from app.core.errors import AppError, NotFound
+from app.core.modules import require_module
 from app.core.numbering import next_number
 from app.jobs.queue import enqueue, run_now
 from app.models.core import Tenant
@@ -56,6 +57,7 @@ def pricing_overview(actor: CurrentActor, db: DB, season: int | None = None) -> 
     """Price, self cost and cost coverage per order (before planning: estimated drive share)."""
     actor.require("orders.read")
     tid = actor.require_tenant()
+    require_module(db, tid, "customer_billing")
     stmt = (
         select(PickupOrder, Customer.name)
         .join(Customer, Customer.id == PickupOrder.customer_id)
@@ -106,6 +108,7 @@ def create_quote(order_id: uuid.UUID, actor: CurrentActor, db: DB) -> dict[str, 
     """Create a quote with the current estimate and store it as PDF."""
     actor.require("pricing.write")
     order = _order(db, actor, order_id)
+    require_module(db, order.tenant_id, "customer_billing")
     estimate = refresh_order_estimate(db, order)
     price = estimate.get("price") or {}
     if "gross" not in price:
@@ -198,6 +201,7 @@ def quote_dict(q: Quote) -> dict[str, Any]:
 def list_quotes(order_id: uuid.UUID, actor: CurrentActor, db: DB) -> list[dict[str, Any]]:
     actor.require("orders.read")
     _order(db, actor, order_id)
+    require_module(db, actor.tenant_id, "customer_billing")
     return [
         quote_dict(q)
         for q in db.scalars(select(Quote).where(Quote.order_id == order_id).order_by(Quote.created_at.desc()))

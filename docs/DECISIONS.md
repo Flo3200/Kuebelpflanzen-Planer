@@ -200,3 +200,55 @@ und Wege der Abholung verwendet. Die Tourenplanung behandelt sie später als eig
   Schlüssel und Webhook-Geheimnis in `.env`). Der Webhook wird mit dem Stripe-Signaturverfahren
   geprüft (HMAC-SHA256, Zeitfenster 5 Minuten); bezahlt wird erst durch das Ereignis, nie durch die
   Rückkehr des Browsers.
+
+## D23 – Fokus Logistik: Module statt Löschen
+- Lager, Preise/Angebote/Rechnungen an Endkunden, Kundenzugang und Online-Zahlung sind Module
+  (`modules.storage`, `modules.customer_billing`, `modules.portal`, `modules.payments`; Ebenen Admin
+  und Betrieb, Standard aus). Online-Zahlung setzt den Kundenzugang voraus (`app/core/modules.py`).
+- Ein ausgeschaltetes Modul verschwindet aus Menü, Dashboard, Formularen und Einstellungen; seine
+  Endpunkte antworten 409 `errors.module_off`. Tabellen und Daten bleiben unverändert, Einschalten
+  stellt alles wieder her. Die Plattform-Abrechnung (Admin → Betrieb) ist kein Modul.
+- `portal.enabled` heißt jetzt `modules.portal` (umkehrbare Migration `a1f0c3d9e201`, Werte behalten
+  ihre Ebene).
+- Einstellungen tragen `SettingDef.module`, Datenfelder `info["module"]`; die Oberfläche zeigt beide
+  nur, solange das Modul an ist. Die Einstellungs-API liefert die Werte weiter (Agenten, Einstellungs-
+  KI), markiert sie aber mit `module_active = false`. Die Lagerplatz-Anzeige der Fahrer-App gehört
+  zum Lager-Modul.
+- `pricing.typical_tour_stops` und `pricing.local_detour_km` bestimmen den Fahranteil der
+  **Kostenschätzung** vor der Planung; sie stehen daher in der Gruppe „Kosten“ und gehören zu keinem
+  Modul (Schlüssel unverändert, damit gespeicherte Werte gelten).
+- Frostregel, Rücklieferung und Planung lesen keine Lagerdaten; der Status „eingelagert“ bleibt als
+  Wert erhalten, wird ohne Lager-Modul aber nicht als Filter angeboten.
+
+## D24 – Felder der Erfassungsmasken
+Felder, die keine Formel, Planung, Ladeplanung oder Plattform-Rechnung braucht, stehen unter
+„Weitere Angaben“ (`info["advanced"]`, eingeklappt, Pflichtfelder nie). Felder eines Moduls
+erscheinen nur mit dem Modul. Nichts wurde gelöscht.
+
+| Maske | Feld | Verwendet in | Entscheidung |
+|---|---|---|---|
+| Betrieb | Name, Kurzname (Anmeldung Fahrer-App) | Anmeldung, Rechnung | sichtbar |
+| Betrieb | Straße, PLZ, Ort | Plattform-Rechnung (Empfänger) | sichtbar |
+| Betrieb | Standort Betrieb (Breite/Länge) | Fahrzeiten, Tourenplanung | sichtbar |
+| Betrieb | Firmierung, Land, E-Mail, Telefon, aktuelle Saison | nur Anzeige | Weitere Angaben |
+| Betrieb | USt-IdNr., Steuernummer, IBAN | Rechnungen an Kunden | Modul Preise/Rechnungen |
+| Personal | Name, aktiv | Planung | sichtbar |
+| Personal | Führerscheinklassen | Planung (erlaubte Fahrzeuge) | sichtbar |
+| Personal | Kürzel, Telefon, E-Mail, Qualifikationen, Farbe, Notizen | nur Anzeige | Weitere Angaben |
+| Personal | Lohn, Tragen, Tempo (Reiter Einstellungen) | Kosten, Zeitformel, Teamgröße | sichtbar |
+| Fahrzeug | Name, Art, Führerschein, Sitzplätze, aktiv | Planung | sichtbar |
+| Fahrzeug | Laderaum L/B/H, Nutzlast, Tür B/H | Planung (Kapazität), Ladeplanung | sichtbar |
+| Fahrzeug | Radkästen, Achsen, Stützlast, Kupplung, Anhänger | Ladeplanung, Planung | sichtbar |
+| Fahrzeug | Kennzeichen, Türlage, Ladekante, Rampe, Hebebühne, max. Anhängelast, Notizen | nur Anzeige | Weitere Angaben |
+| Kunde | Name, Telefon (für den Fahrer) | Fahrer-App | sichtbar |
+| Kunde | Firma, E-Mail, Kontaktweg, Einwilligung Fotos, Notizen | Datenschutz, Anzeige | Weitere Angaben |
+| Adresse | Straße, PLZ, Ort, Koordinaten | Fahrzeiten, Planung, Fahrer-App | sichtbar |
+| Adresse | Parken, Klingel, Zugang | Fahrer-App | sichtbar |
+| Adresse | Bezeichnung, Land | nur Anzeige | Weitere Angaben |
+| Auftrag | Status, Zeitraum, fester Tag, Zeitfenster, Priorität | Planung | sichtbar |
+| Auftrag | Endpreis | Kundenrechnung | Modul Preise/Rechnungen |
+| Auftrag | Notizen | Anzeige | Weitere Angaben |
+| Pflanze | Bezeichnung, Weg, Topf, Krone, Höhe, Gewicht, gewogen | Zeitformel, Teamgröße, Ladeplanung | sichtbar |
+| Pflanze | kippbar, sichern, empfindlich, frostempfindlich | Ladeplanung, Frostregel | sichtbar |
+| Pflanze | Unsicherheit Gewicht, nicht stapelbar (immer so), feste Teamgröße, Hilfsmittel, Notizen | selten/nie | Weitere Angaben |
+| Pflanze | Lagerplatz | Lager | Modul Lager |

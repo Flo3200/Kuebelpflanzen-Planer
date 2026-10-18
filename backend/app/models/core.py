@@ -33,23 +33,29 @@ class Tenant(IdMixin, TimestampMixin, SoftDeleteMixin, Base):
 
     name: Mapped[str] = mapped_column(String(200), info={"group": "master", "required": True})
     slug: Mapped[str] = mapped_column(String(80), unique=True, info={"group": "master", "optional": True})
-    legal_name: Mapped[str | None] = mapped_column(String(300), info={"group": "master"})
+    legal_name: Mapped[str | None] = mapped_column(String(300), info={"advanced": True, "group": "master"})
     street: Mapped[str | None] = mapped_column(String(200), info={"group": "address"})
     postal_code: Mapped[str | None] = mapped_column(String(20), info={"group": "address"})
     city: Mapped[str | None] = mapped_column(String(120), info={"group": "address"})
-    country: Mapped[str] = mapped_column(String(2), default="DE", info={"group": "address"})
+    country: Mapped[str] = mapped_column(String(2), default="DE", info={"advanced": True, "group": "address"})
     depot_lat: Mapped[float | None] = mapped_column(Float, info={"group": "address", "unit": "°"})
     depot_lon: Mapped[float | None] = mapped_column(Float, info={"group": "address", "unit": "°"})
-    email: Mapped[str | None] = mapped_column(String(200), info={"group": "contact"})
-    phone: Mapped[str | None] = mapped_column(String(60), info={"group": "contact"})
-    vat_id: Mapped[str | None] = mapped_column(String(40), info={"group": "billing"})
-    tax_number: Mapped[str | None] = mapped_column(String(40), info={"group": "billing"})
-    iban: Mapped[str | None] = mapped_column(String(40), info={"group": "billing"})
+    email: Mapped[str | None] = mapped_column(String(200), info={"advanced": True, "group": "contact"})
+    phone: Mapped[str | None] = mapped_column(String(60), info={"advanced": True, "group": "contact"})
+    vat_id: Mapped[str | None] = mapped_column(
+        String(40), info={"module": "customer_billing", "group": "billing"}
+    )
+    tax_number: Mapped[str | None] = mapped_column(
+        String(40), info={"module": "customer_billing", "group": "billing"}
+    )
+    iban: Mapped[str | None] = mapped_column(
+        String(40), info={"module": "customer_billing", "group": "billing"}
+    )
     status: Mapped[str] = mapped_column(
         String(20), default="active", info={"group": "master", "enum": ["active", "suspended"]}
     )
     is_demo: Mapped[bool] = mapped_column(Boolean, default=False, info={"group": "master"})
-    current_season: Mapped[int | None] = mapped_column(Integer, info={"group": "master"})
+    current_season: Mapped[int | None] = mapped_column(Integer, info={"advanced": True, "group": "master"})
 
 
 ROLES = ("admin", "owner", "dispatcher", "driver", "customer", "agent")

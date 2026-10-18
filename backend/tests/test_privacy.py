@@ -18,7 +18,7 @@ from app.models.formulas import Quote
 from app.models.orders import Customer, Photo, PickupOrder, Plant, StoredFile
 from app.models.platform import Invoice
 from app.storage.backend import get_storage
-from tests.helpers import make_photo
+from tests.helpers import make_photo, set_modules
 
 
 @pytest.fixture(scope="module")
@@ -41,6 +41,7 @@ def owner(tenant, make_client):
 
     api = make_client()
     api.login(tenant[1], DEMO_PASSWORD)
+    set_modules(api, customer_billing=True)
     return api
 
 

@@ -13,6 +13,7 @@ from app.agents.confirm import confirm_if_agent
 from app.api.deps import DB, CurrentActor
 from app.core.context import Actor
 from app.core.errors import AppError, Forbidden
+from app.core.modules import module_states
 from app.i18n import catalog
 from app.settings.chains import chain_for
 from app.settings.registry import GROUPS, OBJECT_SCOPES, SETTINGS
@@ -109,12 +110,19 @@ def get_values(
     tid = target_tenant(actor, tenant_id, scope)
     if scope == "tenant" and tid is None:
         raise AppError("errors.tenant_required")
+    values = values_for(db, actor, scope, object_id, tid)
+    # settings of a module that is off stay readable (agents, settings AI) but are marked, and the
+    # settings page hides them; the module switches themselves are never part of a module
+    modules = module_states(SettingsResolver(db, tid)) if tid is not None else None
+    for v in values:
+        v["module_active"] = not v.get("module") or modules is None or modules.get(v["module"], True)
     return {
         "scope": scope,
         "object_id": object_id,
         "tenant_id": tid,
         "groups": [{"key": g, "label": group_label(g)} for g in GROUPS],
-        "values": values_for(db, actor, scope, object_id, tid),
+        "values": values,
+        "modules": modules,
     }
 
 

@@ -1,5 +1,6 @@
-// Navigation of the owner/dispatcher app and the admin app. Items are shown if the user has the permission.
-export type NavItem = { to: string; label: string; perm?: string; end?: boolean };
+// Navigation of the owner/dispatcher app and the admin app. Items are shown if the user has the
+// permission and the optional module of the item is on.
+export type NavItem = { to: string; label: string; perm?: string; end?: boolean; module?: string };
 export type NavSection = { label?: string; items: NavItem[] };
 
 export const TENANT_NAV: NavSection[] = [
@@ -21,7 +22,7 @@ export const TENANT_NAV: NavSection[] = [
       { to: "/betrieb/hilfsmittel", label: "nav.equipment", perm: "fleet.read" },
       { to: "/betrieb/verfuegbarkeit", label: "nav.availability", perm: "staff.read" },
       { to: "/betrieb/pflanzenarten", label: "nav.species", perm: "orders.read" },
-      { to: "/betrieb/lager", label: "nav.storage", perm: "tenant.view" },
+      { to: "/betrieb/lager", label: "nav.storage", perm: "tenant.view", module: "storage" },
     ],
   },
   {
@@ -35,7 +36,7 @@ export const TENANT_NAV: NavSection[] = [
   {
     label: "nav.section_analysis",
     items: [
-      { to: "/betrieb/preise", label: "nav.pricing", perm: "orders.read" },
+      { to: "/betrieb/preise", label: "nav.pricing", perm: "orders.read", module: "customer_billing" },
       { to: "/betrieb/formeln", label: "nav.formulas", perm: "formulas.write" },
       { to: "/betrieb/modell", label: "nav.model", perm: "planning.read" },
     ],

@@ -110,7 +110,7 @@ abgeschaltet, Tabellen bleiben, Migrationen sind umkehrbar.
 
 | Paket | Inhalt | Stand |
 |---|---|---|
-| A | Fokus Logistik, Modul-Schalter, schlanke Eingaben | offen |
+| A | Fokus Logistik, Modul-Schalter, schlanke Eingaben | abgeschlossen |
 | B | Pflanzenarten im Hintergrund | offen |
 | D | Teams durch den Unternehmer | offen |
 | E | Eigene Kostenpositionen, reine Logistikkosten | offen |

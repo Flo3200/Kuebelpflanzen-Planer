@@ -413,6 +413,7 @@ def describe(
                 "choices_source": defn.choices_source,
                 "important": defn.important,
                 "admin_only": defn.admin_only,
+                "module": defn.module,
                 "label": texts["label"],
                 "help": texts["help"],
                 "value": here.value,

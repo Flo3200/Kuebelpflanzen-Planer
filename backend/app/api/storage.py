@@ -10,6 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.api.deps import DB, CurrentActor
+from app.core.modules import require_module
 from app.models.masterdata import StorageArea
 from app.models.orders import PickupOrder, Plant
 from app.settings.service import SettingsResolver
@@ -89,6 +90,7 @@ def get_occupancy(actor: CurrentActor, db: DB, order_id: uuid.UUID | None = None
     """Current occupancy; with order_id the plants of a not yet confirmed order are added (acceptance check)."""
     actor.require("tenant.view")
     tid = actor.require_tenant()
+    require_module(db, tid, "storage")
     extra: list[Plant] = []
     if order_id:
         order = db.get(PickupOrder, order_id)

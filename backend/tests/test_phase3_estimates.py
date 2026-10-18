@@ -7,6 +7,8 @@ import math
 
 import pytest
 
+from tests.helpers import set_modules
+
 
 def make_order(api, *, weight=50.0, path_length=15.0, plants=1, stairs: int = 0, lat=48.80, lon=9.30):
     c = api.post("/api/customers", expect=201, json={"name": "Testkunde"}).json()
@@ -202,6 +204,7 @@ def test_tier_switch_and_test_endpoint(new_tenant):
 
 def test_quote_pdf(new_tenant):
     _, owner = new_tenant()
+    set_modules(owner, customer_billing=True)
     oid = make_order(owner, weight=40, plants=3)
     q = owner.post(f"/api/orders/{oid}/quote", expect=201).json()
     assert q["number"].startswith("AN-") and q["gross_eur"] > 0

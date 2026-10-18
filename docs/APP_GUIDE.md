@@ -19,6 +19,21 @@ Gärtnereien holen im Herbst Kübelpflanzen (Oleander, Olivenbäume, Palmen, Zit
 6. **Lernen**: Aus den gemessenen Zeiten wird die Zeitformel verbessert.
 7. **Abrechnung**: Die Plattform rechnet monatlich mit den Betrieben ab.
 
+## Module (Fokus Logistik)
+
+Die App ist auf die Logistik ausgerichtet: Abholung, Touren, Beladung, Abladen und Rücklieferung.
+Weitere Bereiche sind **Module**, die für einen neuen Betrieb ausgeschaltet sind und unter
+„Einstellungen → Module“ eingeschaltet werden (`modules.*`):
+- **Lager** (`modules.storage`): Lagerflächen, Lagerbelegung, Lagerplatz je Pflanze.
+- **Preise, Angebote und Rechnungen an Kunden** (`modules.customer_billing`): Kundenpreis,
+  Angebots-PDF, Kostendeckung, Rechnungen an Endkunden. Ohne das Modul zeigt die App die
+  Logistikkosten (Personal, Fahrzeug).
+- **Kundenzugang** (`modules.portal`) und **Online-Zahlung** (`modules.payments`, braucht den
+  Kundenzugang).
+Ein ausgeschaltetes Modul verschwindet aus Menü, Übersicht, Formularen und Einstellungen; die Daten
+bleiben erhalten und sind nach dem Einschalten wieder da. Felder, die keine Berechnung braucht,
+stehen in den Formularen eingeklappt unter „Weitere Angaben“.
+
 ## Rollen
 
 - **Admin** (Plattform): legt Betriebe an, pflegt globale Formeln, Pflanzenarten, KI-Modelle,
@@ -61,7 +76,8 @@ Wichtige Gruppen:
 - **Abrechnung** (`billing.*`, Admin): Bausteine je Betrieb, Mehrwertsteuer, Rechnungssteller.
 - **Agenten** (`agents.*`): Gültigkeit der Tokens, Aufrufe pro Minute.
 - **Rücklieferung** (`returns.*`): Frostregel und Stichtag, Zeitfaktor, Preisregel, Zeitraum.
-- **Kundenzugang** (`portal.*`, `payments.*`): Zugang an/aus, Gültigkeit des Links, Online-Zahlung.
+- **Module** (`modules.*`): Lager, Preise/Angebote/Rechnungen an Kunden, Kundenzugang, Online-Zahlung.
+- **Kundenzugang** (`portal.*`, `payments.*`): Gültigkeit des Links, Anbieter der Online-Zahlung.
 
 ## Erfassung: Kunden, Aufträge, Pflanzen
 
@@ -101,7 +117,8 @@ Personen wie die schwerste Pflanze. Mehr als die höchste Teamgröße wird marki
 
 ## Kosten und Preise
 
-Selbstkosten = Arbeitszeit · Stundenkosten (Lohn + Arbeitgeberanteil) + Fahrzeugkosten +
+Der Kundenpreis, Angebote und Rechnungen an Kunden gehören zum Modul „Preise, Angebote und
+Rechnungen an Kunden“. Selbstkosten = Arbeitszeit · Stundenkosten (Lohn + Arbeitgeberanteil) + Fahrzeugkosten +
 Hilfsmittel + Gemeinkosten. Der Kundenpreis kommt aus der Preisformel: Grundpreis + Preis pro
 Arbeitsminute + Preis pro Pflanze + Entfernungszuschlag, mindestens der Mindestpreis. Angebote
 werden als PDF erzeugt. Nach der Planung zeigt jeder Auftrag, ob der Preis die Kosten deckt.
@@ -136,9 +153,9 @@ eigenen Faktor haben (`returns.time_factor`) und der Preis eigene Regeln (`retur
 Im Ladeplan steht der erste Stopp an der Tür; die Fahrer-App zeigt beim Beladen den Lagerplatz und
 beim Kunden den Schritt „Abgestellt“ mit Foto.
 
-## Kundenzugang und Online-Zahlung
+## Kundenzugang und Online-Zahlung (Module)
 
-Auf der Seite eines Kunden erzeugt „Kundenzugang“ einen persönlichen Link (Gültigkeit
+Nur mit eingeschaltetem Modul „Kundenzugang“. Auf der Seite eines Kunden erzeugt „Kundenzugang“ einen persönlichen Link (Gültigkeit
 `portal.link_days`), den der Betrieb dem Kunden schickt. Der Kunde sieht dort nur seine eigenen
 Aufträge mit Fortschritt und Termin, kann Fotos nach Anleitung hochladen (nach Einwilligung), den
 Standort auf der Karte setzen, Angebote ansehen und annehmen (das bestätigt den Auftrag), einen

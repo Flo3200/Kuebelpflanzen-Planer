@@ -17,7 +17,7 @@ from app.core.db import RlsContext, session_scope
 from app.models.orders import Address, Customer, Photo, PickupOrder
 from app.models.platform import Invoice, Payment
 from app.payments.providers import StripeProvider, verify_stripe_signature
-from tests.helpers import make_photo
+from tests.helpers import make_photo, set_modules
 
 
 @pytest.fixture(scope="module")
@@ -40,6 +40,7 @@ def owner(demo, make_client):
 
     api = make_client()
     api.login(demo[1], DEMO_PASSWORD)
+    set_modules(api, portal=True, customer_billing=True, payments=True)
     return api
 
 

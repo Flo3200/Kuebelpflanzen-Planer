@@ -40,18 +40,22 @@ class Customer(IdMixin, TimestampMixin, SoftDeleteMixin, TenantMixin, Base):
     __tablename__ = "customers"
 
     name: Mapped[str] = mapped_column(String(200), info={"group": "master", "required": True, "list": True})
-    company: Mapped[str | None] = mapped_column(String(200), info={"group": "master"})
-    email: Mapped[str | None] = mapped_column(String(200), info={"group": "contact", "list": True})
+    company: Mapped[str | None] = mapped_column(String(200), info={"advanced": True, "group": "master"})
+    email: Mapped[str | None] = mapped_column(
+        String(200), info={"advanced": True, "group": "contact", "list": True}
+    )
     phone: Mapped[str | None] = mapped_column(String(60), info={"group": "contact", "list": True})
     preferred_contact: Mapped[str | None] = mapped_column(
-        String(10), info={"group": "contact", "enum": ["phone", "email", "sms", "whatsapp"]}
+        String(10), info={"advanced": True, "group": "contact", "enum": ["phone", "email", "sms", "whatsapp"]}
     )
-    consent_photos: Mapped[bool] = mapped_column(Boolean, default=False, info={"group": "privacy"})
+    consent_photos: Mapped[bool] = mapped_column(
+        Boolean, default=False, info={"advanced": True, "group": "privacy"}
+    )
     consent_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), info={"group": "privacy", "readonly": True}
     )
     consent_text: Mapped[str | None] = mapped_column(Text, info={"group": "privacy", "readonly": True})
-    notes: Mapped[str | None] = mapped_column(Text, info={"group": "master"})
+    notes: Mapped[str | None] = mapped_column(Text, info={"advanced": True, "group": "master"})
     source: Mapped[str] = mapped_column(String(20), default="manual", info={"readonly": True})
     last_activity_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), info={"readonly": True}
@@ -67,7 +71,7 @@ class Address(IdMixin, TimestampMixin, SoftDeleteMixin, TenantMixin, Base):
         index=True,
         info={"fk": "customer", "required": True},
     )
-    label: Mapped[str | None] = mapped_column(String(80), info={"group": "address"})
+    label: Mapped[str | None] = mapped_column(String(80), info={"advanced": True, "group": "address"})
     street: Mapped[str] = mapped_column(
         String(200), info={"group": "address", "required": True, "list": True}
     )
@@ -75,7 +79,7 @@ class Address(IdMixin, TimestampMixin, SoftDeleteMixin, TenantMixin, Base):
         String(20), info={"group": "address", "required": True, "list": True}
     )
     city: Mapped[str] = mapped_column(String(120), info={"group": "address", "required": True, "list": True})
-    country: Mapped[str] = mapped_column(String(2), default="DE", info={"group": "address"})
+    country: Mapped[str] = mapped_column(String(2), default="DE", info={"advanced": True, "group": "address"})
     lat: Mapped[float | None] = mapped_column(Float, info={"group": "geo", "unit": "°"})
     lon: Mapped[float | None] = mapped_column(Float, info={"group": "geo", "unit": "°"})
     geocode_source: Mapped[str | None] = mapped_column(String(20), info={"group": "geo", "readonly": True})
@@ -116,7 +120,7 @@ class PickupOrder(IdMixin, TimestampMixin, SoftDeleteMixin, TenantMixin, Base):
     )
     fixed_date: Mapped[date | None] = mapped_column(Date, info={"group": "timing"})
     priority: Mapped[int] = mapped_column(Integer, default=0, info={"group": "order", "min": 0, "max": 9})
-    notes: Mapped[str | None] = mapped_column(Text, info={"group": "order"})
+    notes: Mapped[str | None] = mapped_column(Text, info={"advanced": True, "group": "order"})
     source: Mapped[str] = mapped_column(String(20), default="manual", info={"readonly": True})
     return_wish: Mapped[dict[str, Any]] = mapped_column(
         default=dict, info={"hidden": True}
@@ -127,7 +131,9 @@ class PickupOrder(IdMixin, TimestampMixin, SoftDeleteMixin, TenantMixin, Base):
     price_quoted: Mapped[float | None] = mapped_column(
         Float, info={"readonly": True, "unit": "€", "list": True}
     )
-    price_final: Mapped[float | None] = mapped_column(Float, info={"group": "order", "unit": "€"})
+    price_final: Mapped[float | None] = mapped_column(
+        Float, info={"module": "customer_billing", "group": "order", "unit": "€"}
+    )
     cancelled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), info={"readonly": True})
     estimate: Mapped[dict[str, Any] | None] = mapped_column(info={"readonly": True, "hidden": True})
 
@@ -217,19 +223,23 @@ class Plant(IdMixin, TimestampMixin, SoftDeleteMixin, TenantMixin, Base):
     weight_kg: Mapped[float | None] = mapped_column(
         Float, info={"group": "weight", "unit": "kg", "list": True}
     )
-    weight_uncertainty_kg: Mapped[float | None] = mapped_column(Float, info={"group": "weight", "unit": "kg"})
+    weight_uncertainty_kg: Mapped[float | None] = mapped_column(
+        Float, info={"advanced": True, "group": "weight", "unit": "kg"}
+    )
     weight_measured_kg: Mapped[float | None] = mapped_column(Float, info={"group": "weight", "unit": "kg"})
     # handling
     can_tilt: Mapped[bool | None] = mapped_column(Boolean, info={"group": "handling"})
     must_secure: Mapped[bool] = mapped_column(Boolean, default=False, info={"group": "handling"})
     sensitive: Mapped[bool | None] = mapped_column(Boolean, info={"group": "handling"})
     frost_sensitive: Mapped[bool | None] = mapped_column(Boolean, info={"group": "handling"})
-    not_stackable: Mapped[bool] = mapped_column(Boolean, default=True, info={"group": "handling"})
+    not_stackable: Mapped[bool] = mapped_column(
+        Boolean, default=True, info={"advanced": True, "group": "handling"}
+    )
     team_size_override: Mapped[int | None] = mapped_column(
-        Integer, info={"group": "handling", "min": 1, "max": 8}
+        Integer, info={"advanced": True, "group": "handling", "min": 1, "max": 8}
     )
     required_equipment: Mapped[list[Any]] = mapped_column(
-        default=list, info={"group": "handling", "widget": "tags"}
+        default=list, info={"advanced": True, "group": "handling", "widget": "tags"}
     )
     incompatible_with: Mapped[list[Any]] = mapped_column(default=list, info={"hidden": True})
     # bookkeeping
@@ -239,12 +249,12 @@ class Plant(IdMixin, TimestampMixin, SoftDeleteMixin, TenantMixin, Base):
     storage_area_id: Mapped[uuid.UUID | None] = mapped_column(
         Uuid,
         ForeignKey("storage_areas.id", ondelete="SET NULL"),
-        info={"group": "master", "fk": "storage_area"},
+        info={"module": "storage", "group": "master", "fk": "storage_area"},
     )
     qr_code: Mapped[str | None] = mapped_column(String(64), index=True, info={"readonly": True})
     estimated_fields: Mapped[list[Any]] = mapped_column(default=list, info={"readonly": True})
     field_confidence: Mapped[dict[str, Any]] = mapped_column(default=dict, info={"readonly": True})
-    notes: Mapped[str | None] = mapped_column(Text, info={"group": "master"})
+    notes: Mapped[str | None] = mapped_column(Text, info={"advanced": True, "group": "master"})
 
 
 class StoredFile(IdMixin, TenantMixin, Base):

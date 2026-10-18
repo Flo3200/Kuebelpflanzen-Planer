@@ -20,6 +20,7 @@ from app.models.orders import PickupOrder
 from app.models.planning import TourStop
 from app.models.platform import AgentToken
 from tests.conftest import Api
+from tests.helpers import set_modules
 
 
 @pytest.fixture
@@ -194,6 +195,7 @@ def demo_owner(demo, make_client):
 
     api = make_client()
     api.login(demo[1], DEMO_PASSWORD)
+    set_modules(api, customer_billing=True)
     return api
 
 

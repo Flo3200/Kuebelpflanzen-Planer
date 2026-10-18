@@ -17,7 +17,7 @@ function LeafMark() {
 }
 
 export function AppShell({ nav }: { nav: NavSection[] }) {
-  const { me, has, logout } = useAuth();
+  const { me, has, mod, logout } = useAuth();
   const [open, setOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
@@ -47,7 +47,7 @@ export function AppShell({ nav }: { nav: NavSection[] }) {
         </div>
         <nav>
           {nav.map((section, i) => {
-            const items = section.items.filter((it) => !it.perm || has(it.perm));
+            const items = section.items.filter((it) => (!it.perm || has(it.perm)) && (!it.module || mod(it.module)));
             if (!items.length) return null;
             return (
               <div key={i}>

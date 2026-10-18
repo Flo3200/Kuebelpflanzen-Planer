@@ -2,6 +2,7 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../api/client";
+import { useAuth } from "../auth/auth";
 import { fmtDate, fmtNumber, t, tMaybe } from "../i18n";
 import { ErrorBox, Spinner } from "./ui";
 
@@ -20,6 +21,10 @@ export type FieldMeta = {
   min: number | null;
   max: number | null;
   list: boolean;
+  /** not used by any calculation: shown folded under "Weitere Angaben" */
+  advanced: boolean;
+  /** optional module the field belongs to; hidden while the module is off */
+  module: string | null;
   label: string;
   help: string;
 };
@@ -209,26 +214,30 @@ export function EntityForm(props: {
   extra?: ReactNode;
 }) {
   const meta = useEntityMeta(props.entity);
+  const { mod } = useAuth();
   const [values, setValues] = useState<Record<string, any>>(props.initial ?? {});
   const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
 
   const fields = useMemo(() => {
-    const all = (meta.data?.fields ?? []).filter((f) => f.writable);
+    const all = (meta.data?.fields ?? []).filter((f) => f.writable && (!f.module || mod(f.module)));
     const picked = props.fields ? props.fields.map((n) => all.find((f) => f.name === n)).filter(Boolean) as FieldMeta[] : all;
     return picked.filter((f) => !props.exclude?.includes(f.name));
-  }, [meta.data, props.fields, props.exclude]);
+  }, [meta.data, props.fields, props.exclude, mod]);
 
-  const groups = useMemo(() => {
+  const grouped = (list: FieldMeta[]) => {
     const out: { key: string; fields: FieldMeta[] }[] = [];
-    for (const f of fields) {
+    for (const f of list) {
       const g = f.group ?? "_";
       let entry = out.find((x) => x.key === g);
       if (!entry) out.push((entry = { key: g, fields: [] }));
       entry.fields.push(f);
     }
     return out;
-  }, [fields]);
+  };
+  const groups = useMemo(() => grouped(fields.filter((f) => !f.advanced)), [fields]);
+  // fields no calculation needs are folded away; required ones always stay visible
+  const advanced = useMemo(() => fields.filter((f) => f.advanced && !f.required), [fields]);
 
   if (meta.isLoading) return <Spinner />;
   if (meta.error) return <ErrorBox error={meta.error} />;
@@ -248,29 +257,41 @@ export function EntityForm(props: {
     }
   };
 
+  const renderField = (f: FieldMeta) => {
+    const id = `f-${props.entity}-${f.name}`;
+    const wide = f.type === "text" || f.type === "json";
+    return (
+      <div className="field" key={f.name} style={wide ? { gridColumn: "1 / -1" } : undefined}>
+        <label htmlFor={id}>
+          {f.label}
+          {f.required && <span aria-hidden="true"> *</span>}
+        </label>
+        <FieldInput f={f} id={id} value={values[f.name]} onChange={(v) => setValues((s) => ({ ...s, [f.name]: v }))} />
+        {f.help && <span className="help">{f.help}</span>}
+      </div>
+    );
+  };
+  const filledAdvanced = advanced.filter((f) => values[f.name] !== null && values[f.name] !== undefined && values[f.name] !== "" && !(Array.isArray(values[f.name]) && !values[f.name].length)).length;
+
   return (
     <form onSubmit={submit} className="stack lg">
       {groups.map((g) => (
         <div className="form-section" key={g.key}>
           {groups.length > 1 && g.key !== "_" && <h4>{tMaybe(`fields.groups.${g.key}`) ?? g.key}</h4>}
-          <div className="form-grid">
-            {g.fields.map((f) => {
-              const id = `f-${props.entity}-${f.name}`;
-              const wide = f.type === "text" || f.type === "json";
-              return (
-                <div className="field" key={f.name} style={wide ? { gridColumn: "1 / -1" } : undefined}>
-                  <label htmlFor={id}>
-                    {f.label}
-                    {f.required && <span aria-hidden="true"> *</span>}
-                  </label>
-                  <FieldInput f={f} id={id} value={values[f.name]} onChange={(v) => setValues((s) => ({ ...s, [f.name]: v }))} />
-                  {f.help && <span className="help">{f.help}</span>}
-                </div>
-              );
-            })}
-          </div>
+          <div className="form-grid">{g.fields.map(renderField)}</div>
         </div>
       ))}
+      {advanced.length > 0 && (
+        <details className="form-more">
+          <summary>
+            {t("form.more")}
+            <span className="faint small"> · {t("form.more_hint", { n: advanced.length, filled: filledAdvanced })}</span>
+          </summary>
+          <div className="form-grid" style={{ marginTop: 12 }}>
+            {advanced.map(renderField)}
+          </div>
+        </details>
+      )}
       {props.extra}
       <ErrorBox error={error} />
       <div className="row end">

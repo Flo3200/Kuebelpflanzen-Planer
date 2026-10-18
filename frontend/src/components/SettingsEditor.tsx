@@ -17,6 +17,8 @@ export type SettingValue = {
   choices_source: string | null;
   important: boolean;
   admin_only: boolean;
+  /** false if the setting belongs to an optional module that is off (then it is not shown) */
+  module_active?: boolean;
   label: string;
   help: string;
   value: any;
@@ -80,7 +82,10 @@ export function SettingsEditor(props: {
         tenant_id: tenantId,
       }),
   });
-  const invalidate = () => qc.invalidateQueries({ queryKey: ["settings"] });
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: ["settings"] });
+    qc.invalidateQueries({ queryKey: ["me"] });
+  };
 
   const undo = async (url: string) => {
     await api.post(url);
@@ -111,7 +116,7 @@ export function SettingsEditor(props: {
     onError: (e: Error) => toast({ text: e.message, tone: "error" }),
   });
 
-  const values = query.data?.values ?? [];
+  const values = (query.data?.values ?? []).filter((v) => v.module_active !== false);
   const groups = (query.data?.groups ?? []).filter(
     (g) => values.some((v) => v.group === g.key) && (!props.onlyGroups || props.onlyGroups.includes(g.key)),
   );

@@ -275,3 +275,24 @@ Agenten mit den Bedingungen des jeweiligen KI-Anbieters vereinbar ist, prüft de
 - Serverseitige Sperre: Kunden erreichen nur den Kundenzugang und eigene Dateien.
 
 **Tests:** 13 neue Backend-Tests (112 gesamt, dazu 9 Frontend-Tests). Offen aus Phase 8: Umzug auf einen gehosteten Server.
+
+## Verbesserungsrunde – Paket A: Fokus Logistik und schlanke Eingaben (2026-10-18)
+
+**Umgesetzt**
+- Modul-Schalter unter „Einstellungen → Module“: Lager, Preise/Angebote/Rechnungen an Kunden,
+  Kundenzugang, Online-Zahlung (braucht den Kundenzugang). Für neue Betriebe aus.
+- Ausgeschaltete Module verschwinden aus Menü (Lager, Preise), Übersicht (Lagerauslastung,
+  Angebotssumme), Formularen (Lagerplatz, Endpreis, Steuer-/Bankdaten des Betriebs), Auftrags- und
+  Kundenseiten (Kundenzugang-Link, Angebote, Kundenrechnungen, Preis-Spalten) und Einstellungen;
+  Endpunkte antworten 409. Ohne Preis-Modul zeigen Aufträge die Logistikkosten statt des Preises.
+- `portal.enabled` wird zu `modules.portal` (umkehrbare Migration).
+- Erfassungsmasken: Felder ohne Berechnungsbezug stehen eingeklappt unter „Weitere Angaben“
+  (Feldtabelle in `DECISIONS.md`, D24). Kundenliste zeigt Name und Telefon.
+- Fahrer-App zeigt den Lagerplatz nur mit Lager-Modul; Frostregel und Rücklieferung hängen nicht
+  vom Lager ab.
+
+**Tests:** 8 neue Tests (`test_modules.py`: jedes Modul aus und an, Abhängigkeit Zahlung → Zugang,
+eingeklappte Felder); bestehende Tests schalten die Module ein, die sie brauchen. `make check` grün
+(120 Backend-Tests, 9 Frontend-Tests). **Abnahme:** erfüllt – ein neuer Betrieb sieht nur
+Logistik-Funktionen (`test_new_tenant_has_only_logistics`), Masken zeigen nur Felder mit
+Berechnungsbezug, jedes Modul ist an und aus getestet.

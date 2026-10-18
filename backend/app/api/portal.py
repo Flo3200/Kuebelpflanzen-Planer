@@ -20,6 +20,7 @@ from app.core.config import get_config
 from app.core.context import Actor
 from app.core.db import system_session
 from app.core.errors import AppError, Forbidden, NotFound
+from app.core.modules import module_enabled, module_states, require_module
 from app.jobs.queue import enqueue
 from app.models.core import Tenant
 from app.models.formulas import Quote
@@ -39,7 +40,6 @@ from app.portal.service import (
     progress,
     tenant_contact,
 )
-from app.core.modules import module_enabled, module_states, require_module
 from app.settings.service import SettingsResolver
 from app.timemodel.plantfill import geometry
 
@@ -309,6 +309,7 @@ def location(order_id: uuid.UUID, data: LocationIn, actor: CurrentActor, db: DB)
 @router.post("/api/portal/quotes/{quote_id}/accept")
 def accept_quote(quote_id: uuid.UUID, actor: CurrentActor, db: DB) -> dict[str, Any]:
     _customer(actor, db)
+    require_module(db, actor.tenant_id, "customer_billing")
     q = db.get(Quote, quote_id)
     if q is None:
         raise NotFound()

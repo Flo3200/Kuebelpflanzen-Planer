@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../api/client";
+import { useAuth } from "../../auth/auth";
 import { Badge, Card, Kpi, useToast } from "../../components/ui";
 import { fmtDate, fmtMinutes, fmtMoney, fmtNumber, t, tMaybe } from "../../i18n";
 import { OrderInvoices } from "../common/Billing";
@@ -8,7 +9,9 @@ import { coverageTone } from "./Pricing";
 export function EstimateDetails({ orderId, estimate, onChange }: { orderId: string; estimate: any; onChange: () => void }) {
   const qc = useQueryClient();
   const toast = useToast();
-  const quotes = useQuery({ queryKey: ["quotes", orderId], queryFn: () => api.get<any[]>(`/api/orders/${orderId}/quotes`) });
+  const { mod } = useAuth();
+  const billing = mod("customer_billing");
+  const quotes = useQuery({ queryKey: ["quotes", orderId], queryFn: () => api.get<any[]>(`/api/orders/${orderId}/quotes`), enabled: billing });
   const e = estimate;
   const price = e.price ?? {};
   const costs = e.costs ?? {};
@@ -39,11 +42,15 @@ export function EstimateDetails({ orderId, estimate, onChange }: { orderId: stri
         <Kpi label={t("estimate.team")} value={t("estimate.persons", { n: e.team_size })} />
         <Kpi label={t("estimate.duration")} value={fmtMinutes(e.duration_min)} sub={t("estimate.planned_with", { m: fmtMinutes(e.planning_duration_min) })} />
         <Kpi label={t("estimate.labour")} value={fmtMinutes(e.labour_min)} sub={t("estimate.labour_help")} />
-        <Kpi
-          label={t("estimate.price")}
-          value={fmtMoney(price.gross)}
-          sub={price.coverage_pct != null ? <Badge tone={coverageTone(price.coverage_pct)}>{t("estimate.coverage", { pct: fmtNumber(price.coverage_pct) })}</Badge> : undefined}
-        />
+        {billing ? (
+          <Kpi
+            label={t("estimate.price")}
+            value={fmtMoney(price.gross)}
+            sub={price.coverage_pct != null ? <Badge tone={coverageTone(price.coverage_pct)}>{t("estimate.coverage", { pct: fmtNumber(price.coverage_pct) })}</Badge> : undefined}
+          />
+        ) : (
+          <Kpi label={t("estimate.self_cost")} value={fmtMoney(plan?.self_cost ?? costs.self_cost)} sub={plan ? t("orders.cost_from_plan") : t("orders.cost_estimated")} />
+        )}
       </div>
       <div className="grid cols-2" style={{ alignItems: "start" }}>
         <Card title={t("estimate.plants_title")}>
@@ -123,10 +130,14 @@ export function EstimateDetails({ orderId, estimate, onChange }: { orderId: stri
               <dd className="num">
                 <strong>{fmtMoney(costs.self_cost)}</strong>
               </dd>
-              <dt>{t("estimate.target_price")}</dt>
-              <dd className="num">{fmtMoney(costs.target_price_net)}</dd>
-              <dt>{t("estimate.price_net")}</dt>
-              <dd className="num">{fmtMoney(price.net)}</dd>
+              {billing && (
+                <>
+                  <dt>{t("estimate.target_price")}</dt>
+                  <dd className="num">{fmtMoney(costs.target_price_net)}</dd>
+                  <dt>{t("estimate.price_net")}</dt>
+                  <dd className="num">{fmtMoney(price.net)}</dd>
+                </>
+              )}
               <dt>{t("estimate.distance")}</dt>
               <dd className="num">
                 {e.distance_km != null ? `${fmtNumber(e.distance_km, 1)} km` : "–"} · {t("estimate.drive_share", { km: fmtNumber(e.drive?.share_km, 1), min: fmtMinutes(e.drive?.share_min) })}
@@ -135,7 +146,12 @@ export function EstimateDetails({ orderId, estimate, onChange }: { orderId: stri
                 <>
                   <dt>{t("estimate.plan_self_cost")}</dt>
                   <dd className="num">
-                    {fmtMoney(plan.self_cost)} · <Badge tone={coverageTone(plan.coverage_pct)}>{fmtNumber(plan.coverage_pct)} %</Badge>
+                    {fmtMoney(plan.self_cost)}
+                    {billing && (
+                      <>
+                        {" "}· <Badge tone={coverageTone(plan.coverage_pct)}>{fmtNumber(plan.coverage_pct)} %</Badge>
+                      </>
+                    )}
                   </dd>
                 </>
               )}
@@ -144,6 +160,7 @@ export function EstimateDetails({ orderId, estimate, onChange }: { orderId: stri
               {t("estimate.formula_info", { name: e.formula?.time?.name, v: e.formula?.time?.version, q: Math.round((e.formula?.quantile ?? 0.8) * 100) })} · {fmtDate(e.computed_at, true)}
             </p>
           </Card>
+          {billing && (
           <Card
             title={t("estimate.quotes")}
             actions={
@@ -166,7 +183,8 @@ export function EstimateDetails({ orderId, estimate, onChange }: { orderId: stri
               ))}
             </div>
           </Card>
-          <OrderInvoices orderId={orderId} />
+          )}
+          {billing && <OrderInvoices orderId={orderId} />}
         </div>
       </div>
     </div>

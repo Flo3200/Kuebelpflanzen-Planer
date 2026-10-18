@@ -84,7 +84,9 @@ SETTINGS: tuple[SettingDef, ...] = (
         important=True,
         module="storage",
     ),
-    _s("general.storage_space_factor", "float", 1.25, "general", unit="×", min=1.0, max=3.0, module="storage"),
+    _s(
+        "general.storage_space_factor", "float", 1.25, "general", unit="×", min=1.0, max=3.0, module="storage"
+    ),
     # --- security / platform -------------------------------------------------
     _s("security.admin_require_2fa", "bool", False, "security", levels=P),
     _s("security.owner_require_2fa", "bool", False, "security"),
@@ -318,8 +320,26 @@ SETTINGS: tuple[SettingDef, ...] = (
         choices=("off", "distance", "zones", "detour"),
         module="customer_billing",
     ),
-    _s("pricing.distance_rate_km", "float", 0.9, "pricing", unit="€/km", min=0, max=20, module="customer_billing"),
-    _s("pricing.distance_free_km", "float", 5.0, "pricing", unit="km", min=0, max=200, module="customer_billing"),
+    _s(
+        "pricing.distance_rate_km",
+        "float",
+        0.9,
+        "pricing",
+        unit="€/km",
+        min=0,
+        max=20,
+        module="customer_billing",
+    ),
+    _s(
+        "pricing.distance_free_km",
+        "float",
+        5.0,
+        "pricing",
+        unit="km",
+        min=0,
+        max=200,
+        module="customer_billing",
+    ),
     _s(
         "pricing.zones",
         "json",

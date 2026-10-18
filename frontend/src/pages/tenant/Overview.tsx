@@ -14,13 +14,13 @@ type Dashboard = {
   plants_picked_up: number;
   drafts_pending: number;
   planned_tours: number;
-  revenue_quoted: number;
+  revenue_quoted: number | null;
   storage: { used_m2: number; capacity_m2: number; pct: number | null; warn: boolean } | null;
   next_tours: { id: string; date: string; label: string; stops: number }[];
 };
 
 export function TenantOverviewPage() {
-  const { me } = useAuth();
+  const { me, mod } = useAuth();
   const q = useQuery({ queryKey: ["dashboard"], queryFn: () => api.get<Dashboard>("/api/dashboard"), retry: false });
   const d = q.data;
   const name = me?.user?.name?.split(" ")[0] ?? me?.label ?? "";
@@ -43,13 +43,17 @@ export function TenantOverviewPage() {
         />
         <Kpi label={t("dashboard.orders")} value={fmtNumber(d?.counts?.pickup_orders)} sub={d ? t("dashboard.confirmed", { n: fmtNumber(d.orders_by_status?.confirmed ?? 0) }) : undefined} />
         <Kpi label={t("dashboard.drafts")} value={fmtNumber(d?.drafts_pending)} sub={<Link to="/betrieb/posteingang">{t("nav.inbox")}</Link>} />
-        <Kpi
-          label={t("dashboard.storage")}
-          value={d?.storage?.pct != null ? `${fmtNumber(d.storage.pct)} %` : "–"}
-          sub={d?.storage ? `${fmtNumber(d.storage.used_m2, 1)} / ${fmtNumber(d.storage.capacity_m2, 0)} m²` : undefined}
-        />
+        {mod("storage") ? (
+          <Kpi
+            label={t("dashboard.storage")}
+            value={d?.storage?.pct != null ? `${fmtNumber(d.storage.pct)} %` : "–"}
+            sub={d?.storage ? `${fmtNumber(d.storage.used_m2, 1)} / ${fmtNumber(d.storage.capacity_m2, 0)} m²` : undefined}
+          />
+        ) : (
+          <Kpi label={t("dashboard.planned_tours")} value={fmtNumber(d?.planned_tours)} sub={<Link to="/betrieb/planung">{t("nav.planning")}</Link>} />
+        )}
       </div>
-      {d?.storage?.warn && <div className="alert warn" style={{ marginBottom: 24 }}>{t("dashboard.storage_warn")}</div>}
+      {mod("storage") && d?.storage?.warn && <div className="alert warn" style={{ marginBottom: 24 }}>{t("dashboard.storage_warn")}</div>}
       <div className="grid cols-2">
         <Card title={t("dashboard.status_title")}>
           <div className="stack" style={{ gap: 8 }}>
@@ -59,8 +63,8 @@ export function TenantOverviewPage() {
                 <span className="num">{fmtNumber(n)}</span>
               </div>
             ))}
-            {d && <div className="divider" />}
-            {d && (
+            {d && d.revenue_quoted != null && <div className="divider" />}
+            {d && d.revenue_quoted != null && (
               <div className="row between">
                 <span className="muted">{t("dashboard.revenue_quoted")}</span>
                 <span className="num">{fmtMoney(d.revenue_quoted)}</span>

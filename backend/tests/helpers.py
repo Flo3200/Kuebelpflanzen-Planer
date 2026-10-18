@@ -1,4 +1,4 @@
-"""Test helpers: synthetic photos (with an A4 sheet and GPS EXIF data)."""
+"""Test helpers: synthetic photos (with an A4 sheet and GPS EXIF data), module switches."""
 
 from __future__ import annotations
 
@@ -30,3 +30,9 @@ def make_photo(a4: bool = True, blur: bool = False, size=(900, 1200), gps: bool 
     else:
         img.save(out, format="JPEG", quality=90)
     return out.getvalue()
+
+
+def set_modules(api, **modules: bool) -> None:
+    """Switches optional modules of the logged-in tenant (all are off for a new tenant)."""
+    for name, on in modules.items():
+        api.put("/api/settings", json={"scope": "tenant", "key": f"modules.{name}", "value": on})

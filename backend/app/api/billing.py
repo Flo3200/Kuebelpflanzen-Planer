@@ -25,6 +25,7 @@ from app.billing.service import (
 from app.core import audit
 from app.core.context import Actor
 from app.core.errors import AppError, NotFound
+from app.core.modules import require_module
 from app.jobs.queue import enqueue, run_now
 from app.models.core import Tenant
 from app.models.orders import PickupOrder, StoredFile
@@ -80,6 +81,8 @@ def list_invoices(
     q = select(Invoice).where(Invoice.kind == kind)
     if actor.tenant_id is not None:
         actor.require("tenant.billing" if kind == "platform" else "orders.read")
+        if kind != "platform":
+            require_module(db, actor.tenant_id, "customer_billing")
         q = q.where(Invoice.tenant_id == actor.tenant_id)
     else:
         actor.require("platform.billing")
@@ -193,6 +196,7 @@ def order_invoice(order_id: uuid.UUID, actor: CurrentActor, db: DB) -> dict[str,
     order = db.get(PickupOrder, order_id)
     if order is None or order.tenant_id != actor.tenant_id:
         raise NotFound()
+    require_module(db, order.tenant_id, "customer_billing")
     confirm_if_agent(db, actor, "billing:customer_invoice", {"order_id": str(order_id)})
     open_inv = db.scalar(
         select(Invoice).where(

@@ -14,6 +14,7 @@ from app.core import audit
 from app.core.config import get_config
 from app.core.context import Actor
 from app.core.errors import AppError, NotFound
+from app.core.modules import require_module
 from app.core.security import new_token, token_hash
 from app.models.core import OneTimeCode, Tenant, User
 from app.models.formulas import Quote
@@ -21,7 +22,6 @@ from app.models.orders import Customer, Photo, PickupOrder, StoredFile
 from app.models.planning import Plan, Tour, TourStop
 from app.models.platform import Invoice, Payment
 from app.settings.service import SettingsResolver
-from app.core.modules import require_module
 
 # what the customer sees as progress of one order
 PICKUP_STEPS = ["request", "offer", "confirmed", "planned", "picked_up", "stored", "returned"]

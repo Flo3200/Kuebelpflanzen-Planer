@@ -353,6 +353,19 @@ textarea.input {
 .form-section h4 {
   margin-bottom: var(--space-3);
 }
+/* fields no calculation needs, folded away ("Weitere Angaben") */
+.form-more {
+  border-top: 1px solid var(--border);
+  padding-top: var(--space-3);
+}
+.form-more > summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+.form-more[open] > summary {
+  color: var(--text);
+}
 
 /* ---------- tables ---------- */
 .table-wrap {

@@ -4,6 +4,8 @@ Column metadata (``info``) understood here:
   hidden    – never exposed (tenant_id, deleted_at)
   readonly  – exposed but not writable
   required  – required on create even if nullable in the database
+  advanced  – not used by any calculation; forms fold it under "Weitere Angaben"
+  module    – belongs to an optional module (app/core/modules.py), hidden while it is off
   unit, group, enum, fk (target entity), help, widget, min, max
 """
 
@@ -41,6 +43,7 @@ class EntitySpec:
         order_by: tuple[str, ...] = ("created_at",),
         settings_scope: str | None = None,
         exclude: tuple[str, ...] = (),
+        module: str | None = None,
     ) -> None:
         self.name = name
         self.model = model
@@ -51,6 +54,13 @@ class EntitySpec:
         self.order_by = order_by
         self.settings_scope = settings_scope
         self.exclude = exclude
+        self.module = module  # optional module (app/core/modules.py); endpoints answer 409 while it is off
+
+    def check_module(self, db: Session, actor: Actor) -> None:
+        if self.module:
+            from app.core.modules import require_module
+
+            require_module(db, actor.tenant_id, self.module)
 
     @property
     def columns(self) -> list[Column]:
@@ -214,6 +224,7 @@ def crud_router(
         filter: list[str] = Query(default=[], description="feld=wert"),
     ) -> list[Any]:
         actor.require(spec.read_perm)
+        spec.check_module(db, actor)
         stmt = select(model)
         if hasattr(model, "deleted_at"):
             stmt = stmt.where(model.deleted_at.is_(None))
@@ -240,11 +251,13 @@ def crud_router(
     @router.get("/{row_id}", response_model=Read, name=f"get_{spec.name}")
     def get_one(row_id: uuid.UUID, actor: CurrentActor, db: DB) -> Any:
         actor.require(spec.read_perm)
+        spec.check_module(db, actor)
         return get_row(db, spec, actor, row_id)
 
     @router.post("", response_model=Read, status_code=201, name=f"create_{spec.name}")
     def create(data: Create, actor: CurrentActor, db: DB) -> Any:  # type: ignore[valid-type]
         actor.require(spec.write_perm)
+        spec.check_module(db, actor)
         row = model()
         if hasattr(model, "tenant_id"):
             row.tenant_id = actor.require_tenant()
@@ -273,6 +286,7 @@ def crud_router(
     @router.patch("/{row_id}", response_model=Read, name=f"update_{spec.name}")
     def update(row_id: uuid.UUID, data: Update, actor: CurrentActor, db: DB) -> Any:  # type: ignore[valid-type]
         actor.require(spec.write_perm)
+        spec.check_module(db, actor)
         row = get_row(db, spec, actor, row_id)
         values = data.model_dump(exclude_unset=True)  # type: ignore[attr-defined]
         check_foreign_keys(db, spec, values)
@@ -300,6 +314,7 @@ def crud_router(
     @router.delete("/{row_id}", name=f"delete_{spec.name}")
     def delete(row_id: uuid.UUID, actor: CurrentActor, db: DB) -> dict:
         actor.require(spec.write_perm)
+        spec.check_module(db, actor)
         from app.agents.confirm import confirm_if_agent
 
         confirm_if_agent(db, actor, f"delete:{spec.name}", {"id": str(row_id)})
@@ -379,6 +394,10 @@ def field_meta(spec: EntitySpec, lang: str = "de") -> list[dict[str, Any]]:
                 "min": col.info.get("min"),
                 "max": col.info.get("max"),
                 "list": col.info.get("list", False),
+                # not needed by any calculation: the form folds it under "Weitere Angaben"
+                "advanced": bool(col.info.get("advanced")),
+                # belongs to an optional module and is hidden while the module is off
+                "module": col.info.get("module"),
                 "label": entry.get("label", col.name),
                 "help": entry.get("help", ""),
             }

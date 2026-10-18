@@ -14,6 +14,7 @@ from app.api.deps import CSRF_COOKIE, SESSION_COOKIE, CurrentActor, cookie_kwarg
 from app.core.config import get_config
 from app.core.db import system_session
 from app.core.errors import AppError, Forbidden, Unauthorized
+from app.core.modules import MODULES, module_enabled, module_states
 from app.core.permissions import effective_permissions
 from app.core.security import (
     decrypt,
@@ -28,7 +29,6 @@ from app.core.security import (
     verify_totp,
 )
 from app.models.core import AuthSession, LoginAttempt, OneTimeCode, Tenant, User
-from app.core.modules import MODULES, module_enabled, module_states
 from app.settings.service import SettingsResolver
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -315,11 +315,7 @@ def customer_link_login(code: str, request: Request, response: Response) -> dict
         if user is None or not user.is_active or user.role != "customer" or user.customer_id is None:
             raise Unauthorized("errors.code_invalid")
         tenant = db.get(Tenant, user.tenant_id)
-        if (
-            tenant is None
-            or tenant.status != "active"
-            or not module_enabled(db, tenant.id, "portal")
-        ):
+        if tenant is None or tenant.status != "active" or not module_enabled(db, tenant.id, "portal"):
             raise Unauthorized("errors.code_invalid")
         otc.used_at = now
         create_session(db, user, response, request, kind="customer")

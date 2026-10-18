@@ -8,6 +8,7 @@ from typing import Any
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.core.modules import module_enabled
 from app.models.orders import Draft, PickupOrder, Plant
 
 
@@ -63,13 +64,16 @@ def extend(db: Session, tenant_id: uuid.UUID, out: dict[str, Any]) -> None:
         )
         or 0
     )
-    occ = occupancy(db, tenant_id)
-    out["storage"] = {
-        "used_m2": occ["used_m2"],
-        "capacity_m2": occ["capacity_m2"],
-        "pct": occ["pct"],
-        "warn": occ["warn"],
-    }
+    if module_enabled(db, tenant_id, "storage"):
+        occ = occupancy(db, tenant_id)
+        out["storage"] = {
+            "used_m2": occ["used_m2"],
+            "capacity_m2": occ["capacity_m2"],
+            "pct": occ["pct"],
+            "warn": occ["warn"],
+        }
+    if not module_enabled(db, tenant_id, "customer_billing"):
+        out["revenue_quoted"] = None
     try:
         from app.api.dashboard_tours import next_tours
 

@@ -40,18 +40,18 @@ class StaffMember(IdMixin, TimestampMixin, SoftDeleteMixin, TenantMixin, Base):
     __tablename__ = "staff_members"
 
     name: Mapped[str] = mapped_column(String(200), info={"group": "master", "list": True})
-    short_name: Mapped[str | None] = mapped_column(String(20), info={"group": "master"})
-    phone: Mapped[str | None] = mapped_column(String(60), info={"group": "master"})
-    email: Mapped[str | None] = mapped_column(String(200), info={"group": "master"})
+    short_name: Mapped[str | None] = mapped_column(String(20), info={"advanced": True, "group": "master"})
+    phone: Mapped[str | None] = mapped_column(String(60), info={"advanced": True, "group": "master"})
+    email: Mapped[str | None] = mapped_column(String(200), info={"advanced": True, "group": "master"})
     licences: Mapped[list[Any]] = mapped_column(
         default=list, info={"group": "skills", "widget": "tags", "enum_values": LICENCES, "list": True}
     )
     qualifications: Mapped[list[Any]] = mapped_column(
-        default=list, info={"group": "skills", "widget": "tags"}
+        default=list, info={"advanced": True, "group": "skills", "widget": "tags"}
     )
     active: Mapped[bool] = mapped_column(Boolean, default=True, info={"group": "master", "list": True})
-    color: Mapped[str | None] = mapped_column(String(9), info={"group": "master"})
-    notes: Mapped[str | None] = mapped_column(Text, info={"group": "master"})
+    color: Mapped[str | None] = mapped_column(String(9), info={"advanced": True, "group": "master"})
+    notes: Mapped[str | None] = mapped_column(Text, info={"advanced": True, "group": "master"})
 
 
 class Team(IdMixin, TimestampMixin, SoftDeleteMixin, TenantMixin, Base):
@@ -67,7 +67,7 @@ class Team(IdMixin, TimestampMixin, SoftDeleteMixin, TenantMixin, Base):
         Uuid, ForeignKey("vehicles.id", ondelete="SET NULL"), info={"group": "master", "fk": "vehicle"}
     )
     active: Mapped[bool] = mapped_column(Boolean, default=True, info={"group": "master", "list": True})
-    notes: Mapped[str | None] = mapped_column(Text, info={"group": "master"})
+    notes: Mapped[str | None] = mapped_column(Text, info={"advanced": True, "group": "master"})
 
 
 VEHICLE_KINDS = ["van", "truck", "trailer", "car"]
@@ -80,7 +80,9 @@ class Vehicle(IdMixin, TimestampMixin, SoftDeleteMixin, TenantMixin, Base):
     __tablename__ = "vehicles"
 
     name: Mapped[str] = mapped_column(String(120), info={"group": "master", "list": True})
-    plate: Mapped[str | None] = mapped_column(String(20), info={"group": "master", "list": True})
+    plate: Mapped[str | None] = mapped_column(
+        String(20), info={"advanced": True, "group": "master", "list": True}
+    )
     kind: Mapped[str] = mapped_column(
         String(20), default="van", info={"group": "master", "enum": VEHICLE_KINDS, "list": True}
     )
@@ -105,11 +107,13 @@ class Vehicle(IdMixin, TimestampMixin, SoftDeleteMixin, TenantMixin, Base):
     door_width_cm: Mapped[float] = mapped_column(Float, default=155, info={"group": "cargo", "unit": "cm"})
     door_height_cm: Mapped[float] = mapped_column(Float, default=175, info={"group": "cargo", "unit": "cm"})
     door_position: Mapped[str] = mapped_column(
-        String(10), default="rear", info={"group": "cargo", "enum": ["rear", "side"]}
+        String(10), default="rear", info={"advanced": True, "group": "cargo", "enum": ["rear", "side"]}
     )
-    loading_edge_cm: Mapped[float] = mapped_column(Float, default=55, info={"group": "cargo", "unit": "cm"})
-    has_ramp: Mapped[bool] = mapped_column(Boolean, default=False, info={"group": "cargo"})
-    has_lift: Mapped[bool] = mapped_column(Boolean, default=False, info={"group": "cargo"})
+    loading_edge_cm: Mapped[float] = mapped_column(
+        Float, default=55, info={"advanced": True, "group": "cargo", "unit": "cm"}
+    )
+    has_ramp: Mapped[bool] = mapped_column(Boolean, default=False, info={"advanced": True, "group": "cargo"})
+    has_lift: Mapped[bool] = mapped_column(Boolean, default=False, info={"advanced": True, "group": "cargo"})
     # wheel arches as blocked boxes at both side walls
     wheel_arch_x_cm: Mapped[float | None] = mapped_column(Float, info={"group": "cargo", "unit": "cm"})
     wheel_arch_length_cm: Mapped[float | None] = mapped_column(Float, info={"group": "cargo", "unit": "cm"})
@@ -127,11 +131,13 @@ class Vehicle(IdMixin, TimestampMixin, SoftDeleteMixin, TenantMixin, Base):
     min_tongue_load_kg: Mapped[float | None] = mapped_column(Float, info={"group": "trailer", "unit": "kg"})
     hitch_x_cm: Mapped[float | None] = mapped_column(Float, info={"group": "trailer", "unit": "cm"})
     can_tow: Mapped[bool] = mapped_column(Boolean, default=False, info={"group": "trailer"})
-    max_trailer_kg: Mapped[float | None] = mapped_column(Float, info={"group": "trailer", "unit": "kg"})
+    max_trailer_kg: Mapped[float | None] = mapped_column(
+        Float, info={"advanced": True, "group": "trailer", "unit": "kg"}
+    )
     default_trailer_id: Mapped[uuid.UUID | None] = mapped_column(
         Uuid, ForeignKey("vehicles.id", ondelete="SET NULL"), info={"group": "trailer", "fk": "vehicle"}
     )
-    notes: Mapped[str | None] = mapped_column(Text, info={"group": "master"})
+    notes: Mapped[str | None] = mapped_column(Text, info={"advanced": True, "group": "master"})
 
 
 class VehicleShelf(IdMixin, TimestampMixin, TenantMixin, Base):
@@ -181,12 +187,16 @@ class Equipment(IdMixin, TimestampMixin, SoftDeleteMixin, TenantMixin, Base):
     )
     solo_limit_kg: Mapped[float | None] = mapped_column(Float, info={"group": "effect", "unit": "kg"})
     usable_on_stairs: Mapped[bool] = mapped_column(Boolean, default=False, info={"group": "effect"})
-    surfaces: Mapped[list[Any]] = mapped_column(default=list, info={"group": "effect", "widget": "tags"})
-    min_path_width_cm: Mapped[float | None] = mapped_column(Float, info={"group": "effect", "unit": "cm"})
+    surfaces: Mapped[list[Any]] = mapped_column(
+        default=list, info={"advanced": True, "group": "effect", "widget": "tags"}
+    )
+    min_path_width_cm: Mapped[float | None] = mapped_column(
+        Float, info={"advanced": True, "group": "effect", "unit": "cm"}
+    )
     vehicle_id: Mapped[uuid.UUID | None] = mapped_column(
         Uuid, ForeignKey("vehicles.id", ondelete="SET NULL"), info={"group": "master", "fk": "vehicle"}
     )
-    notes: Mapped[str | None] = mapped_column(Text, info={"group": "master"})
+    notes: Mapped[str | None] = mapped_column(Text, info={"advanced": True, "group": "master"})
 
 
 AVAILABILITY_KINDS = ["available", "unavailable", "vacation", "sick", "maintenance"]

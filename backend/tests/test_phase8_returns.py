@@ -19,6 +19,7 @@ from app.models.field import Measurement
 from app.models.masterdata import Species
 from app.models.orders import PickupOrder, Plant
 from app.models.planning import Tour, TourStop
+from tests.helpers import set_modules
 
 
 @pytest.fixture(scope="module")
@@ -254,6 +255,7 @@ def test_driver_delivers_with_proof_photo(demo, april_plan, make_client):
         ).json()["id"]
     pin = f"{uuid.uuid4().int % 900000 + 100000}"
     api.post(f"/api/users/{user_id}/pin", json={"pin": pin})
+    set_modules(api, storage=True)  # the storage place is shown only with the storage module
     drv = make_client()
     drv.post("/api/auth/driver/pin", json={"tenant": demo[2], "pin": pin})
     day = drv.get("/api/driver/day", params={"on": tour["date"]}).json()

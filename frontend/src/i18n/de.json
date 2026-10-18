@@ -270,7 +270,9 @@
   },
   "form": {
     "tags_placeholder": "durch Komma getrennt",
-    "add_window": "Zeitfenster hinzufügen"
+    "add_window": "Zeitfenster hinzufügen",
+    "more": "Weitere Angaben",
+    "more_hint": "{n} Felder, die keine Berechnung braucht ({filled} ausgefüllt)"
   },
   "stats": {
     "users": "Benutzer",
@@ -336,7 +338,8 @@
     "revenue_quoted": "Angebotssumme",
     "next_tours": "Nächste Touren",
     "no_tours": "Noch keine Touren geplant.",
-    "stops": "{n} Stopps"
+    "stops": "{n} Stopps",
+    "planned_tours": "Geplante Touren"
   },
   "orders": {
     "status": {
@@ -376,7 +379,11 @@
     "estimate": "Schätzung",
     "path": "Weg",
     "photos": "Fotos",
-    "details": "Auftragsdaten"
+    "details": "Auftragsdaten",
+    "totals_logistics": "{n} Aufträge · {plants} Pflanzen · Arbeitszeit {labour}",
+    "logistics_cost": "Logistikkosten",
+    "cost_from_plan": "aus der Tourenplanung",
+    "cost_estimated": "geschätzt, vor der Planung"
   },
   "resource": {
     "tab_data": "Daten",

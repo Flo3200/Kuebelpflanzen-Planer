@@ -64,7 +64,9 @@ EQUIPMENT = EntitySpec(
     order_by=("name",),
     settings_scope="equipment",
 )
-STORAGE = EntitySpec("storage_area", StorageArea, "tenant.view", "tenant.profile", order_by=("name",))
+STORAGE = EntitySpec(
+    "storage_area", StorageArea, "tenant.view", "tenant.profile", order_by=("name",), module="storage"
+)
 AVAIL = EntitySpec(
     "availability",
     Availability,

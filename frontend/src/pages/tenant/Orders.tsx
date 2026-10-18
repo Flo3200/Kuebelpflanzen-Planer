@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, ApiError } from "../../api/client";
+import { useAuth } from "../../auth/auth";
 import { EntityForm, EntityTable, formatCell, useEntityMeta } from "../../components/EntityForm";
 import { SettingsEditor } from "../../components/SettingsEditor";
 import { Badge, Card, Confidence, ConfirmButton, Empty, ErrorBox, Modal, PageHeader, Spinner, Tabs, useToast } from "../../components/ui";
@@ -51,7 +52,7 @@ export function CustomersPage() {
         <EntityTable
           entity="customer"
           rows={list.data}
-          columns={["name", "email", "phone", "consent_photos"]}
+          columns={["name", "phone"]}
           onRowClick={(r) => navigate(`/betrieb/kunden/${r.id}`)}
         />
       )}
@@ -68,7 +69,7 @@ function NewCustomerModal({ onClose, onCreated }: { onClose: () => void; onCreat
       {step === "customer" && (
         <EntityForm
           entity="customer"
-          fields={["name", "company", "email", "phone", "preferred_contact", "notes"]}
+          fields={["name", "phone", "company", "email", "preferred_contact", "notes"]}
           submitLabel={t("common.next")}
           onCancel={onClose}
           onSubmit={async (v) => {
@@ -99,6 +100,7 @@ export function CustomerDetailPage() {
   const toast = useToast();
   const navigate = useNavigate();
   const q = useQuery({ queryKey: ["customer", id], queryFn: () => api.get<any>(`/api/customers/${id}/full`) });
+  const { mod } = useAuth();
   const [addAddress, setAddAddress] = useState(false);
   const [editAddress, setEditAddress] = useState<any>(null);
   if (q.isLoading) return <Spinner />;
@@ -135,9 +137,11 @@ export function CustomerDetailPage() {
         description={[customer.email, customer.phone].filter(Boolean).join(" · ")}
         actions={
           <>
-            <button className="btn secondary" onClick={portalLink}>
-              {t("portal.staff_link")}
-            </button>
+            {mod("portal") && (
+              <button className="btn secondary" onClick={portalLink}>
+                {t("portal.staff_link")}
+              </button>
+            )}
             <a className="btn ghost" href={`/api/customers/${id}/export`}>
               {t("privacy.export")}
             </a>
@@ -279,6 +283,8 @@ export function OrdersPage() {
   const [direction, setDirection] = useState<string>("pickup");
   const [returnsOpen, setReturnsOpen] = useState(false);
   const navigate = useNavigate();
+  const { mod } = useAuth();
+  const billing = mod("customer_billing");
   const list = useQuery({
     queryKey: ["orders", q, status, direction],
     queryFn: () => api.get<any[]>("/api/orders", { q: q || undefined, status: status ? [status] : undefined, direction: direction || undefined }),
@@ -305,7 +311,7 @@ export function OrdersPage() {
             </select>
             <select className="input" style={{ width: 170 }} value={status} onChange={(e) => setStatus(e.target.value)} aria-label={t("common.status")}>
               <option value="">{t("common.all")}</option>
-              {["draft", "confirmed", "planned", "picked_up", "stored", "returned", "cancelled"].map((s) => (
+              {["draft", "confirmed", "planned", "picked_up", ...(mod("storage") ? ["stored"] : []), "returned", "cancelled"].map((s) => (
                 <option key={s} value={s}>
                   {t(`orders.status.${s}`)}
                 </option>
@@ -324,7 +330,9 @@ export function OrdersPage() {
       {list.data && list.data.length > 0 && (
         <>
           <p className="small muted">
-            {t("orders.totals", { n: list.data.length, plants: totals.plants, labour: fmtMinutes(totals.labour), revenue: fmtMoney(totals.revenue) })}
+            {billing
+              ? t("orders.totals", { n: list.data.length, plants: totals.plants, labour: fmtMinutes(totals.labour), revenue: fmtMoney(totals.revenue) })
+              : t("orders.totals_logistics", { n: list.data.length, plants: totals.plants, labour: fmtMinutes(totals.labour) })}
           </p>
           <div className="table-wrap">
             <table className="table">
@@ -336,7 +344,7 @@ export function OrdersPage() {
                   <th className="num">{t("orders.plants")}</th>
                   <th className="num">{t("orders.duration")}</th>
                   <th className="num">{t("orders.team")}</th>
-                  <th className="num">{t("orders.price")}</th>
+                  {billing && <th className="num">{t("orders.price")}</th>}
                   <th>{t("common.status")}</th>
                 </tr>
               </thead>
@@ -351,7 +359,7 @@ export function OrdersPage() {
                     <td className="num">{o.n_plants}</td>
                     <td className="num">{fmtMinutes(o.duration_min)}</td>
                     <td className="num">{o.team_size ?? "–"}</td>
-                    <td className="num">{fmtMoney(o.price_quoted)}</td>
+                    {billing && <td className="num">{fmtMoney(o.price_quoted)}</td>}
                     <td>
                       <StatusBadge status={o.status} />
                     </td>
@@ -373,10 +381,11 @@ export function OrderDetailPage() {
   const navigate = useNavigate();
   const [tab, setTab] = useState<"plants" | "path" | "photos" | "order" | "estimate">("plants");
   const q = useQuery({ queryKey: ["order", id], queryFn: () => api.get<any>(`/api/orders/${id}`) });
+  const { mod } = useAuth();
   const occupancy = useQuery({
     queryKey: ["occupancy", id],
     queryFn: () => api.get<any>("/api/storage/occupancy", { order_id: id }),
-    enabled: q.data?.order?.status === "draft",
+    enabled: q.data?.order?.status === "draft" && mod("storage"),
   });
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["order", id] });
@@ -447,11 +456,19 @@ export function OrderDetailPage() {
           <span className="kpi-value">{fmtMinutes(est.labour_min)}</span>
           <span className="kpi-sub">{est.planning_duration_min ? t("estimate.planned_with", { m: fmtMinutes(est.planning_duration_min) }) : ""}</span>
         </div>
-        <div className="card tight kpi">
-          <span className="kpi-label">{t("orders.price")}</span>
-          <span className="kpi-value">{fmtMoney(order.price_quoted)}</span>
-          <span className="kpi-sub">{est.price?.coverage_pct != null ? t("estimate.coverage", { pct: fmtNumber(est.price.coverage_pct) }) : ""}</span>
-        </div>
+        {mod("customer_billing") ? (
+          <div className="card tight kpi">
+            <span className="kpi-label">{t("orders.price")}</span>
+            <span className="kpi-value">{fmtMoney(order.price_quoted)}</span>
+            <span className="kpi-sub">{est.price?.coverage_pct != null ? t("estimate.coverage", { pct: fmtNumber(est.price.coverage_pct) }) : ""}</span>
+          </div>
+        ) : (
+          <div className="card tight kpi">
+            <span className="kpi-label">{t("orders.logistics_cost")}</span>
+            <span className="kpi-value">{fmtMoney(est.plan_costs?.self_cost ?? est.costs?.self_cost)}</span>
+            <span className="kpi-sub">{est.plan_costs ? t("orders.cost_from_plan") : t("orders.cost_estimated")}</span>
+          </div>
+        )}
       </div>
       <Tabs
         value={tab}

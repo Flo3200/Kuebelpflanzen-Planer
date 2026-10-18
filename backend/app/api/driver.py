@@ -17,6 +17,7 @@ from app.core import audit
 from app.core.config import get_config
 from app.core.context import Actor
 from app.core.errors import AppError, NotFound
+from app.core.modules import module_enabled
 from app.field.events import apply_events, can_use_tour, photo_by_client_id
 from app.models.field import DEVIATION_KINDS, Deviation, TourEvent
 from app.models.masterdata import Species, StaffMember, StorageArea, Vehicle
@@ -88,6 +89,7 @@ def stop_package(db, stop: TourStop) -> dict[str, Any]:
     source = (order.return_of_id or order.id) if order else stop.order_id
     est = (order.estimate or {}) if order else {}
     crew = {p["id"]: p for p in est.get("plants", [])}
+    storage_on = module_enabled(db, stop.tenant_id, "storage")
     plants = []
     for p in db.scalars(
         select(Plant).where(Plant.order_id == source, Plant.deleted_at.is_(None)).order_by(Plant.number)
@@ -112,7 +114,7 @@ def stop_package(db, stop: TourStop) -> dict[str, Any]:
                 "sensitive": p.sensitive,
                 "must_secure": p.must_secure,
                 "notes": p.notes,
-                "storage": _storage_name(db, p.storage_area_id),
+                "storage": _storage_name(db, p.storage_area_id) if storage_on else None,
                 "photos": _photos(db, plant_id=p.id),
             }
         )
