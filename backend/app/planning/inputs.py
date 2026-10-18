@@ -1,7 +1,8 @@
 """Planning input: stops (orders) and units (one vehicle + team on one day).
 
 Team formation (setting planning.form_teams):
-  fixed – only active fixed teams (all members and the vehicle available that day)
+  fixed – only active fixed teams valid that day (weekdays, period) whose members and vehicle are
+          available; a team that cannot work becomes a team issue with its reason (no error)
   auto  – fixed teams first, then teams formed from the remaining staff per day: one large team
           for heavy stops if needed, the rest with the default size; every team gets a driver with
           the required licence (incl. BE/C1E for a trailer).
@@ -223,6 +224,14 @@ class PlanningInput:
     shared_equipment: list[EquipmentInfo]
     settings: dict[str, Any]
     direction: str = "pickup"
+    team_mode: str = "auto"
+    # fixed teams that could not work on a day: {date, team_id, team, reason, names}
+    team_issues: list[dict[str, Any]] = field(default_factory=list)
+    # all fixed teams with their members (for hints on unassigned stops)
+    fixed_teams: list[dict[str, Any]] = field(default_factory=list)
+    names: dict[str, str] = field(default_factory=dict)  # staff, vehicle and team names by id
+    staff_ids: list[str] = field(default_factory=list)  # active staff (not virtual)
+    vehicles: list[VehicleIn] = field(default_factory=list)  # all active vehicles (not trailers)
 
 
 # ----------------------------------------------------------------------------------- resources
@@ -335,14 +344,21 @@ def form_units(
     mode: str,
     default_size: int,
     team_size_override: int | None = None,
+    issues: list[dict[str, Any]] | None = None,
+    names: dict[str, str] | None = None,
 ) -> list[Unit]:
+    """issues collects fixed teams that cannot work today (with reason); names: staff/vehicle names."""
     max_size = int(r.get("team.max_size"))
     pool = {m.id: m for m in members}
     free_vehicles = {v.id: v for v in vehicles}
     free_trailers = dict(trailers)
     units: list[Unit] = []
+    names = names or {}
+    used_by: dict[str, str] = {}  # staff or vehicle id -> fixed team that took it today
+    last_reason: list[str] = []
 
     def make(vehicle: VehicleIn, team: list[Member], fixed_id: str | None) -> Unit | None:
+        last_reason.clear()
         trailer = None
         need = vehicle.licence
         if vehicle.default_trailer and vehicle.default_trailer in free_trailers:
@@ -355,11 +371,13 @@ def form_units(
             trailer, need = None, vehicle.licence
             drivers = sorted((m for m in team if m.can_drive(need)), key=lambda m: len(m.licences))
             if not drivers:
+                last_reason.append("no_driver")
                 return None
         driver = drivers[0]
         start = max([vehicle.start] + [m.start for m in team] + ([trailer.start] if trailer else []))
         end = min([vehicle.end] + [m.end for m in team] + ([trailer.end] if trailer else []))
         if end - start < 60:
+            last_reason.append("short_day")
             return None
         brk = break_minutes(r, end - start)
         max_work = min(m.max_work_min for m in team)
@@ -386,23 +404,55 @@ def form_units(
             fixed_team_id=fixed_id,
         )
 
+    def issue(team_id: str, reason: str, ids: list[str] | None = None) -> None:
+        if issues is None or team_id.startswith("forced:"):
+            return
+        issues.append(
+            {
+                "date": day.isoformat(),
+                "team_id": team_id,
+                "team": names.get(team_id, ""),
+                "reason": reason,
+                "names": [names.get(i, "?") for i in ids or []],
+                "other_team": next((used_by[i] for i in ids or [] if i in used_by), None),
+            }
+        )
+
     for team_id, member_ids, vehicle_id in fixed_teams:
         team = [pool[i] for i in member_ids if i in pool]
-        if len(team) != len(member_ids) or not team:
+        if not member_ids:
+            issue(team_id, "no_members")
+            continue
+        if len(team) != len(member_ids):
+            missing = [i for i in member_ids if i not in pool]
+            busy = [i for i in missing if i in used_by]
+            issue(team_id, "member_in_other_team" if busy else "member_absent", busy or missing)
             continue
         vehicle = free_vehicles.get(vehicle_id) if vehicle_id else None
         if vehicle is None:
+            # the standard vehicle is a default: another free vehicle the team can drive takes over
             vehicle = next(
                 (v for v in free_vehicles.values() if any(m.can_drive(v.licence) for m in team)), None
             )
+            if vehicle_id and vehicle is not None:
+                issue(team_id, "vehicle_replaced", [vehicle.id])
         if vehicle is None:
+            if vehicle_id:
+                reason = "vehicle_in_other_team" if vehicle_id in used_by else "vehicle_unavailable"
+                issue(team_id, reason, [vehicle_id])
+            else:
+                issue(team_id, "no_vehicle")
             continue
         unit = make(vehicle, team, team_id)
         if unit is not None:
             units.append(unit)
             free_vehicles.pop(vehicle.id, None)
+            used_by[vehicle.id] = names.get(team_id, "")
             for m in team:
                 pool.pop(m.id, None)
+                used_by[m.id] = names.get(team_id, "")
+        else:
+            issue(team_id, last_reason[0] if last_reason else "no_driver", [vehicle.id])
     if mode == "fixed":
         return units
 
@@ -694,12 +744,21 @@ def build_input(
     sw = day_windows(db, r, "staff", real_staff_ids, dates[0], dates[-1])
     vw = day_windows(db, r, "vehicle", real_vehicle_ids, dates[0], dates[-1])
     default_start, default_end = hhmm(r.get("planning.day_start")), hhmm(r.get("planning.day_end"))
-    fixed_teams = [
-        (str(t.id), [str(x) for x in (t.member_ids or [])], str(t.vehicle_id) if t.vehicle_id else None)
-        for t in db.scalars(
-            select(Team).where(Team.tenant_id == tenant_id, Team.deleted_at.is_(None), Team.active.is_(True))
+    team_rows = list(
+        db.scalars(
+            select(Team)
+            .where(Team.tenant_id == tenant_id, Team.deleted_at.is_(None), Team.active.is_(True))
+            .order_by(Team.name)
         )
-    ]
+    )
+    names: dict[str, str] = {m.id: m.name for m in members_base.values()}
+    names.update({vid: v.name for vid, v in vehicles_base.items()})
+    for s in db.scalars(select(StaffMember).where(StaffMember.tenant_id == tenant_id)):
+        names.setdefault(str(s.id), s.name)  # inactive members still have a name in the hints
+    for v in db.scalars(select(Vehicle).where(Vehicle.tenant_id == tenant_id)):
+        names.setdefault(str(v.id), v.name)
+    names.update({str(t.id): t.name for t in team_rows})
+    team_issues: list[dict[str, Any]] = []
     mode = r.get("planning.form_teams")
     default_size = int(scenario.get("team_size") or r.get("planning.team_size_default"))
     units: list[Unit] = []
@@ -730,7 +789,25 @@ def build_input(
                 trailers_today[vid] = vv
             else:
                 vehicles_today.append(vv)
+        fixed_today = [
+            (str(t.id), [str(x) for x in (t.member_ids or [])], str(t.vehicle_id) if t.vehicle_id else None)
+            for t in team_rows
+            if t.valid_on(day) and not _regular_day_off(t, sw, day)
+        ]
         if not members_today or not vehicles_today:
+            if mode == "fixed" and day.weekday() < 5:
+                reason = "no_staff_today" if not members_today else "no_vehicle"
+                for tid, _, _ in fixed_today:
+                    team_issues.append(
+                        {
+                            "date": day.isoformat(),
+                            "team_id": tid,
+                            "team": names.get(tid, ""),
+                            "reason": reason,
+                            "names": [],
+                            "other_team": None,
+                        }
+                    )
             continue
         forced_today = [
             (f"forced:{f['key']}", [m["id"] for m in f.get("members", [])], f.get("vehicle_id"))
@@ -746,11 +823,13 @@ def build_input(
             members_today,
             vehicles_today,
             trailers_today,
-            forced_today + fixed_teams,
+            forced_today + fixed_today,
             stops,
             mode,
             default_size,
             scenario.get("team_size"),
+            issues=team_issues if mode == "fixed" else None,
+            names=names,
         )
     settings = {
         "skip_penalty": float(r.get("planning.skip_penalty")),
@@ -773,7 +852,7 @@ def build_input(
         "capacity_shrink": float(r.get("planning.capacity_shrink")),
         "quantile_factor": est.quantile_factor,
     }
-    return PlanningInput(
+    inp = PlanningInput(
         direction=direction,
         tenant_id=tenant_id,
         depot=depot,
@@ -784,7 +863,31 @@ def build_input(
         estimator=est,
         shared_equipment=shared,
         settings=settings,
+        team_mode=mode,
+        team_issues=team_issues,
+        fixed_teams=[
+            {
+                "id": str(t.id),
+                "name": t.name,
+                "member_ids": [str(x) for x in (t.member_ids or [])],
+                "vehicle_id": str(t.vehicle_id) if t.vehicle_id else None,
+            }
+            for t in team_rows
+        ],
+        names=names,
+        staff_ids=[m.id for m in members_base.values() if not m.virtual],
+        vehicles=[v for v in vehicles_base.values() if v.kind != "trailer"],
     )
+    return inp
+
+
+def _regular_day_off(team: Team, sw: dict, day: date) -> bool:
+    """A team without fixed weekdays does not work on days its members normally have off."""
+    if team.weekdays:
+        return False
+    windows = [sw.get(uuid.UUID(str(m)), {}).get(day) for m in team.member_ids or []]
+    windows = [w for w in windows if w is not None]
+    return bool(windows) and all(not w.available and w.reason in ("weekend", "no_pattern") for w in windows)
 
 
 def fits_geometry(stop: StopIn, unit: Unit) -> bool:

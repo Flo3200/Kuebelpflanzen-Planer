@@ -66,8 +66,21 @@ class Team(IdMixin, TimestampMixin, SoftDeleteMixin, TenantMixin, Base):
     vehicle_id: Mapped[uuid.UUID | None] = mapped_column(
         Uuid, ForeignKey("vehicles.id", ondelete="SET NULL"), info={"group": "master", "fk": "vehicle"}
     )
+    # when the team works: weekdays 0 = Monday … 6 = Sunday (empty = every day the members work)
+    weekdays: Mapped[list[Any]] = mapped_column(
+        default=list, info={"group": "validity", "widget": "weekdays"}
+    )
+    valid_from: Mapped[date | None] = mapped_column(Date, info={"group": "validity"})
+    valid_to: Mapped[date | None] = mapped_column(Date, info={"group": "validity"})
     active: Mapped[bool] = mapped_column(Boolean, default=True, info={"group": "master", "list": True})
     notes: Mapped[str | None] = mapped_column(Text, info={"advanced": True, "group": "master"})
+
+    def valid_on(self, day: date) -> bool:
+        if self.valid_from and day < self.valid_from:
+            return False
+        if self.valid_to and day > self.valid_to:
+            return False
+        return not self.weekdays or day.weekday() in {int(d) for d in self.weekdays}
 
 
 VEHICLE_KINDS = ["van", "truck", "trailer", "car"]

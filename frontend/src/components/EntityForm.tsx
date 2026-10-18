@@ -87,6 +87,32 @@ function StaffMulti(props: { id: string; value: string[] | null; onChange: (v: s
   );
 }
 
+const WEEKDAY_SHORT = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
+
+/** Weekdays 0 = Monday … 6 = Sunday; empty list = every day. */
+function WeekdaysInput(props: { id: string; value: number[] | null; onChange: (v: number[]) => void }) {
+  const current = props.value ?? [];
+  return (
+    <div className="row" id={props.id} role="group" style={{ gap: 8 }}>
+      {WEEKDAY_SHORT.map((d, i) => (
+        <label key={d} className="checkbox small">
+          <input
+            type="checkbox"
+            checked={current.includes(i)}
+            onChange={(e) => props.onChange(e.target.checked ? [...current, i].sort() : current.filter((x) => x !== i))}
+          />
+          {d}
+        </label>
+      ))}
+    </div>
+  );
+}
+
+export function fmtWeekdays(days: number[] | null | undefined): string {
+  if (!days || !days.length) return t("teams.weekdays_all");
+  return days.map((d) => WEEKDAY_SHORT[d]).join(", ");
+}
+
 function WindowsInput(props: { id: string; value: { from: string; to: string; date?: string }[] | null; onChange: (v: any[]) => void }) {
   const list = props.value ?? [];
   return (
@@ -154,6 +180,7 @@ export function FieldInput(props: { f: FieldMeta; value: any; onChange: (v: any)
   }
   if (f.type === "staff_multi") return <StaffMulti id={id} value={value} onChange={onChange} />;
   if (f.type === "windows") return <WindowsInput id={id} value={value} onChange={onChange} />;
+  if (f.type === "weekdays") return <WeekdaysInput id={id} value={value} onChange={onChange} />;
   if (f.type === "text")
     return <textarea id={id} className="input" value={value ?? ""} onChange={(e) => onChange(e.target.value || null)} />;
   if (f.type === "json" || f.type === "tags") {

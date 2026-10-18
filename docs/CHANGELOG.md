@@ -316,3 +316,20 @@ Berechnungsbezug, jedes Modul ist an und aus getestet.
 Wissensbasis, Gewicht und Frostregel aus der Pflanze, KI-Erfassung mit Art und Sicherheit);
 `make check` grün (124 Backend-, 9 Frontend-Tests). **Abnahme:** erfüllt – Pflanzen erhalten ohne
 Artverwaltung alle nötigen Eigenschaften, alle betroffenen Tests grün.
+
+## Verbesserungsrunde – Paket D: Teams durch den Unternehmer (2026-10-18)
+
+**Umgesetzt**
+- Teams mit Mitgliedern, Standard-Fahrzeug, Einsatztagen und Zeitraum; Teamliste zeigt Fahrzeug,
+  Tage und Zeitraum.
+- Verfügbarkeitskalender mit Zeile je Team: kann fahren, Konflikt (mit Grund im Tooltip) oder kein
+  Einsatztag.
+- Planung mit festen Teams: Teams, die an einem Tag nicht fahren können, erscheinen als Warnung mit
+  Grund und Tagen; nicht einplanbare Stopps zeigen Grund, benötigte Personen und einen Lösungshinweis
+  (Team ergänzen, anderes Team, passendes Fahrzeug). Es entsteht immer ein Plan.
+- Das Standard-Fahrzeug ist eine Vorgabe: Ist es nicht frei, fährt das Team mit einem anderen.
+
+**Tests:** 4 neue Tests (`test_teams.py`: feste Teams ohne Teams, zu kleines Team mit Hinweis,
+Abwesenheit und Wochentage als Warnung, Konflikte im Kalender); `make check` grün (128 Backend-,
+9 Frontend-Tests). **Abnahme:** erfüllt – mit festen Teams entsteht immer ein Plan, nicht
+einplanbare Stopps haben einen verständlichen Grund und einen Lösungshinweis.

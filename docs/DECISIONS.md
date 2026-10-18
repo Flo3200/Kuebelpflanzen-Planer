@@ -272,3 +272,22 @@ erscheinen nur mit dem Modul. Nichts wurde gelöscht.
   Version älter ist; eigene neuere Versionen des Admins bleiben vorrangig.
 - Migration `b7c41e2f9a10` kopiert Name, Gewichtsbeiwerte und Kippgefahr der Art an jede Pflanze und
   füllt nur neue Spalten, Downgrade entfernt sie wieder (geprüft mit 674 Demo-Pflanzen hin und zurück).
+
+## D26 – Feste Teams: Warnungen statt Fehler
+- Teams haben Einsatztage (`weekdays`, leer = an allen Tagen, an denen die Mitglieder normal
+  arbeiten) und einen optionalen Zeitraum (`valid_from`, `valid_to`).
+- Bei `planning.form_teams = fixed` bildet die Planung je Tag nur Einheiten aus gültigen Teams.
+  Ein Team, das nicht fahren kann, wird mit Grund gesammelt (`team_issues`: Mitglied abwesend, schon
+  in einem anderen Team, Fahrzeug nicht verfügbar oder vergeben, kein Fahrer mit Führerschein,
+  gemeinsame Arbeitszeit unter einer Stunde, keine Mitglieder) und im Plan als Warnung gezeigt.
+- Nicht eingeplante Stopps bekommen `need` (Personen) und `hints` (`{code, params}`, Übersetzung in
+  der Oberfläche): Team um n Personen ergänzen (mit freien Personen), passendes Team kann an den Tagen
+  nicht fahren (mit dessen Problemen), passendes Fahrzeug nennen, kein Team angelegt. Die benötigte
+  Personenzahl wird mit den tatsächlichen Teammitgliedern berechnet (schwächere Träger → mehr Personen).
+- Das Standard-Fahrzeug eines Teams ist eine Vorgabe: Ist es nicht frei, fährt das Team mit einem
+  anderen freien Fahrzeug, das jemand im Team fahren darf (Hinweis „vehicle_replaced“, kein Ausfall).
+- Der Verfügbarkeitskalender bewertet Teams je Tag mit denselben Regeln (ohne Solver).
+- Beobachtung: Ein einzelner Testlauf brach mit einem Segmentation fault in OR-Tools
+  (`SolveWithParameters`) bei einer gewöhnlichen Planung ab; zwei Wiederholungen der Planungstests
+  und der folgende Gesamtlauf liefen fehlerfrei. Ursache liegt in der nativen Bibliothek, nicht im
+  Modell; bei erneutem Auftreten OR-Tools-Version prüfen.

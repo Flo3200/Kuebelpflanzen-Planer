@@ -112,7 +112,7 @@ abgeschaltet, Tabellen bleiben, Migrationen sind umkehrbar.
 |---|---|---|
 | A | Fokus Logistik, Modul-Schalter, schlanke Eingaben | abgeschlossen |
 | B | Pflanzenarten im Hintergrund | abgeschlossen |
-| D | Teams durch den Unternehmer | offen |
+| D | Teams durch den Unternehmer | abgeschlossen |
 | E | Eigene Kostenpositionen, reine Logistikkosten | offen |
 | C | Fahrzeuge per Foto und Chat, Module (Regale, Einbauten, Anhänger) | offen |
 | F | Abladezeit per Formel, Graphen, Dashboard | offen |

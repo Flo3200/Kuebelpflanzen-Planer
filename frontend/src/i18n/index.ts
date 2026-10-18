@@ -27,8 +27,8 @@ export function t(key: string, params?: Record<string, string | number | null | 
 }
 
 /** Like t(), but returns undefined if the key does not exist. */
-export function tMaybe(key: string): string | undefined {
-  const value = t(key);
+export function tMaybe(key: string, params?: Record<string, string | number | null | undefined>): string | undefined {
+  const value = t(key, params);
   return value === key ? undefined : value;
 }
 

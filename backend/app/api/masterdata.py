@@ -92,6 +92,15 @@ def _validate_team(db: Session, actor: Actor, row: Team, created: bool) -> None:
         if missing:
             raise AppError("errors.validation")
     row.member_ids = ids
+    try:
+        days = sorted({int(d) for d in (row.weekdays or [])})
+    except (TypeError, ValueError) as exc:
+        raise AppError("errors.validation") from exc
+    if any(d < 0 or d > 6 for d in days) or (
+        row.valid_from and row.valid_to and row.valid_from > row.valid_to
+    ):
+        raise AppError("errors.validation")
+    row.weekdays = days
 
 
 router.include_router(crud_router(STAFF, "/api/staff"))
@@ -161,7 +170,82 @@ def availability_calendar(
         "days": days,
         "staff": [{"id": s.id, "name": s.name, "days": fmt(sw[s.id])} for s in staff],
         "vehicles": [{"id": v.id, "name": v.name, "days": fmt(vw[v.id])} for v in vehicles],
+        "teams": team_calendar(db, tid, staff, vehicles, sw, vw, start, days),
     }
+
+
+def team_calendar(db: Session, tid, staff, vehicles, sw, vw, start: date, days: int) -> list[dict[str, Any]]:
+    """Fixed teams per day: valid (weekdays, period) and conflicts (member absent or in two teams,
+    vehicle unavailable or in two teams)."""
+    teams = list(
+        db.scalars(
+            select(Team)
+            .where(Team.tenant_id == tid, Team.deleted_at.is_(None), Team.active.is_(True))
+            .order_by(Team.name)
+        )
+    )
+    staff_names = {str(s.id): s.name for s in staff}
+    vehicle_names = {str(v.id): v.name for v in vehicles}
+    out: list[dict[str, Any]] = []
+    rows = {str(t.id): {} for t in teams}
+    for i in range(days):
+        day = start + timedelta(days=i)
+        valid = [t for t in teams if t.valid_on(day)]
+        member_count: dict[str, int] = {}
+        vehicle_count: dict[str, int] = {}
+        for t in valid:
+            for m in t.member_ids or []:
+                member_count[str(m)] = member_count.get(str(m), 0) + 1
+            if t.vehicle_id:
+                vehicle_count[str(t.vehicle_id)] = vehicle_count.get(str(t.vehicle_id), 0) + 1
+        for t in teams:
+            ids = [str(m) for m in t.member_ids or []]
+            known = [m for m in ids if m in staff_names]
+            # without fixed weekdays a team works on the days its members normally work
+            regular_off = (
+                not t.weekdays
+                and known
+                and all(
+                    not sw[uuid.UUID(m)][day].available
+                    and sw[uuid.UUID(m)][day].reason in ("weekend", "no_pattern")
+                    for m in known
+                )
+            )
+            if t not in valid or regular_off:
+                rows[str(t.id)][day.isoformat()] = {"valid": False, "conflicts": []}
+                continue
+            conflicts: list[dict[str, Any]] = []
+            inactive = [m for m in ids if m not in staff_names]
+            absent = [staff_names[m] for m in ids if m in staff_names and not sw[uuid.UUID(m)][day].available]
+            double = [staff_names.get(m, "?") for m in ids if member_count.get(m, 0) > 1]
+            if not ids:
+                conflicts.append({"code": "no_members", "names": []})
+            if inactive:
+                conflicts.append({"code": "member_inactive", "names": []})
+            if absent:
+                conflicts.append({"code": "member_absent", "names": absent})
+            if double:
+                conflicts.append({"code": "member_double", "names": double})
+            if t.vehicle_id:
+                vid = str(t.vehicle_id)
+                if vid not in vehicle_names:
+                    conflicts.append({"code": "vehicle_inactive", "names": []})
+                elif not vw[t.vehicle_id][day].available:
+                    conflicts.append({"code": "vehicle_unavailable", "names": [vehicle_names[vid]]})
+                elif vehicle_count.get(vid, 0) > 1:
+                    conflicts.append({"code": "vehicle_double", "names": [vehicle_names[vid]]})
+            rows[str(t.id)][day.isoformat()] = {"valid": True, "conflicts": conflicts}
+    for t in teams:
+        out.append(
+            {
+                "id": t.id,
+                "name": t.name,
+                "members": [staff_names.get(str(m), "?") for m in t.member_ids or []],
+                "vehicle": vehicle_names.get(str(t.vehicle_id)) if t.vehicle_id else None,
+                "days": rows[str(t.id)],
+            }
+        )
+    return out
 
 
 # ----------------------------------------------------------------------------- species

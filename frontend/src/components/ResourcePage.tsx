@@ -16,6 +16,7 @@ export function ResourcePage(props: {
   description?: string;
   columns: string[];
   render?: Record<string, (row: any) => ReactNode>;
+  labels?: Record<string, string>;
   settingsScope?: string;
   settingsGroups?: string[];
   extraTabs?: ExtraTab[];
@@ -65,6 +66,7 @@ export function ResourcePage(props: {
           rows={rows}
           columns={props.columns}
           render={props.render}
+          labels={props.labels}
           onRowClick={(row) => {
             setSelected(row);
             setTab("form");

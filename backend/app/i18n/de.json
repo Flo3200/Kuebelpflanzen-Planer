@@ -885,7 +885,17 @@
         "label": "Mitglieder"
       },
       "vehicle_id": {
-        "label": "Bevorzugtes Fahrzeug"
+        "label": "Standard-Fahrzeug"
+      },
+      "weekdays": {
+        "label": "Tage",
+        "help": "An welchen Wochentagen das Team fährt. Leer: an allen Tagen, an denen die Mitglieder arbeiten."
+      },
+      "valid_from": {
+        "label": "Gültig ab"
+      },
+      "valid_to": {
+        "label": "Gültig bis"
       }
     },
     "vehicle": {
@@ -1424,7 +1434,8 @@
       "order": "Auftrag",
       "timing": "Termin",
       "pot": "Topf",
-      "crown": "Krone"
+      "crown": "Krone",
+      "validity": "Einsatztage"
     }
   },
   "enums": {

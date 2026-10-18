@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 
 from app.models.orders import PickupOrder, Plant
 from app.models.planning import Plan, Tour, TourStop
+from app.planning.hints import explain, team_issue_overview
 from app.planning.inputs import PlanningInput, build_input
 from app.planning.solver import SolvedTrip, SolveResult, solve
 from app.routing.provider import cached_matrix
@@ -186,6 +187,9 @@ def run_plan(
         "pack_failures": pack_failures,
         "forbidden_pairs": len(forbidden),
         "forbidden_assignments": len(forbidden_assign),
+        "team_mode": inp.team_mode,
+        # fixed teams that could not work on some days (warnings, never errors)
+        "team_issues": team_issue_overview(inp),
     }
     plan.status = "ready"
     plan.computed_at = datetime.now(UTC)
@@ -354,7 +358,7 @@ def write_results(
 
                 save_load_plan(db, tour, pack)
     db.flush()
-    plan.unassigned = res.unassigned
+    plan.unassigned = explain(inp, res.unassigned)
     plan.units = [u.to_json() for u in inp.units]
     plan.kpis = compute_kpis(db, plan, inp)
 

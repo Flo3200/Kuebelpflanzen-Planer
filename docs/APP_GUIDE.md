@@ -143,6 +143,17 @@ Hilfsmittel, unverträgliche Pflanzen, fixierte Touren. Stopps, die nicht passen
 Grund. Touren lassen sich verschieben (Zeitachse) und fixieren; bei Stornierung oder Ausfall
 zeigt die App „Neu planen“. **Szenarien** vergleichen z. B. „+1 Person“ oder „+1 Fahrzeug“.
 
+### Feste Teams
+
+Unter „Teams“ legt der Betrieb feste Teams an: Mitglieder, Standard-Fahrzeug, Einsatztage
+(Wochentage) und optional einen Zeitraum. Der Verfügbarkeitskalender zeigt für jedes Team und jeden
+Tag, ob es fahren kann, oder den Konflikt (Mitglied abwesend oder in zwei Teams, Fahrzeug nicht
+verfügbar oder doppelt vergeben). Mit der Einstellung `planning.form_teams = fixed` plant die App nur
+mit diesen Teams. Kann ein Team an einem Tag nicht fahren, ist das eine **Warnung** im Plan, kein
+Fehler; ein Plan entsteht immer. Stopps, die kein Team übernehmen kann, stehen unter „Nicht
+eingeplant“ mit Grund, benötigter Personenzahl und einem Hinweis, welches Team oder welche Person
+das Problem lösen würde (z. B. „Team Nord um 1 Person ergänzen; frei: Lea Roth“).
+
 ## Ladeplanung (3D)
 
 Für jede Tour wird ein Ladeplan berechnet: Töpfe sind starr, Kronen dürfen sich etwas

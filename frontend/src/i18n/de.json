@@ -457,7 +457,20 @@
     },
     "legend_available": "verfügbar",
     "legend_partial": "teilweise",
-    "legend_absent": "abwesend"
+    "legend_absent": "abwesend",
+    "teams": "Feste Teams",
+    "team_ok": "Team kann fahren",
+    "team_not_valid": "kein Einsatztag des Teams",
+    "conflicts": {
+      "no_members": "keine Mitglieder",
+      "member_inactive": "ein Mitglied ist nicht mehr aktiv",
+      "member_absent": "abwesend: {names}",
+      "member_double": "auch in einem anderen Team: {names}",
+      "vehicle_inactive": "Fahrzeug nicht aktiv",
+      "vehicle_unavailable": "Fahrzeug nicht verfügbar: {names}",
+      "vehicle_double": "Fahrzeug auch bei einem anderen Team: {names}"
+    },
+    "legend_conflict": "Konflikt im Team"
   },
   "storage": {
     "description": "Lagerbereiche für die Überwinterung. Die Auslastung ergibt sich aus der Grundfläche der eingelagerten und erwarteten Pflanzen.",
@@ -963,6 +976,27 @@
       "ready": "fertig",
       "failed": "fehlgeschlagen",
       "archived": "archiviert"
+    },
+    "team_issues_title": "Hinweise zu den festen Teams",
+    "team_issues_help": "Das sind Warnungen, kein Fehler: Der Plan nutzt die Teams, die fahren können. Ändern Sie Teams oder Abwesenheiten unter",
+    "need_persons": "braucht {n} Personen",
+    "hints": {
+      "no_teams": "Es gibt keine festen Teams. Legen Sie unter „Teams“ mindestens ein Team mit Fahrzeug an oder stellen Sie die Teambildung auf automatisch.",
+      "add_person": "Team {team} um {n} Person(en) ergänzen (braucht {need}). Frei, in keinem Team: {persons}",
+      "big_team_unavailable": "Ein passendes Team ({teams}) gibt es, es kann an den möglichen Tagen aber nicht fahren.",
+      "use_vehicle": "Passt in: {vehicles}. Ein Team mit diesem Fahrzeug einsetzen.",
+      "bigger_vehicle": "Kein vorhandenes Fahrzeug passt (Tür, Laderaum oder {weight} kg Gewicht). Ein größeres Fahrzeug oder einen Anhänger anlegen und einem Team zuordnen.",
+      "more_days": "Keine freie Kapazität: mehr Tage planen oder ein weiteres Team anlegen.",
+      "team_member_absent": "Team {team}: {names} abwesend am {days}",
+      "team_member_in_other_team": "Team {team}: {names} ist am {days} schon im Team {other}",
+      "team_vehicle_unavailable": "Team {team}: Fahrzeug {names} nicht verfügbar am {days}",
+      "team_vehicle_in_other_team": "Team {team}: Fahrzeug {names} fährt am {days} schon mit Team {other}",
+      "team_no_vehicle": "Team {team}: kein freies Fahrzeug am {days}",
+      "team_no_driver": "Team {team}: niemand mit passendem Führerschein für {names} ({days})",
+      "team_short_day": "Team {team}: gemeinsame Arbeitszeit unter einer Stunde am {days}",
+      "team_no_members": "Team {team} hat keine Mitglieder",
+      "team_no_staff_today": "Team {team}: niemand verfügbar am {days}",
+      "team_vehicle_replaced": "Team {team} fährt am {days} mit {names}, weil das Standard-Fahrzeug nicht frei ist"
     }
   },
   "scenarios": {
@@ -1598,5 +1632,9 @@
     "test_cancel": "Abbrechen",
     "staff_link": "Kundenzugang",
     "staff_link_copy": "Persönlicher Link für den Kundenzugang (gültig {days} Tage, in die Zwischenablage kopiert):"
+  },
+  "teams": {
+    "weekdays_all": "alle Arbeitstage",
+    "valid": "Zeitraum"
   }
 }

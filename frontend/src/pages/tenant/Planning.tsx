@@ -521,9 +521,42 @@ function ToursList({ plan, onChange }: { plan: any; onChange: () => void }) {
   );
 }
 
-function Unassigned({ plan }: { plan: any }) {
-  if (!plan.unassigned.length) return <Empty title={t("planning.all_assigned")} />;
+/** A hint {code, params} for an unplanned stop or a fixed team (package D), translated. */
+export function hintText(h: { code: string; params: Record<string, any> }): string {
+  return tMaybe(`planning.hints.${h.code}`, h.params) ?? h.code;
+}
+
+function TeamIssues({ plan }: { plan: any }) {
+  const issues: any[] = plan.solver?.team_issues ?? [];
+  if (plan.solver?.team_mode !== "fixed" || !issues.length) return null;
   return (
+    <div className="alert warn" style={{ marginBottom: 16 }}>
+      <strong>{t("planning.team_issues_title")}</strong>
+      <ul style={{ margin: "6px 0 0", paddingLeft: 18 }}>
+        {issues.map((h, i) => (
+          <li key={i} className="small">
+            {hintText(h)}
+          </li>
+        ))}
+      </ul>
+      <div className="xs muted" style={{ marginTop: 6 }}>
+        {t("planning.team_issues_help")} <Link to="/betrieb/verfuegbarkeit">{t("nav.availability")}</Link> · <Link to="/betrieb/teams">{t("resources.teams")}</Link>
+      </div>
+    </div>
+  );
+}
+
+function Unassigned({ plan }: { plan: any }) {
+  if (!plan.unassigned.length)
+    return (
+      <>
+        <TeamIssues plan={plan} />
+        <Empty title={t("planning.all_assigned")} />
+      </>
+    );
+  return (
+    <>
+    <TeamIssues plan={plan} />
     <div className="table-wrap">
       <table className="table">
         <thead>
@@ -546,12 +579,19 @@ function Unassigned({ plan }: { plan: any }) {
               <td className="num">{u.plants ?? "–"}</td>
               <td>
                 <Badge tone="amber">{t(`planning.reasons.${u.reason}`)}</Badge>
+                {u.need != null && <span className="xs muted"> · {t("planning.need_persons", { n: u.need })}</span>}
                 <div className="xs muted">{tMaybe(`planning.reason_help.${u.reason}`)}</div>
+                {(u.hints ?? []).map((h: any, i: number) => (
+                  <div key={i} className="small" style={{ marginTop: 4 }}>
+                    → {hintText(h)}
+                  </div>
+                ))}
               </td>
             </tr>
           ))}
         </tbody>
       </table>
     </div>
+    </>
   );
 }

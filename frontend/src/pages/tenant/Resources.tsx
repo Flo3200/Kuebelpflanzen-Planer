@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../api/client";
+import { fmtWeekdays } from "../../components/EntityForm";
 import { ResourcePage } from "../../components/ResourcePage";
 import { Badge, Card, ConfirmButton, ErrorBox, Kpi, Modal, PageHeader, Spinner, useToast } from "../../components/ui";
 import { fmtDate, fmtNumber, t } from "../../i18n";
@@ -22,15 +24,29 @@ export function StaffPage() {
 
 export function TeamsPage() {
   const staff = useQuery({ queryKey: ["fk", "staff"], queryFn: () => api.get<any[]>("/api/staff") });
+  const vehicles = useQuery({ queryKey: ["fk", "vehicle"], queryFn: () => api.get<any[]>("/api/vehicles") });
   const names = new Map((staff.data ?? []).map((s) => [s.id, s.name]));
+  const vnames = new Map((vehicles.data ?? []).map((v) => [v.id, v.name]));
   return (
     <ResourcePage
       entity="team"
       url="/api/teams"
       title={t("resources.teams")}
       description={t("resources.teams_description")}
-      columns={["name", "member_ids", "vehicle_id", "active"]}
-      render={{ member_ids: (r) => (r.member_ids ?? []).map((id: string) => names.get(id) ?? "?").join(", ") }}
+      columns={["name", "member_ids", "vehicle_id", "weekdays", "valid_from", "active"]}
+      formFields={["name", "member_ids", "vehicle_id", "weekdays", "valid_from", "valid_to", "active", "notes"]}
+      labels={{ valid_from: t("teams.valid") }}
+      render={{
+        member_ids: (r) => (r.member_ids ?? []).map((id: string) => names.get(id) ?? "?").join(", "),
+        vehicle_id: (r) => (r.vehicle_id ? vnames.get(r.vehicle_id) ?? "?" : <span className="faint">–</span>),
+        weekdays: (r) => fmtWeekdays(r.weekdays),
+        valid_from: (r) => (r.valid_from || r.valid_to ? `${r.valid_from ? fmtDate(r.valid_from) : "…"} – ${r.valid_to ? fmtDate(r.valid_to) : "…"}` : <span className="faint">–</span>),
+      }}
+      headerExtra={
+        <Link className="btn ghost" to="/betrieb/verfuegbarkeit">
+          {t("nav.availability")}
+        </Link>
+      }
     />
   );
 }
@@ -297,6 +313,21 @@ export function AvailabilityPage() {
       </td>
     );
   };
+  const teamCell = (info: any) => {
+    if (!info) return <td />;
+    const conflicts: any[] = info.conflicts ?? [];
+    const title = !info.valid
+      ? t("availability.team_not_valid")
+      : conflicts.length
+        ? conflicts.map((c) => t(`availability.conflicts.${c.code}`, { names: (c.names ?? []).join(", ") })).join("; ")
+        : t("availability.team_ok");
+    const bg = !info.valid ? "var(--surface-2)" : conflicts.length ? "var(--warning-soft)" : "var(--success-soft)";
+    return (
+      <td title={title} style={{ background: bg, padding: 0, minWidth: 30, height: 34, textAlign: "center", fontSize: 11 }}>
+        {info.valid ? (conflicts.length ? "⚠" : "✓") : ""}
+      </td>
+    );
+  };
   const section = (label: string, type: "staff" | "vehicle", rows: any[]) => (
     <>
       <tr>
@@ -352,6 +383,23 @@ export function AvailabilityPage() {
               </tr>
             </thead>
             <tbody>
+              {(q.data.teams ?? []).length > 0 && (
+                <>
+                  <tr>
+                    <th colSpan={days + 1} style={{ background: "var(--surface-3)" }}>
+                      {t("availability.teams")}
+                    </th>
+                  </tr>
+                  {q.data.teams.map((tm: any) => (
+                    <tr key={tm.id}>
+                      <td style={{ whiteSpace: "nowrap" }} title={[tm.members.join(", "), tm.vehicle].filter(Boolean).join(" · ")}>
+                        <Link to="/betrieb/teams">{tm.name}</Link>
+                      </td>
+                      {dates.map((d) => teamCell(tm.days[iso(d)]))}
+                    </tr>
+                  ))}
+                </>
+              )}
               {section(t("nav.staff"), "staff", q.data.staff)}
               {section(t("nav.vehicles"), "vehicle", q.data.vehicles)}
             </tbody>
@@ -362,6 +410,7 @@ export function AvailabilityPage() {
         <span><span className="badge green">&nbsp;</span> {t("availability.legend_available")}</span>
         <span><span className="badge amber">½</span> {t("availability.legend_partial")}</span>
         <span><span className="badge red">✕</span> {t("availability.legend_absent")}</span>
+        <span><span className="badge amber">⚠</span> {t("availability.legend_conflict")}</span>
       </div>
       {edit && (
         <Modal title={`${t("resources.availability")}: ${edit.name}`} onClose={() => setEdit(null)} wide>
