@@ -17,6 +17,7 @@ import { TenantOverviewPage } from "./pages/tenant/Overview";
 import { tenantRoutes, adminRoutes } from "./routes";
 
 const DriverApp = lazy(() => import("./driver/DriverApp"));
+const CustomerPortal = lazy(() => import("./portal/CustomerPortal"));
 
 function RequireAuth({ children, roles }: { children: ReactNode; roles?: string[] }) {
   const { me, loading } = useAuth();
@@ -54,6 +55,7 @@ export function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/fahrer/*" element={<DriverApp />} />
+        <Route path="/kunde/*" element={<CustomerPortal />} />
         <Route
           element={
             <RequireAuth>

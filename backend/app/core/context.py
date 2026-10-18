@@ -20,6 +20,7 @@ class Actor:
     agent_token_id: uuid.UUID | None = None
     staff_member_id: uuid.UUID | None = None
     confirmation_id: str | None = None  # agents: approved confirmation sent with X-KP-Confirmation
+    customer_id: uuid.UUID | None = None  # customer portal: the customer this login belongs to
 
     @property
     def is_platform_admin(self) -> bool:

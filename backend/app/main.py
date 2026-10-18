@@ -48,6 +48,7 @@ API_ROUTER_MODULES = (
     "app.api.agents",
     "app.api.assistant",
     "app.api.privacy",
+    "app.api.portal",
 )
 
 

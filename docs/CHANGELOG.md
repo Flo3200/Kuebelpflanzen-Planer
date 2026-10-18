@@ -247,3 +247,31 @@ Agenten mit den Bedingungen des jeweiligen KI-Anbieters vereinbar ist, prüft de
   `agent/README.md` (`make agent-readme`), Frontend-Unit-Tests (Vitest) für `make check`.
 
 **Tests:** 2 neue Backend-Tests (98 gesamt) und 9 Frontend-Tests.
+
+## Phase 8 – Rücklieferung und Kundenzugang (abgeschlossen 2026-10-18)
+
+**Rücklieferung im Frühjahr als eigener Planungsmodus**
+- Pläne für Rücklieferungen mit Beladen im Betrieb vor jeder Fahrt, Frostregel mit Stichtag
+  (Eisheilige), eigenem Zeitfaktor und eigener Preisregel (eigener Preis, im Abholpreis enthalten
+  oder Faktor).
+- Rücklieferungen gesammelt anlegen (Zeitraum, Wunsch des Kunden hat Vorrang); Zeitfenster der
+  Abholung werden übernommen.
+- Ladeplan rückwärts (zuletzt ausgeliefert = zuerst eingeladen), Fahrer-App mit Schritt
+  „Abgestellt“ und Abgabefoto, Lagerplatz je Pflanze beim Beladen; danach ist auch die Abholung
+  „zurückgebracht“.
+- Demodaten: ein Teil der Abholungen ist eingelagert (mit Lagerbereich), Rücklieferungen für April
+  und Mai liegen vor.
+- Modellanpassung: robuster Start (eingebaute Huber-Verlustfunktion vor der Neugewichtung), damit
+  einzelne Ausreißer keine Person in ein falsches Optimum ziehen; Personenfaktoren 0,5–2,0.
+
+**Kundenzugang**
+- Persönlicher Link (Kundenseite „Kundenzugang“), Übersicht der eigenen Aufträge mit Fortschritt
+  und Termin (Zeitfenster), Angebot ansehen und annehmen (bestätigt den Auftrag), geführte
+  Foto-Aufnahme je Pflanze und für den Weg mit Einwilligung und Rückmeldung der Prüfung,
+  Standort auf der Karte mit Hinweisen zu Parken, Klingel und Zugang, Wunsch für die
+  Rücklieferung, Rechnungen.
+- Online-Zahlung: Testzahlung und Stripe Checkout (Stripe Connect) mit geprüftem Webhook;
+  Zahlungen erscheinen beim Betrieb, Rechnungen werden als bezahlt markiert.
+- Serverseitige Sperre: Kunden erreichen nur den Kundenzugang und eigene Dateien.
+
+**Tests:** 13 neue Backend-Tests (112 gesamt, dazu 9 Frontend-Tests). Offen aus Phase 8: Umzug auf einen gehosteten Server.

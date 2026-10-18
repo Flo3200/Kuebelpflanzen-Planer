@@ -118,6 +118,9 @@ class PickupOrder(IdMixin, TimestampMixin, SoftDeleteMixin, TenantMixin, Base):
     priority: Mapped[int] = mapped_column(Integer, default=0, info={"group": "order", "min": 0, "max": 9})
     notes: Mapped[str | None] = mapped_column(Text, info={"group": "order"})
     source: Mapped[str] = mapped_column(String(20), default="manual", info={"readonly": True})
+    return_wish: Mapped[dict[str, Any]] = mapped_column(
+        default=dict, info={"hidden": True}
+    )  # from the portal
     return_of_id: Mapped[uuid.UUID | None] = mapped_column(
         Uuid, ForeignKey("pickup_orders.id", ondelete="SET NULL"), info={"readonly": True}
     )

@@ -2,7 +2,8 @@
 
 Planungsplattform für Gärtnereien, die Kübelpflanzen zur Überwinterung abholen: Erfassung mit KI,
 Zeit- und Preismodell, Tourenplanung (OR-Tools), 3D-Ladeplanung, Fahrer-App (offline), Lernen aus
-Messungen, Abrechnung der Plattform, Agenten-API und Einstellungs-KI. Mehrere Betriebe (Mandanten)
+Messungen, Rücklieferung im Frühjahr, Kundenzugang mit Online-Zahlung, Abrechnung der Plattform,
+Agenten-API und Einstellungs-KI. Mehrere Betriebe (Mandanten)
 mit strikter Datentrennung (PostgreSQL Row-Level Security).
 
 - Funktionsbeschreibung: [docs/APP_GUIDE.md](docs/APP_GUIDE.md)
@@ -19,6 +20,7 @@ mit strikter Datentrennung (PostgreSQL Row-Level Security).
 | Planung | OR-Tools (Touren), eigener Packer (Ladeplan), SciPy (Modellanpassung) |
 | Frontend | React, TypeScript, Vite; three.js (3D), Leaflet (Karte), Recharts |
 | Fahrer-App | dieselbe App unter `/fahrer`, PWA mit Service Worker und IndexedDB |
+| Kundenzugang | dieselbe App unter `/kunde`, Anmeldung über persönlichen Link |
 | Hintergrundaufträge | Warteschlange in PostgreSQL, Worker-Prozess (oder eingebettet) |
 | PDF | reportlab (Angebote, Rechnungen, Etiketten) |
 
@@ -91,7 +93,10 @@ Kundendaten. Anmeldungen (Passwort jeweils `demo-passwort-2026`):
 | Baumschule Lindenhof (`lindenhof`) | inhaber@lindenhof.example | dispo@lindenhof.example |
 
 Fahrer-App: http://localhost:8000/fahrer, Betriebskennung z. B. `gruenfink`, PIN `1000`, `2111`
-oder `3222` (die ersten drei Personen). Admin: die Zugangsdaten aus `.env`.
+oder `3222` (die ersten drei Personen). Kundenzugang: auf der Seite eines Kunden „Kundenzugang“
+klicken und den Link öffnen. Ein Teil der Abholungen ist schon eingelagert; für sie gibt es
+Rücklieferungen im April und Mai (Plan mit Richtung „Rücklieferung“ anlegen). Admin: die
+Zugangsdaten aus `.env`.
 
 ## KI
 
@@ -99,6 +104,14 @@ Ohne Schlüssel arbeitet ein **Testmodell** mit einfachen Regeln (Nachrichtenerf
 Fotoprüfung, Einstellungs-KI). Für echte Modelle den Plattform-Schlüssel in `.env`
 (`KP_ANTHROPIC_API_KEY`, `KP_OPENAI_API_KEY`) oder unter Admin → KI eintragen und dort Modelle
 aktivieren; Modellnamen sind Daten, nicht Code. Betriebe können eigene Schlüssel hinterlegen (BYOK).
+
+## Online-Zahlung
+
+Pro Betrieb unter Einstellungen → Kundenzugang: „Testzahlung“ (kein Geld, zum Ausprobieren) oder
+„Stripe“. Für Stripe in `.env` den Plattform-Schlüssel `KP_STRIPE_SECRET_KEY` und das
+Webhook-Geheimnis `KP_STRIPE_WEBHOOK_SECRET` setzen, beim Betrieb die Kennung des verbundenen
+Kontos (`acct_…`) eintragen und in Stripe den Webhook auf `/api/payments/stripe/webhook` richten
+(Ereignis `checkout.session.completed`).
 
 ## Tests und Qualität
 

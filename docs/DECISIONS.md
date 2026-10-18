@@ -171,3 +171,32 @@ und Wege der Abholung verwendet. Die Tourenplanung behandelt sie später als eig
   Protokoll mit Quelle `settings_ai`), die Antwort enthält die Protokoll-IDs für „Rückgängig“.
 - Der Systemtext enthält `docs/APP_GUIDE.md` und alle Einstellungen mit Wert und Herkunft; bei
   Anthropic wird er mit Prompt-Caching übertragen (gleich in jeder Runde).
+
+## D21 – Rücklieferung als Planungsmodus
+- Eine Rücklieferung ist ein eigener Auftrag (D13) mit eigenem Plan (`direction = return`). Das
+  Modell ist dasselbe; anders sind: Depotzeit **vor** jeder Fahrt (Beladen, `planning.load_min`,
+  im Solver als Servicezeit am Start- bzw. Abladeknoten) statt Abladen danach, Ladeplan mit dem
+  ersten Stopp an der Tür (Beladereihenfolge rückwärts), eigener Zeitfaktor (`returns.time_factor`,
+  auch in der Modellanpassung berücksichtigt) und eigene Preisregel (`returns.price_mode`).
+- Frostregel: Frostempfindliche Pflanzen (Pflanze markiert oder Art „empfindlich“) frühestens am
+  Stichtag (`returns.frost_safe_date`, Standard 15. Mai); liegt er hinter dem Planungszeitraum,
+  erscheint der Auftrag als nicht eingeplant mit Grund „Frost“.
+- Fahrer-App: Ereignis `delivered` (Abgestellt, mit Abgabefoto `delivery_proof`) ersetzt `loaded`;
+  danach sind Rücklieferung und Abholung „zurückgebracht“. Beim Beladen zeigt die App den Lagerplatz.
+- Sammelanlage: Rücklieferungen für alle abgeholten/eingelagerten Aufträge in einem Zeitraum; der
+  Wunsch des Kunden aus dem Kundenzugang hat Vorrang.
+
+## D22 – Kundenzugang und Online-Zahlung
+- Anmeldung nur über einen persönlichen Link (Einmal-Code, mehrfach nutzbar, Gültigkeit
+  `portal.link_days`); kein Passwort. Rolle `customer` mit `customer_id` am Benutzer.
+- Ein Kunden-Login erreicht serverseitig nur `/api/portal/*`, `/api/auth/*` und eigene Dateien
+  (Fotos eigener Aufträge, eigene Angebote und Rechnungen) – auch Endpunkte, die sonst nur den
+  Betrieb prüfen, bleiben zu.
+- Fotos nur nach Einwilligung (Text aus `privacy.consent_text`, wird mit Zeitpunkt gespeichert);
+  danach läuft die Vollständigkeitsprüfung im Hintergrund.
+- Angebot annehmen bestätigt einen Auftrag im Entwurf (abschaltbar).
+- Zahlung über eine Anbieter-Schicht: `test` (simulierter Checkout ohne Geld, zum Ausprobieren) und
+  `stripe` (Stripe Checkout auf dem verbundenen Konto des Betriebs, Stripe Connect; Plattform-
+  Schlüssel und Webhook-Geheimnis in `.env`). Der Webhook wird mit dem Stripe-Signaturverfahren
+  geprüft (HMAC-SHA256, Zeitfenster 5 Minuten); bezahlt wird erst durch das Ereignis, nie durch die
+  Rückkehr des Browsers.

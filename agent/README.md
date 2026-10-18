@@ -137,6 +137,7 @@ Die Liste wird beim Abruf aus der laufenden API erzeugt.
 - `POST /api/auth/2fa/enable` – Totp Enable
 - `POST /api/auth/2fa/setup` – Totp Setup
 - `POST /api/auth/act-as` – Platform admin switches into a tenant (or back to platform view).
+- `POST /api/auth/customer/{code}` – Personal link of a customer: /kunde/login/<code> posts here (customer portal).
 - `POST /api/auth/driver/pin` – Driver Pin Login
 - `POST /api/auth/link/{code}` – Personal driver link: /fahrer/login/<code> posts here.
 - `POST /api/auth/login` – Login
@@ -270,6 +271,7 @@ Die Liste wird beim Abruf aus der laufenden API erzeugt.
 - `GET /api/orders/{order_id}` – Get Order Detail
 - `GET /api/orders` – List Orders
 - `PATCH /api/orders/{order_id}` – Update Order
+- `POST /api/orders/returns` – Spring: returns for all stored pickups (or the given ones) at once, in one date range.
 - `POST /api/orders/{order_id}/return` – Spring return: a new order in direction 'return' that reuses plants and paths of the pickup.
 - `POST /api/orders` – Create Order
 
@@ -295,6 +297,22 @@ Die Liste wird beim Abruf aus der laufenden API erzeugt.
 - `GET /api/plants` – List Plants
 - `PATCH /api/plants/{plant_id}` – Update Plant
 - `POST /api/orders/{order_id}/plants` – Add Plant
+
+### portal
+
+- `GET /api/payments` – List Payments
+- `GET /api/portal/me` – Me
+- `GET /api/portal/orders/{order_id}` – Order
+- `GET /api/portal/orders` – Orders
+- `GET /api/portal/payments/{payment_id}` – Payment Status
+- `POST /api/customers/{customer_id}/portal-link` – Personal link for the customer portal (copy it into an e-mail or message).
+- `POST /api/portal/consent` – Consent to store photos of garden and home (text from the tenant's settings is saved with it).
+- `POST /api/portal/orders/{order_id}/photos` – Guided photo set: per plant front/side (with A4 sheet), top, pot; the path from start to end.
+- `POST /api/portal/payments/{payment_id}/simulate` – Test payment only: confirm or cancel the simulated checkout (no money moves).
+- `POST /api/portal/payments` – Start an online payment of an invoice (or an offer as prepayment); returns the checkout URL.
+- `POST /api/portal/quotes/{quote_id}/accept` – Accept Quote
+- `PUT /api/portal/orders/{order_id}/location` – Pin where the plants are (and hints for parking, bell, access).
+- `PUT /api/portal/orders/{order_id}/return-wish` – When the plants should come back in spring. Applied to the return order while it is not planned.
 
 ### privacy
 

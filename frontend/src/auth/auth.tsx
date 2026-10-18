@@ -49,7 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     logout: async () => {
       await api.post("/api/auth/logout");
       qc.clear();
-      window.location.href = me?.role === "driver" ? "/fahrer" : "/login";
+      window.location.href = me?.role === "driver" ? "/fahrer" : me?.role === "customer" ? "/kunde" : "/login";
     },
   };
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -65,6 +65,7 @@ export function homeFor(me: Me | null): string {
   if (!me) return "/login";
   if (me.mfa_setup_required) return "/konto/2fa";
   if (me.role === "driver") return "/fahrer";
+  if (me.role === "customer") return "/kunde";
   if (me.role === "admin" && !me.acting_as_tenant) return "/admin";
   return "/betrieb";
 }

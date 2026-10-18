@@ -101,7 +101,9 @@ def create_session(
     cfg = get_config()
     token = new_token()
     lifetime = (
-        timedelta(days=cfg.driver_session_days) if kind == "driver" else timedelta(hours=cfg.session_hours)
+        timedelta(days=cfg.driver_session_days)
+        if kind in ("driver", "customer")
+        else timedelta(hours=cfg.session_hours)
     )
     sess = AuthSession(
         token_hash=token_hash(token),
@@ -289,6 +291,33 @@ def link_login(code: str, request: Request, response: Response) -> dict:
             raise Unauthorized("errors.code_invalid")
         otc.used_at = now
         create_session(db, user, response, request, kind="driver")
+        return {"ok": True}
+
+
+@router.post("/customer/{code}")
+def customer_link_login(code: str, request: Request, response: Response) -> dict:
+    """Personal link of a customer: /kunde/login/<code> posts here (customer portal)."""
+    now = datetime.now(UTC)
+    with system_session() as db:
+        otc = db.scalar(
+            select(OneTimeCode).where(
+                OneTimeCode.code_hash == token_hash(code), OneTimeCode.purpose == "customer_link"
+            )
+        )
+        if otc is None or otc.expires_at < now or otc.user_id is None:
+            raise Unauthorized("errors.code_invalid")
+        user = db.get(User, otc.user_id)
+        if user is None or not user.is_active or user.role != "customer" or user.customer_id is None:
+            raise Unauthorized("errors.code_invalid")
+        tenant = db.get(Tenant, user.tenant_id)
+        if (
+            tenant is None
+            or tenant.status != "active"
+            or not bool(SettingsResolver(db, tenant.id).get("portal.enabled"))
+        ):
+            raise Unauthorized("errors.code_invalid")
+        otc.used_at = now
+        create_session(db, user, response, request, kind="customer")
         return {"ok": True}
 
 

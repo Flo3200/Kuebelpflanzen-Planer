@@ -15,7 +15,7 @@ Jede Phase endet mit: Tests grün, Abnahmekriterium geprüft, Eintrag in `docs/C
 | 6 Fahrer-App und Lernen | abgeschlossen |
 | 7 Abrechnung, Agenten, Einstellungs-KI | abgeschlossen |
 | Datenschutz (Abschnitt 19), Dokumentation (Abschnitt 22) | abgeschlossen |
-| 8 später | offen: Kundenzugang, Rücklieferung als eigener Planungsmodus, Hosting |
+| 8 Rücklieferung und Kundenzugang | abgeschlossen; offen: Umzug auf einen gehosteten Server |
 
 ## Projektstruktur
 

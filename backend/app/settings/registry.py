@@ -420,6 +420,12 @@ SETTINGS: tuple[SettingDef, ...] = (
     _s("returns.price_mode", "enum", "separate", "returns", choices=("separate", "included", "factor")),
     _s("returns.price_factor", "float", 0.8, "returns", unit="×", min=0, max=3.0),
     _s("returns.default_window_days", "int", 42, "returns", unit="Tage", min=1, max=180),
+    # --- customer portal and online payment -------------------------------------------
+    _s("portal.enabled", "bool", True, "portal", important=True),
+    _s("portal.link_days", "int", 120, "portal", unit="Tage", min=1, max=730),
+    _s("portal.accept_quote_confirms", "bool", True, "portal"),
+    _s("payments.provider", "enum", "off", "portal", choices=("off", "test", "stripe"), important=True),
+    _s("payments.stripe_account", "str", "", "portal"),
     # --- agents --------------------------------------------------------------------
     _s("agents.token_days", "int", 30, "agents", unit="Tage", min=1, max=365),
     _s("agents.rate_per_min", "int", 120, "agents", unit="/min", min=1, max=10000),

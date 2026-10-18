@@ -249,6 +249,11 @@ def get_file(file_id: uuid.UUID, actor: CurrentActor, db: DB, download: bool = F
     stored = db.get(StoredFile, file_id)
     if stored is None or (actor.tenant_id is not None and stored.tenant_id != actor.tenant_id):
         raise NotFound()
+    if actor.role == "customer":
+        from app.portal.service import customer_owns_file
+
+        if not customer_owns_file(db, actor, stored):
+            raise NotFound()
     try:
         data = get_storage().get(stored.key)
     except FileNotFoundError as exc:

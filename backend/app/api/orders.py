@@ -444,8 +444,12 @@ def make_return(
     )
     ret.return_of_id = pickup.id
     ret.time_windows = [w for w in (pickup.time_windows or []) if not w.get("date")]
-    ret.earliest_date = earliest
-    ret.latest_date = latest
+    # the customer's wish from the portal wins over the general range
+    wish = pickup.return_wish or {}
+    ret.earliest_date = date.fromisoformat(wish["earliest_date"]) if wish.get("earliest_date") else earliest
+    ret.latest_date = date.fromisoformat(wish["latest_date"]) if wish.get("latest_date") else latest
+    if wish.get("notes"):
+        ret.notes = "\n".join(x for x in (ret.notes, f"Wunsch Rücklieferung: {wish['notes']}") if x)
     ret.status = "confirmed"
     db.flush()
     _after_order_change(db, actor, ret, {})

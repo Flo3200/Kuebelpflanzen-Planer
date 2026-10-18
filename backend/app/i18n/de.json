@@ -66,7 +66,12 @@
     "invoice_empty": "In diesem Zeitraum gibt es nichts abzurechnen.",
     "no_estimate": "Für diesen Auftrag gibt es noch keinen Preis.",
     "setting_unknown": "Die Einstellung „{key}“ gibt es nicht.",
-    "confirm_required": "Bitte ausdrücklich bestätigen."
+    "confirm_required": "Bitte ausdrücklich bestätigen.",
+    "consent_required": "Bitte zuerst der Speicherung der Fotos zustimmen.",
+    "quote_expired": "Dieses Angebot ist abgelaufen. Bitte fragen Sie ein neues an.",
+    "nothing_to_pay": "Hier ist nichts (mehr) zu bezahlen.",
+    "payment_not_configured": "Die Online-Zahlung ist für diesen Betrieb noch nicht eingerichtet.",
+    "payment_failed": "Die Zahlung konnte nicht gestartet werden: {detail}"
   },
   "origins": {
     "default": "Systemstandard",
@@ -100,7 +105,8 @@
     "billing": "Plattform-Abrechnung",
     "agents": "Agenten-Zugänge",
     "weight": "Gewichtsschätzung",
-    "returns": "Rücklieferung im Frühjahr"
+    "returns": "Rücklieferung im Frühjahr",
+    "portal": "Kundenzugang und Online-Zahlung"
   },
   "settings": {
     "general.season_start_month": {
@@ -748,6 +754,31 @@
     "returns.default_window_days": {
       "label": "Zeitraum für Rücklieferungen (Tage)",
       "help": "Länge des Zeitraums, der beim Anlegen der Rücklieferungen vorgeschlagen wird."
+    },
+    "portal.enabled": {
+      "label": "Kundenzugang",
+      "help": "Kunden können mit ihrem persönlichen Link ihre Aufträge sehen, Fotos hochladen, den Standort setzen, Angebote annehmen und bezahlen."
+    },
+    "portal.link_days": {
+      "label": "Gültigkeit des Kunden-Links (Tage)",
+      "help": "So lange funktioniert ein persönlicher Link für den Kundenzugang."
+    },
+    "portal.accept_quote_confirms": {
+      "label": "Angebot annehmen bestätigt den Auftrag",
+      "help": "Nimmt der Kunde das Angebot im Kundenzugang an, wird ein Auftrag im Entwurf automatisch bestätigt."
+    },
+    "payments.provider": {
+      "label": "Online-Zahlung",
+      "help": "Aus, Testzahlung (ohne echtes Geld, zum Ausprobieren) oder Stripe (Stripe Connect mit dem Konto des Betriebs).",
+      "choices": {
+        "off": "aus",
+        "test": "Testzahlung",
+        "stripe": "Stripe"
+      }
+    },
+    "payments.stripe_account": {
+      "label": "Stripe-Konto des Betriebs",
+      "help": "Die Kennung des verbundenen Stripe-Kontos (acct_…). Der Plattform-Schlüssel steht in der .env."
     }
   },
   "fields": {

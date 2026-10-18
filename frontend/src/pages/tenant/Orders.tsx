@@ -109,6 +109,15 @@ export function CustomerDetailPage() {
     const o = await api.post("/api/orders", { customer_id: id, address_id: addressId });
     navigate(`/betrieb/auftraege/${o.order.id}`);
   };
+  const portalLink = async () => {
+    try {
+      const r = await api.post<any>(`/api/customers/${id}/portal-link`);
+      await navigator.clipboard?.writeText(r.url).catch(() => undefined);
+      window.prompt(t("portal.staff_link_copy", { days: r.valid_days }), r.url);
+    } catch (e) {
+      toast({ text: (e as Error).message, tone: "error" });
+    }
+  };
   const erase = async () => {
     try {
       await api.post(`/api/customers/${id}/erase`, { confirm: true });
@@ -126,6 +135,9 @@ export function CustomerDetailPage() {
         description={[customer.email, customer.phone].filter(Boolean).join(" · ")}
         actions={
           <>
+            <button className="btn secondary" onClick={portalLink}>
+              {t("portal.staff_link")}
+            </button>
             <a className="btn ghost" href={`/api/customers/${id}/export`}>
               {t("privacy.export")}
             </a>

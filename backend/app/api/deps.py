@@ -27,6 +27,9 @@ SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
 # Bearer-token authenticators (agent tokens etc.) register here: fn(request, token) -> Actor | None
 BEARER_AUTHENTICATORS: list[Callable[[Request, str], Actor | None]] = []
 
+# The only paths a customer login may use
+CUSTOMER_PATHS = ("/api/portal/", "/api/auth/", "/api/files/")
+
 # Paths a session with pending 2FA setup may use
 MFA_SETUP_PATHS = ("/api/auth/me", "/api/auth/logout", "/api/auth/2fa/")
 
@@ -67,6 +70,7 @@ def _session_actor(request: Request) -> Actor | None:
             permissions=effective_permissions(user.role, user.extra_permissions, user.revoked_permissions),
             via="ui",
             staff_member_id=user.staff_member_id,
+            customer_id=user.customer_id if user.role == "customer" else None,
         )
 
 
@@ -87,6 +91,9 @@ def get_optional_actor(request: Request) -> Actor | None:
         actor = _session_actor(request)
         if actor is not None and request.headers.get("x-kp-via") == "settings_ai":
             actor = actor.with_via("settings_ai")
+    if actor is not None and actor.role == "customer" and not request.url.path.startswith(CUSTOMER_PATHS):
+        # customers only reach the portal (and their own files, checked there) - never staff endpoints
+        raise Forbidden()
     request.state.actor = actor
     return actor
 

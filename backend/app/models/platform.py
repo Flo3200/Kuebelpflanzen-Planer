@@ -124,3 +124,29 @@ class PlatformCounter(Base):
 
     name: Mapped[str] = mapped_column(String(40), primary_key=True)
     value: Mapped[int] = mapped_column(Integer, default=0)
+
+
+class Payment(IdMixin, TimestampMixin, OptionalTenantMixin, Base):
+    """Online payment of a customer (invoice or offer). Provider 'test' simulates the checkout,
+    'stripe' uses Stripe Checkout on the connected account of the tenant (Stripe Connect)."""
+
+    __tablename__ = "payments"
+    __rls__ = "strict"
+
+    order_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid, ForeignKey("pickup_orders.id", ondelete="SET NULL"), index=True
+    )
+    invoice_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, ForeignKey("invoices.id", ondelete="SET NULL"))
+    quote_id: Mapped[uuid.UUID | None] = mapped_column(Uuid)
+    customer_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, index=True)
+    amount_eur: Mapped[float] = mapped_column(Float)
+    currency: Mapped[str] = mapped_column(String(3), default="EUR")
+    description: Mapped[str] = mapped_column(String(300), default="")
+    provider: Mapped[str] = mapped_column(String(20))
+    status: Mapped[str] = mapped_column(
+        String(12), default="created"
+    )  # created | pending | paid | failed | cancelled
+    provider_ref: Mapped[str | None] = mapped_column(String(200), index=True)
+    checkout_url: Mapped[str | None] = mapped_column(Text)
+    paid_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    raw: Mapped[dict[str, Any]] = mapped_column(default=dict)

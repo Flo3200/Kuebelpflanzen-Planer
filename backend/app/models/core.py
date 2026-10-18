@@ -71,6 +71,7 @@ class User(IdMixin, TimestampMixin, SoftDeleteMixin, OptionalTenantMixin, Base):
     totp_secret_enc: Mapped[str | None] = mapped_column(Text)
     totp_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
     staff_member_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, index=True)
+    customer_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, index=True)  # role customer: own data only
     pin_hash: Mapped[str | None] = mapped_column(String(300))
     pin_lookup: Mapped[str | None] = mapped_column(String(64), index=True)
     language: Mapped[str] = mapped_column(String(5), default="de")

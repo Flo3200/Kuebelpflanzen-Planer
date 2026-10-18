@@ -45,6 +45,10 @@ class Config(BaseSettings):
 
     anthropic_api_key: str = ""
     openai_api_key: str = ""
+    # online payments (Stripe Connect): platform key, webhook secret, API base (tests: local mock)
+    stripe_secret_key: str = ""
+    stripe_webhook_secret: str = ""
+    stripe_api_base: str = "https://api.stripe.com"
 
     initial_admin_email: str = "admin@example.com"
     initial_admin_password: str = ""

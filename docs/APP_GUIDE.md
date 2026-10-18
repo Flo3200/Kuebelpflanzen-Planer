@@ -27,6 +27,7 @@ Gärtnereien holen im Herbst Kübelpflanzen (Oleander, Olivenbäume, Palmen, Zit
 - **Disposition**: Aufträge, Planung, Stammdaten – ohne Benutzer, Abrechnung und Agenten.
 - **Fahrer/in**: nur die Fahrer-App mit den eigenen Touren (Anmeldung mit PIN oder Link).
 - **Agent**: ein KI-Agent mit Token und begrenzten Rechten (siehe „Agenten“).
+- **Kunde**: nur der Kundenzugang mit den eigenen Aufträgen (Anmeldung über einen persönlichen Link).
 
 ## Einstellungen und Ebenen
 
@@ -59,6 +60,8 @@ Wichtige Gruppen:
 - **KI** (`ai.*`): Modell je Funktion, Ersatzmodell, eigener Schlüssel (BYOK), Ausgabenlimit.
 - **Abrechnung** (`billing.*`, Admin): Bausteine je Betrieb, Mehrwertsteuer, Rechnungssteller.
 - **Agenten** (`agents.*`): Gültigkeit der Tokens, Aufrufe pro Minute.
+- **Rücklieferung** (`returns.*`): Frostregel und Stichtag, Zeitfaktor, Preisregel, Zeitraum.
+- **Kundenzugang** (`portal.*`, `payments.*`): Zugang an/aus, Gültigkeit des Links, Online-Zahlung.
 
 ## Erfassung: Kunden, Aufträge, Pflanzen
 
@@ -120,6 +123,28 @@ Für jede Tour wird ein Ladeplan berechnet: Töpfe sind starr, Kronen dürfen si
 Achslasten und Stützlast werden beachtet. Die Ladereihenfolge folgt der Tour: bei der Abholung
 steht, was zuerst eingeladen wird, ganz hinten. Passt eine Tour nicht, plant die Tourenplanung
 neu oder nennt Pflanze und Grund. Ansicht: Draufsicht, 3D und Schritt für Schritt.
+
+## Rücklieferung im Frühjahr
+
+Für abgeholte und eingelagerte Aufträge legt die Disposition unter „Aufträge → Rücklieferungen
+anlegen“ die Rücklieferungen in einem Zeitraum an (z. B. April bis Mai). Pflanzen, Wege und
+Zeitfenster kommen aus der Abholung; einen Terminwunsch des Kunden aus dem Kundenzugang übernimmt
+die App. Geplant wird als eigener Plan mit Richtung „Rücklieferung“: Vor jeder Fahrt wird im
+Betrieb beladen (`planning.load_min`), frostempfindliche Pflanzen kommen erst ab dem frostsicheren
+Stichtag zurück (`returns.frost_rule`, `returns.frost_safe_date`), die Dauer vor Ort kann einen
+eigenen Faktor haben (`returns.time_factor`) und der Preis eigene Regeln (`returns.price_mode`).
+Im Ladeplan steht der erste Stopp an der Tür; die Fahrer-App zeigt beim Beladen den Lagerplatz und
+beim Kunden den Schritt „Abgestellt“ mit Foto.
+
+## Kundenzugang und Online-Zahlung
+
+Auf der Seite eines Kunden erzeugt „Kundenzugang“ einen persönlichen Link (Gültigkeit
+`portal.link_days`), den der Betrieb dem Kunden schickt. Der Kunde sieht dort nur seine eigenen
+Aufträge mit Fortschritt und Termin, kann Fotos nach Anleitung hochladen (nach Einwilligung), den
+Standort auf der Karte setzen, Angebote ansehen und annehmen (das bestätigt den Auftrag), einen
+Wunsch für die Rücklieferung angeben und Rechnungen ansehen. Ist die Online-Zahlung eingeschaltet
+(`payments.provider`: Testzahlung oder Stripe mit dem Stripe-Konto des Betriebs), kann er offene
+Rechnungen online bezahlen; die Rechnung steht danach auf „bezahlt“.
 
 ## Fahrer-App
 
