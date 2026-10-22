@@ -2077,6 +2077,7 @@
     "adopt": "Als neue Formelversion übernehmen",
     "is_adopted": "übernommen",
     "adopted": "Neue Formelversion {v} ist aktiv (rücknehmbar über die Versionen).",
-    "invalid": "Der Vorschlag ist keine gültige Formel"
+    "invalid": "Der Vorschlag ist keine gültige Formel",
+    "no_key": "kein Schlüssel"
   }
 }

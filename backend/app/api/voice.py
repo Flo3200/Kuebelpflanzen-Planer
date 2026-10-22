@@ -37,9 +37,9 @@ PAGES: dict[str, tuple[str, tuple[str, ...]]] = {
     "overview": ("/betrieb", ("übersicht", "start", "dashboard", "startseite")),
     "inbox": ("/betrieb/posteingang", ("posteingang", "nachrichten", "entwürfe", "eingang")),
     "orders": ("/betrieb/auftraege", ("aufträge", "auftrag", "auftragsliste")),
-    "tables": ("/betrieb/tabellen", ("tabelle", "tabellen", "übersichtstabelle", "excel")),
+    "tables": ("/betrieb/tabellen", ("tabellen", "tabelle", "übersichtstabelle", "excel")),
     "customers": ("/betrieb/kunden", ("kunden", "kundenliste")),
-    "planning": ("/betrieb/planung", ("planung", "tourenplanung", "touren", "tourenplan")),
+    "planning": ("/betrieb/planung", ("tourenplanung", "planung", "touren", "tourenplan")),
     "deviations": ("/betrieb/meldungen", ("meldungen", "abweichungen")),
     "teams": ("/betrieb/teams", ("teams", "team")),
     "staff": ("/betrieb/personal", ("personal", "mitarbeiter", "mitarbeiterinnen")),
@@ -118,9 +118,9 @@ class Runner:
             return f"Ungültiger Aufruf: {exc}", True
 
     def tool_open_page(self, page: str) -> str:
-        route = PAGES[page][0]
+        route, words = PAGES[page]
         self.actions.append({"type": "navigate", "to": route})
-        return f"Seite {page} geöffnet."
+        return f"{words[0][:1].upper()}{words[0][1:]} geöffnet."
 
     def tool_search(self, query: str) -> str:
         tid = self.actor.require_tenant()

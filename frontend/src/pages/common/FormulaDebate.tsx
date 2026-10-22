@@ -7,10 +7,12 @@ import { Badge, Card, ErrorBox, Spinner, useToast } from "../../components/ui";
 import { fmtDate, fmtNumber, t } from "../../i18n";
 import { JobStatus, useJob } from "./Jobs";
 
-type Model = { id: string; label: string; provider: string; kind: string };
+type Model = { id: string; label: string; provider: string; kind: string; ready: boolean };
 
+/** Ready model of the wanted provider (ChatGPT for one side, Claude for the other), else any ready one. */
 function pick(models: Model[], kind: string, other?: string): string {
-  return (models.find((m) => m.kind === kind && m.id !== other) ?? models.find((m) => m.id !== other) ?? models[0])?.id ?? "";
+  const ready = models.filter((m) => m.ready);
+  return (ready.find((m) => m.kind === kind && m.id !== other) ?? ready.find((m) => m.id !== other) ?? ready[0] ?? models[0])?.id ?? "";
 }
 
 export function FormulaDebateCard({ formulaKey }: { formulaKey: "time" | "unload" | "price" }) {
@@ -83,7 +85,7 @@ export function FormulaDebateCard({ formulaKey }: { formulaKey: "time" | "unload
             <select id={`deb-${side}`} className="input" value={side === "a" ? a : b} onChange={(e) => (side === "a" ? setA(e.target.value) : setB(e.target.value))}>
               {(models.data ?? []).map((m) => (
                 <option key={m.id} value={m.id}>
-                  {m.label} ({m.provider})
+                  {m.label} ({m.provider}){m.ready ? "" : ` – ${t("debate.no_key")}`}
                 </option>
               ))}
             </select>
@@ -124,7 +126,7 @@ export function FormulaDebateCard({ formulaKey }: { formulaKey: "time" | "unload
       {d && (
         <div className="stack" style={{ marginTop: 16 }}>
           {["new", "running"].includes(d.status) && (job.data ? <JobStatus job={job.data} /> : <Spinner label={t("debate.running")} />)}
-          {d.status === "failed" && <div className="alert error">{t(d.error ?? "errors.generic")}</div>}
+          {d.status === "failed" && <div className="alert error">{d.error ?? t("errors.generic")}</div>}
           {(d.rounds ?? []).map((r: any, i: number) => (
             <div key={i} className={`debate-turn side-${r.speaker}`}>
               <div className="xs muted">

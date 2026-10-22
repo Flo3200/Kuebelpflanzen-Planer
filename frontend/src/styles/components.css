@@ -1057,7 +1057,7 @@ table.table {
   object-fit: cover;
   display: block;
 }
-.thumb.empty {
+.thumb.thumb-none {
   background: repeating-linear-gradient(45deg, var(--surface-2), var(--surface-2) 6px, var(--surface-3) 6px, var(--surface-3) 12px);
 }
 .thumb-ai {

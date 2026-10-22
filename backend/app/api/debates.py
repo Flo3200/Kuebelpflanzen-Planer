@@ -54,16 +54,26 @@ def _perm(actor) -> None:
 def models(actor: CurrentActor, db: DB) -> list[dict[str, Any]]:
     """Models that can take part (active models of active providers)."""
     _perm(actor)
+    from app.ai.service import api_key_for
+    from app.settings.service import SettingsResolver
+
+    resolver = SettingsResolver(db, actor.tenant_id)
     providers = {p.id: p for p in db.scalars(select(AIProvider).where(AIProvider.active.is_(True)))}
+    ready = {
+        pid: p.kind == "fake" or bool(api_key_for(db, actor.tenant_id, resolver, p)[0])
+        for pid, p in providers.items()
+    }
     return [
         {
             "id": m.id,
             "label": m.label,
             "provider": providers[m.provider_id].name,
             "kind": providers[m.provider_id].kind,
+            "ready": ready[m.provider_id],  # a key is there (or it is the test model)
         }
         for m in db.scalars(select(AIModel).where(AIModel.active.is_(True)).order_by(AIModel.label))
-        if m.provider_id in providers
+        # chat models only (image and speech models cannot discuss)
+        if m.provider_id in providers and m.supports_tools
     ]
 
 

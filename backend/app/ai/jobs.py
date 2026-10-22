@@ -184,8 +184,10 @@ def formula_debate_job(ctx: JobContext) -> dict:
     try:
         run_debate(ctx.db, debate, ctx.progress)
     except AppError as exc:
+        from app.i18n import t
+
         debate.status = "failed"
-        debate.error = exc.code
+        debate.error = t(exc.code, **{k: str(v) for k, v in exc.params.items()})
         ctx.db.commit()
         raise
     return {"rounds": len(debate.rounds), "valid": bool((debate.proposal or {}).get("valid"))}

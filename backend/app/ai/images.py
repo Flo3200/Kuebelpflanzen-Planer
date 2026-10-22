@@ -122,7 +122,7 @@ def render_plant(info: dict[str, Any]) -> bytes:
     pot_h = min(float(info["pot_height_cm"]), total * 0.6)
     pot_d = float(info["pot_diameter_cm"])
     crown_w = float(info["crown_width_cm"])
-    scale = min((H - 170) / total, (W - 140) / max(crown_w, pot_d * 1.1, 1))
+    scale = min((H - 230) / total, (W - 140) / max(crown_w, pot_d * 1.1, 1))
     ground = H - 90
     cx = W // 2 - 20
     # ruler with the height
@@ -173,24 +173,43 @@ def render_plant(info: dict[str, Any]) -> bytes:
             d.rounded_rectangle(
                 [cx - cw * 0.32, box[1], cx + cw * 0.32, box[3]], radius=int(cw * 0.3), fill=leaf
             )
+            dark_spots = tuple(max(0, c - 18) for c in leaf)
+            for k in range(30):  # a little texture
+                px = cx + math.sin(k * 2.399) * cw * 0.2
+                py = box[1] + (box[3] - box[1]) * ((k + 0.5) / 30)
+                d.ellipse([px - 8, py - 6, px + 8, py + 6], fill=dark_spots)
         else:
-            d.ellipse(box, fill=leaf)
-            for k in range(7):  # some depth in the crown
-                a = 2 * math.pi * k / 7
-                r = cw * 0.18
-                px, py = cx + math.cos(a) * cw * 0.22, (box[1] + box[3]) / 2 + math.sin(a) * crown_h * 0.18
-                d.ellipse([px - r, py - r, px + r, py + r], fill=dark if k % 2 else leaf)
+            d.ellipse(box, fill=dark)
+            # foliage: overlapping leaf clusters spread evenly over the crown (golden angle)
+            light = tuple(min(255, c + 22) for c in leaf)
+            mx, my = (box[0] + box[2]) / 2, (box[1] + box[3]) / 2
+            rx, ry = (box[2] - box[0]) / 2, (box[3] - box[1]) / 2
+            r = max(6.0, min(rx, ry) * 0.26)
+            for k in range(48):
+                a = k * 2.399
+                rr = math.sqrt((k + 0.5) / 48) * 0.78
+                px, py = mx + math.cos(a) * rx * rr, my + math.sin(a) * ry * rr
+                shade = light if py < my - ry * 0.2 else leaf if k % 3 else dark
+                d.ellipse([px - r, py - r * 0.85, px + r, py + r * 0.85], fill=shade)
         if flower:
+            mx, my = (box[0] + box[2]) / 2, (box[1] + box[3]) / 2
+            rx, ry = (box[2] - box[0]) / 2, (box[3] - box[1]) / 2
+            if shape in ("column", "cylinder"):
+                rx = cw * 0.28
             for k in range(26):
                 a = k * 2.399  # golden angle spreads the dots evenly
-                rr = math.sqrt(k / 26) * 0.42
-                px = cx + math.cos(a) * cw * rr
-                py = (box[1] + box[3]) / 2 + math.sin(a) * crown_h * rr * 0.8
+                rr = math.sqrt((k + 0.5) / 26) * 0.8
+                px, py = mx + math.cos(a) * rx * rr, my + math.sin(a) * ry * rr
+                if shape == "cone":
+                    # keep the dots inside the triangle
+                    half = (py - box[1]) / max(1.0, box[3] - box[1]) * rx * 0.85
+                    if abs(px - cx) > half:
+                        continue
                 d.ellipse([px - 6, py - 6, px + 6, py + 6], fill=flower)
     d.text((24, 20), info["species"], fill=(40, 52, 38), font=_font(30))
     d.text(
         (24, 58),
-        f"Topf Ø {round(pot_d)} cm · Krone {round(crown_w)} cm",
+        f"Topf {round(pot_d)} cm breit · Krone {round(crown_w)} cm",
         fill=(90, 96, 84),
         font=_font(20),
     )
