@@ -83,6 +83,18 @@ def _vehicle_fake(kind: str, request: AIRequest) -> dict[str, Any]:
     return fake_vehicle_photo(request.context) if kind == "photo" else fake_vehicle_chat(request.context)
 
 
+def _team_fake(request: AIRequest) -> dict[str, Any]:
+    from app.teams.spontaneous import fake_team_parse
+
+    return fake_team_parse(request.context)
+
+
+def _formula_fake(request: AIRequest) -> dict[str, Any]:
+    from app.formula.debate import fake_turn
+
+    return fake_turn(request.context)
+
+
 def _layout_fake(request: AIRequest) -> dict[str, Any]:
     from app.packing.ai_layout import fake_layout
 
@@ -101,6 +113,10 @@ class FakeProvider:
             "vehicle_photo": lambda r: _vehicle_fake("photo", r),
             "vehicle_chat": lambda r: _vehicle_fake("chat", r),
             "load_layout": _layout_fake,
+            "photo_sort": self._photo_sort,
+            "follow_up": self._follow_up,
+            "team_parse": _team_fake,
+            "formula_debate": _formula_fake,
         }.get(request.function)
         data = fn(request) if fn else {"text": "Testmodell: keine Auswertung für diese Funktion."}
         import json
@@ -146,8 +162,6 @@ class FakeProvider:
         path = self._path(low, floor)
 
         missing: list[str] = []
-        if not (email or phone):
-            missing.append("Kontakt (Telefon oder E-Mail)")
         if not street or not plz:
             missing.append("vollständige Adresse")
         if not plants:
@@ -451,10 +465,85 @@ class FakeProvider:
 
     # ------------------------------------------------------------------------- photos
 
+    def _photo_sort(self, request: AIRequest) -> dict[str, Any]:
+        """Portrait photos or photos with an A4 sheet show plants (front, side, top, pot in turn, spread
+        evenly over the plants of the message); landscape photos without A4 sheet show the path."""
+        photos = request.context.get("photos", [])
+        n_plants = max(1, len(request.context.get("plants") or []))
+        plant_idx, path_idx = [], []
+        for i, p in enumerate(photos):
+            landscape = (p.get("width") or 0) > (p.get("height") or 0) * 1.15
+            a4 = bool((p.get("a4") or {}).get("detected"))
+            (path_idx if landscape and not a4 else plant_idx).append(i)
+        per = max(1, -(-len(plant_idx) // n_plants))
+        kinds = ["plant_front", "plant_side", "plant_top", "pot"]
+        out = []
+        for k, i in enumerate(plant_idx):
+            out.append(
+                {
+                    "index": i + 1,
+                    "kind": kinds[(k % per) % len(kinds)],
+                    "plant": min(n_plants, k // per + 1),
+                    "confidence": 0.4,
+                    "description": "Testmodell: Pflanzenfoto (Hochformat oder A4-Blatt)",
+                }
+            )
+        for k, i in enumerate(path_idx):
+            kind = "path_start" if k == 0 else "path_end" if k == len(path_idx) - 1 else "path_segment"
+            out.append(
+                {
+                    "index": i + 1,
+                    "kind": kind,
+                    "plant": None,
+                    "confidence": 0.4,
+                    "description": "Testmodell: Querformat ohne A4-Blatt, vermutlich Weg",
+                }
+            )
+        out.sort(key=lambda x: x["index"])
+        return {
+            "photos": out,
+            "plants_seen": min(n_plants, len(plant_idx)),
+            "notes": "Testmodell ohne KI: Zuordnung nach Bildformat und Reihenfolge.",
+        }
+
+    def _follow_up(self, request: AIRequest) -> dict[str, Any]:
+        ctx = request.context
+        name = ctx.get("customer")
+        lines = [f"Guten Tag {name}," if name else "Guten Tag,", ""]
+        lines.append(
+            "vielen Dank für Ihre Anfrage zur Überwinterung Ihrer Kübelpflanzen. Damit wir die Abholung gut "
+            "planen können, fehlt uns noch Folgendes:"
+        )
+        for m in ctx.get("missing") or []:
+            lines.append(f"- {m}")
+        for f in ctx.get("feedback") or []:
+            lines.append(f"- {f}")
+        if ctx.get("feedback"):
+            lines += [
+                "",
+                "Bitte fotografieren Sie jede Pflanze ganz von vorn und von der Seite mit einem A4-Blatt am Stamm "
+                "als Maßstab, den Topf aus der Nähe und den Weg vom Stellplatz bis zur Straße (jede Tür und "
+                "Treppe).",
+            ]
+        if ctx.get("link"):
+            lines += [
+                "",
+                "Am einfachsten laden Sie die Fotos über diesen persönlichen Link hoch; dort können Sie auch "
+                f"Ihren Standort teilen: {ctx['link']}",
+            ]
+        lines += ["", "Vielen Dank und freundliche Grüße", ctx.get("tenant") or ""]
+        return {
+            "subject": "Fotos für die Abholung Ihrer Kübelpflanzen",
+            "message": "\n".join(lines).strip(),
+        }
+
     def _completeness(self, request: AIRequest) -> dict[str, Any]:
         photos = request.context.get("photos", [])
         required = request.context.get("required_kinds", [])
         labels = request.context.get("kind_labels", {})
+        plant_names = request.context.get("plants") or []
+        if any(p.get("plant") for p in photos):
+            return self._completeness_per_plant(photos, required, labels, plant_names)
         result_photos = []
         feedback = []
         present = {p["kind"] for p in photos}
@@ -496,6 +585,55 @@ class FakeProvider:
             "photos": result_photos,
             "missing": missing,
             "path_complete": path_complete,
+            "overall_ok": not feedback,
+            "feedback": feedback,
+        }
+
+    @staticmethod
+    def _completeness_per_plant(
+        photos: list[dict[str, Any]], required: list[str], labels: dict[str, str], names: list[str]
+    ) -> dict[str, Any]:
+        """Photos sorted to plants: every plant needs the plant set, the path start and end once."""
+        plant_kinds = [k for k in required if not k.startswith("path")]
+        path_kinds = [k for k in required if k.startswith("path")]
+        by_plant: dict[int, set[str]] = {}
+        for p in photos:
+            if p.get("plant"):
+                by_plant.setdefault(int(p["plant"]), set()).add(p["kind"])
+        n = max([len(names), *by_plant.keys()])
+        feedback, missing, result_photos = [], [], []
+        for i, p in enumerate(photos, start=1):
+            issues = []
+            q = p.get("quality") or {}
+            if q and not q.get("sharp", True):
+                issues.append("unscharf")
+                feedback.append(f"Bild {i}: unscharf")
+            result_photos.append(
+                {
+                    "index": i,
+                    "kind": p["kind"],
+                    "usable": not issues,
+                    "plant_fully_visible": None,
+                    "a4_visible": bool((p.get("a4") or {}).get("detected")),
+                    "issues": issues,
+                }
+            )
+        for no in range(1, n + 1):
+            have = by_plant.get(no, set())
+            name = names[no - 1] if no <= len(names) else f"Pflanze {no}"
+            lacking = [labels.get(k, k) for k in plant_kinds if k not in have]
+            if lacking:
+                missing += [f"Pflanze {no} ({name}): {m}" for m in lacking]
+                feedback.append(f"Pflanze {no} ({name}): {', '.join(lacking)}")
+        present = {p["kind"] for p in photos}
+        path_missing = [labels.get(k, k) for k in path_kinds if k != "path_segment" and k not in present]
+        if path_missing:
+            missing += path_missing
+            feedback.append("Weg: " + ", ".join(path_missing))
+        return {
+            "photos": result_photos,
+            "missing": missing,
+            "path_complete": not path_missing if path_kinds else None,
             "overall_ok": not feedback,
             "feedback": feedback,
         }

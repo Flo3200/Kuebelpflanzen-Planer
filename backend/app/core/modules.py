@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 
 from app.core.errors import AppError
 
-MODULES: tuple[str, ...] = ("storage", "customer_billing", "portal", "payments")
+MODULES: tuple[str, ...] = ("storage", "customer_billing", "portal", "payments", "share")
 # a module only works if the modules it builds on are on as well
 REQUIRES: dict[str, tuple[str, ...]] = {"payments": ("portal",)}
 

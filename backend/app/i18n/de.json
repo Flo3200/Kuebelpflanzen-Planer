@@ -75,7 +75,14 @@
     "cost_item_scope": "Eine Kostenposition gehört entweder zu einem Fahrzeug, zu einer Person oder zum ganzen Betrieb.",
     "vehicle_draft_incomplete": "Für die Planung fehlen noch Angaben: {fields}. Bitte im Chat ergänzen oder im Entwurf eintragen.",
     "combination_invalid": "Ein Anhänger lässt sich nur einem Zugfahrzeug zuordnen.",
-    "unload_fit_too_few": "Zu wenige Ablade-Messungen ({n}); mindestens {min} nötig."
+    "unload_fit_too_few": "Zu wenige Ablade-Messungen ({n}); mindestens {min} nötig.",
+    "share_link_invalid": "Dieser Link ist ungültig oder abgelaufen. Bitte fragen Sie bei der Gärtnerei nach einem neuen Link.",
+    "voice_not_understood": "Das habe ich nicht verstanden.",
+    "transcription_unavailable": "Für die Spracherkennung ist kein KI-Modell eingestellt.",
+    "image_generation_unavailable": "Das gewählte Modell kann keine Bilder erzeugen.",
+    "team_parse_failed": "Aus dem Satz ließ sich kein Team ablesen (Tag und mindestens eine Person nötig).",
+    "abort_disabled": "Vorzeitiges Beenden von Touren ist nicht eingeschaltet.",
+    "formula_invalid": "Die vorgeschlagene Formel ist ungültig: {detail}"
   },
   "origins": {
     "default": "Systemstandard",
@@ -111,7 +118,8 @@
     "weight": "Gewichtsschätzung",
     "returns": "Rücklieferung im Frühjahr",
     "portal": "Kundenzugang und Online-Zahlung",
-    "modules": "Module"
+    "modules": "Module",
+    "notify": "Benachrichtigungen und Kunden-Link"
   },
   "settings": {
     "general.season_start_month": {
@@ -837,6 +845,83 @@
         "ai_start": "KI als Start",
         "compare": "Vergleich"
       }
+    },
+    "modules.share": {
+      "label": "Kunden-Link für Fotos und Standort",
+      "help": "Kunden bekommen einen persönlichen Link ohne Konto, über den sie Fotos hochladen und ihren Standort teilen. Die Fotos landen direkt im Entwurf; die KI wertet neu aus. Der Link steht dann auch in der Nachfrage an den Kunden."
+    },
+    "privacy.store_contact": {
+      "label": "Kontaktdaten der Kunden speichern",
+      "help": "Aus (Standard): Telefon und E-Mail aus Nachrichten werden nicht in den Kunden übernommen. Sie können es im Entwurf für einzelne Kunden trotzdem einschalten („Kontaktdaten übernehmen“). Von Hand eingetragene Kontaktdaten bleiben."
+    },
+    "privacy.draft_text_days": {
+      "label": "Original-Nachrichten löschen nach",
+      "help": "Nach so vielen Tagen werden Text und Kontaktangaben bestätigter oder verworfener Entwürfe geleert; verworfene Entwürfe verlieren auch ihre Fotos. Die daraus angelegten Aufträge bleiben."
+    },
+    "notify.missing_photos": {
+      "label": "Benachrichtigung bei fehlenden Fotos und Angaben",
+      "help": "Fehlen in einer Nachricht Fotos oder Angaben, erscheint eine Benachrichtigung (Glocke oben) mit einer fertig formulierten Nachricht an den Kunden."
+    },
+    "share.link_days": {
+      "label": "Gültigkeit des Kunden-Links",
+      "help": "So lange kann der Kunde über seinen Link Fotos hochladen und den Standort teilen."
+    },
+    "ai.plant_images": {
+      "label": "KI-Bilder für Pflanzen ohne Foto",
+      "help": "Fehlt von einer Pflanze ein Foto, erzeugt die KI ein Bild aus Art und Maßen (als „KI-Bild“ markiert), damit Büro und Fahrer sehen, was sie erwartet. Aus: kein Bild.",
+      "choices": {
+        "off": "aus",
+        "missing": "für Pflanzen ohne Foto"
+      }
+    },
+    "ai.image_price_eur": {
+      "label": "Kosten je KI-Bild",
+      "help": "Geschätzte Kosten eines erzeugten Bildes für Verbrauch und Abrechnung."
+    },
+    "voice.enabled": {
+      "label": "Sprachsteuerung",
+      "help": "Mikrofon-Knopf oben auf jeder Seite: Sie sprechen, die KI bedient die App (Seiten öffnen, suchen, Nachrichten anlegen, Tagesteams, Planung, Einstellungen)."
+    },
+    "voice.transcription": {
+      "label": "Spracherkennung",
+      "help": "Automatisch: über das KI-Modell „Spracherkennung“, wenn eines eingestellt ist, sonst die Spracherkennung des Browsers. KI: immer über das Modell. Browser: immer im Browser.",
+      "choices": {
+        "auto": "automatisch",
+        "ai": "KI-Modell",
+        "browser": "Browser"
+      }
+    },
+    "planning.abort_enabled": {
+      "label": "Touren vorzeitig beenden erlauben",
+      "help": "Zusätzlich zum Planungspuffer: Fahrer können eine Tour vorzeitig beenden (z. B. bei großer Verspätung). Offene Stopps gehen zurück in die Planung, das Büro bekommt eine Meldung. Die Planung zeigt, welche Stopps verschiebbar sind."
+    },
+    "ai.model.photo_sort": {
+      "label": "Modell: Fotos zuordnen",
+      "help": "Ordnet eingefügte Fotos selbst zu: Art des Fotos (frontal, Topf, Weg …) und zu welcher Pflanze es gehört."
+    },
+    "ai.model.follow_up": {
+      "label": "Modell: Nachfrage formulieren",
+      "help": "Formuliert die Nachricht an den Kunden, wenn Fotos oder Angaben fehlen."
+    },
+    "ai.model.plant_image": {
+      "label": "Modell: Pflanzenbild erzeugen",
+      "help": "Bildgenerierung (z. B. OpenAI gpt-image-1). Bekommt nur Art und Maße der Pflanze, keine Kundendaten."
+    },
+    "ai.model.voice_command": {
+      "label": "Modell: Sprachsteuerung",
+      "help": "Versteht gesprochene Befehle und bedient die App mit Werkzeugen (z. B. ChatGPT oder Claude)."
+    },
+    "ai.model.transcribe": {
+      "label": "Modell: Spracherkennung",
+      "help": "Wandelt die Aufnahme in Text um (z. B. OpenAI gpt-4o-transcribe). Ohne Modell erkennt der Browser die Sprache."
+    },
+    "ai.model.team_parse": {
+      "label": "Modell: Spontan-Team aus Nachricht",
+      "help": "Liest aus einem Satz wie „Morgen fahren Lea und Tom mit dem Sprinter“ Tag, Personen und Fahrzeug."
+    },
+    "ai.model.formula_debate": {
+      "label": "Modell: Formel-Diskussion (Standard)",
+      "help": "Standardmodell für die KI-Diskussion über Formeln; die beiden Teilnehmer wählen Sie beim Start."
     }
   },
   "fields": {
@@ -1687,7 +1772,8 @@
     "pickup_proof": "Abholnachweis",
     "damage": "Schaden",
     "other": "Sonstiges",
-    "delivery_proof": "Abgabenachweis"
+    "delivery_proof": "Abgabenachweis",
+    "generated": "KI-Bild (erzeugt)"
   },
   "formula_vars": {
     "weight": {
@@ -1885,5 +1971,18 @@
   },
   "assistant": {
     "no_answer": "Dazu habe ich keine Antwort."
+  },
+  "notifications": {
+    "photos_missing": "Fotos oder Angaben fehlen: {who}",
+    "photos_missing_body": "Die KI hat eine Nachricht an den Kunden formuliert. Kopieren und abschicken.",
+    "customer_upload": "Kunde hat Fotos oder Standort geschickt: {who}",
+    "customer_upload_body": "{n} neue Fotos{loc}. Der Entwurf wurde neu ausgewertet.",
+    "with_location": ", Standort geteilt",
+    "tour_aborted": "Tour vorzeitig beendet: {tour}",
+    "tour_aborted_body": "{n} offene Stopps gehen zurück in die Planung. Grund: {reason}",
+    "team_created": "Tagesteam angelegt: {name}"
+  },
+  "share": {
+    "default_consent": "Ich bin damit einverstanden, dass die Gärtnerei meine Fotos und meinen Standort nur für die Planung der Abholung verwendet. Standortdaten werden aus den Fotos entfernt; die Fotos werden nach der Saison gelöscht."
   }
 }

@@ -50,6 +50,14 @@ API_ROUTER_MODULES = (
     "app.api.assistant",
     "app.api.privacy",
     "app.api.portal",
+    # round 2
+    "app.api.notifications",
+    "app.api.share",
+    "app.api.voice",
+    "app.api.tables",
+    "app.api.plant_images",
+    "app.api.spontaneous",
+    "app.api.debates",
 )
 
 

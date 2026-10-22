@@ -239,7 +239,10 @@ def run_retention(
     inv_cut = (today or date.today()).replace(
         year=(today or date.today()).year - int(r.get("privacy.invoice_retention_years"))
     )
-    out = {"photos": 0, "customers": 0, "invoices": 0}
+    draft_cut = now - timedelta(days=int(r.get("privacy.draft_text_days")))
+    out = {"photos": 0, "customers": 0, "invoices": 0, "draft_texts": 0, "share_links": 0}
+    out["draft_texts"] = purge_draft_texts(db, tenant_id, draft_cut)
+    out["share_links"] = purge_share_links(db, tenant_id, now)
     # photos of finished or long untouched orders, and of drafts that never became an order
     rows = db.execute(
         select(Photo, PickupOrder)
@@ -275,3 +278,124 @@ def run_retention(
             db, actor, tenant_id=tenant_id, entity="privacy", entity_id=None, action="retention", new=out
         )
     return out
+
+
+def _blank_contact(extracted: dict[str, Any]) -> dict[str, Any]:
+    ex = dict(extracted or {})
+    cust = dict(ex.get("customer") or {})
+    for k in ("email", "phone"):
+        if k in cust:
+            cust[k] = {"value": None, "confidence": 0}
+    ex["customer"] = cust
+    return ex
+
+
+def purge_draft_texts(db: Session, tenant_id: uuid.UUID, cut: datetime) -> int:
+    """Original messages of handled drafts (confirmed, rejected, failed) are emptied after the period;
+    rejected drafts also lose their photos. The orders made from them stay."""
+    n = 0
+    for d in db.scalars(
+        select(Draft).where(
+            Draft.tenant_id == tenant_id,
+            Draft.status.in_(("confirmed", "rejected", "failed")),
+            Draft.updated_at < cut,
+            Draft.source_text != "",
+        )
+    ):
+        d.source_text = ""
+        d.follow_up = None
+        d.extracted = _blank_contact(d.extracted)
+        if d.status == "rejected":
+            for p in list(db.scalars(select(Photo).where(Photo.draft_id == d.id, Photo.order_id.is_(None)))):
+                delete_photo(db, p)
+        n += 1
+    return n
+
+
+def purge_share_links(db: Session, tenant_id: uuid.UUID, now: datetime) -> int:
+    """Customer links that expired more than 30 days ago are removed (with their stored location)."""
+    from app.models.notify import Notification, ShareLink
+
+    n = 0
+    for row in list(
+        db.scalars(
+            select(ShareLink).where(
+                ShareLink.tenant_id == tenant_id, ShareLink.expires_at < now - timedelta(days=30)
+            )
+        )
+    ):
+        db.delete(row)
+        n += 1
+    for old in list(
+        db.scalars(
+            select(Notification).where(
+                Notification.tenant_id == tenant_id,
+                Notification.done_at.is_not(None),
+                Notification.done_at < now - timedelta(days=90),
+            )
+        )
+    ):
+        db.delete(old)
+    return n
+
+
+def overview(db: Session, tenant_id: uuid.UUID) -> dict[str, Any]:
+    """What personal data the tenant stores and when it is deleted (page "Datenschutz")."""
+    from sqlalchemy import func
+
+    from app.models.notify import ShareLink
+
+    r = SettingsResolver(db, tenant_id)
+
+    def count(model, *conds) -> int:
+        return int(
+            db.scalar(select(func.count()).select_from(model).where(model.tenant_id == tenant_id, *conds))
+            or 0
+        )
+
+    live = Customer.name != ERASED
+    now = datetime.now(UTC)
+    photo_cut = now - timedelta(days=int(r.get("privacy.photo_retention_days")))
+    return {
+        "customers": count(Customer, live, Customer.deleted_at.is_(None)),
+        "with_phone": count(Customer, live, Customer.phone.is_not(None), Customer.phone != ""),
+        "with_email": count(Customer, live, Customer.email.is_not(None), Customer.email != ""),
+        "addresses": count(Address, Address.deleted_at.is_(None)),
+        "with_coordinates": count(Address, Address.deleted_at.is_(None), Address.lat.is_not(None)),
+        "photos": count(Photo, Photo.kind != "generated"),
+        "photos_older": count(Photo, Photo.kind != "generated", Photo.created_at < photo_cut),
+        "drafts_with_text": count(Draft, Draft.source_text != ""),
+        "share_links_active": count(ShareLink, ShareLink.expires_at >= now, ShareLink.revoked.is_(False)),
+        "settings": {
+            k: r.get(k)
+            for k in (
+                "privacy.store_contact",
+                "privacy.photo_retention_days",
+                "privacy.customer_retention_days",
+                "privacy.draft_text_days",
+                "privacy.invoice_retention_years",
+            )
+        },
+    }
+
+
+def remove_contact_data(db: Session, actor: Actor, tenant_id: uuid.UUID) -> int:
+    """Remove phone and e-mail of all customers (when the owner decides not to keep contact data)."""
+    n = 0
+    for c in db.scalars(select(Customer).where(Customer.tenant_id == tenant_id)):
+        if c.phone or c.email:
+            c.phone = None
+            c.email = None
+            n += 1
+    for d in db.scalars(select(Draft).where(Draft.tenant_id == tenant_id)):
+        d.extracted = _blank_contact(d.extracted)
+    audit.record(
+        db,
+        actor,
+        tenant_id=tenant_id,
+        entity="privacy",
+        entity_id=None,
+        action="remove_contacts",
+        new={"customers": n},
+    )
+    return n

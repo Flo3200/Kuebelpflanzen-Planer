@@ -11,7 +11,13 @@ from tests.test_phase3_estimates import make_order
 def test_new_tenant_has_only_logistics(new_tenant):
     _, owner = new_tenant()
     me = owner.get("/api/auth/me").json()
-    assert me["modules"] == {"storage": False, "customer_billing": False, "portal": False, "payments": False}
+    assert me["modules"] == {
+        "storage": False,
+        "customer_billing": False,
+        "portal": False,
+        "payments": False,
+        "share": False,
+    }
     dash = owner.get("/api/dashboard").json()
     assert dash["storage"] is None and dash["revenue_quoted"] is None
     # settings of switched-off modules are marked (the settings page hides them), the switches are not

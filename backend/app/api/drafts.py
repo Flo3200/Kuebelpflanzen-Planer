@@ -46,6 +46,19 @@ def draft_dict(d: Draft, photos: list[Photo] | None = None) -> dict[str, Any]:
     }
 
 
+def _notification(db, d: Draft) -> dict[str, Any] | None:
+    from app.models.notify import Notification
+    from app.notify.service import notification_dict
+
+    n = db.scalar(
+        select(Notification)
+        .where(Notification.draft_id == d.id, Notification.kind == "photos_missing")
+        .order_by(Notification.created_at.desc())
+        .limit(1)
+    )
+    return notification_dict(n) if n else None
+
+
 def _summary(d: Draft) -> str:
     ex = d.extracted or {}
     name = ((ex.get("customer") or {}).get("name") or {}).get("value")
@@ -94,8 +107,12 @@ async def create_draft(
         raw = await f.read()
         if len(raw) > max_bytes:
             raise AppError("errors.file_too_large", status_code=413)
-        kind = kinds[i] if i < len(kinds) else "other"
-        save_photo(db, actor, raw, f.filename or f"foto{i}.jpg", kind, draft_id=draft.id, position=i)
+        kind = kinds[i] if i < len(kinds) and kinds[i] not in ("", "auto") else None
+        photo = save_photo(
+            db, actor, raw, f.filename or f"foto{i}.jpg", kind or "other", draft_id=draft.id, position=i
+        )
+        if kind is None:
+            photo.ai_results = {"auto": True}  # the AI decides kind and plant (ai.photo_sort)
     job = enqueue(
         db, "ai.process_draft", {"draft_id": str(draft.id)}, tenant_id=tid, created_by=actor.user_id
     )
@@ -130,7 +147,13 @@ def get_draft(draft_id: uuid.UUID, actor: CurrentActor, db: DB) -> dict[str, Any
     actor.require("drafts.write")
     d = _get(db, actor, draft_id)
     photos = list(db.scalars(select(Photo).where(Photo.draft_id == d.id).order_by(Photo.position)))
-    return draft_dict(d, photos)
+    from app.settings.service import SettingsResolver
+
+    return {
+        **draft_dict(d, photos),
+        "notification": _notification(db, d),
+        "store_contact_default": bool(SettingsResolver(db, d.tenant_id).get("privacy.store_contact")),
+    }
 
 
 class DraftPatch(BaseModel):
@@ -155,6 +178,7 @@ def patch_draft(draft_id: uuid.UUID, data: DraftPatch, actor: CurrentActor, db: 
 class ConfirmIn(BaseModel):
     extracted: dict[str, Any] | None = None
     order_status: str = "confirmed"
+    store_contact: bool | None = None  # None: setting privacy.store_contact
 
 
 @router.post("/{draft_id}/confirm")
@@ -163,7 +187,9 @@ def confirm(draft_id: uuid.UUID, data: ConfirmIn, actor: CurrentActor, db: DB) -
     actor.require("drafts.write", "orders.write", "customers.write")
     d = _get(db, actor, draft_id)
     status = data.order_status if data.order_status in ("draft", "confirmed") else "confirmed"
-    return intake.confirm_draft(db, actor, d, data.extracted, order_status=status)
+    return intake.confirm_draft(
+        db, actor, d, data.extracted, order_status=status, store_contact=data.store_contact
+    )
 
 
 @router.post("/{draft_id}/reject")
@@ -171,6 +197,9 @@ def reject(draft_id: uuid.UUID, actor: CurrentActor, db: DB) -> dict[str, Any]:
     actor.require("drafts.write")
     d = _get(db, actor, draft_id)
     d.status = "rejected"
+    from app.notify.service import close_for_draft
+
+    close_for_draft(db, d.id)
     audit.record(db, actor, tenant_id=d.tenant_id, entity="draft", entity_id=d.id, action="reject")
     return draft_dict(d)
 

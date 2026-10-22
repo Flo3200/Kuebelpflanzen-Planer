@@ -4,7 +4,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { api } from "../api/client";
 import { useAuth } from "../auth/auth";
 import { t } from "../i18n";
-import type { NavSection } from "./nav";
+import type { NavItem, NavSection } from "./nav";
+import { NotificationBell } from "./Notifications";
 import { ThemeToggle } from "./ThemeToggle";
 
 function LeafMark() {
@@ -24,6 +25,28 @@ export function AppShell({ nav }: { nav: NavSection[] }) {
   const qc = useQueryClient();
   useEffect(() => {
     setOpen(false);
+  }, [location.pathname]);
+  const visible = (items: NavItem[]) => items.filter((it) => (!it.perm || has(it.perm)) && (!it.module || mod(it.module)));
+  const rare = nav.flatMap((section) => visible(section.items).filter((it) => it.rare));
+  const [moreOpen, setMoreOpen] = useState(() => {
+    try {
+      return localStorage.getItem("kp.nav.more") === "1";
+    } catch {
+      return false;
+    }
+  });
+  const toggleMore = (v: boolean) => {
+    setMoreOpen(v);
+    try {
+      localStorage.setItem("kp.nav.more", v ? "1" : "0");
+    } catch {
+      /* private mode: only for this visit */
+    }
+  };
+  // an item of "Weitere Bereiche" that is open keeps the group open
+  useEffect(() => {
+    if (rare.some((it) => location.pathname.startsWith(it.to))) setMoreOpen(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
 
   const leaveTenant = async () => {
@@ -47,7 +70,7 @@ export function AppShell({ nav }: { nav: NavSection[] }) {
         </div>
         <nav>
           {nav.map((section, i) => {
-            const items = section.items.filter((it) => (!it.perm || has(it.perm)) && (!it.module || mod(it.module)));
+            const items = visible(section.items).filter((it) => !it.rare);
             if (!items.length) return null;
             return (
               <div key={i}>
@@ -60,6 +83,19 @@ export function AppShell({ nav }: { nav: NavSection[] }) {
               </div>
             );
           })}
+          {rare.length > 0 && (
+            <div className="nav-more">
+              <button className="nav-section nav-more-toggle" onClick={() => toggleMore(!moreOpen)} aria-expanded={moreOpen}>
+                {t("nav.more")} <span aria-hidden="true">{moreOpen ? "▾" : "▸"}</span>
+              </button>
+              {moreOpen &&
+                rare.map((it) => (
+                  <NavLink key={it.to} to={it.to} end={it.end}>
+                    {t(it.label)}
+                  </NavLink>
+                ))}
+            </div>
+          )}
         </nav>
         <div className="sidebar-foot">
           <div>{me?.label}</div>
@@ -88,7 +124,10 @@ export function AppShell({ nav }: { nav: NavSection[] }) {
               </>
             )}
           </div>
-          <ThemeToggle />
+          <div className="row" style={{ gap: 4 }}>
+            {me?.tenant && has("tenant.view") && <NotificationBell />}
+            <ThemeToggle />
+          </div>
         </header>
         <main id="main" className="content" tabIndex={-1}>
           <Outlet />

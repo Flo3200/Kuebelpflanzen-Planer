@@ -94,7 +94,10 @@
     "deviations": "Meldungen",
     "species_kb": "Wissensbasis Pflanzenarten",
     "costs": "Kosten",
-    "modules": "Module"
+    "modules": "Module",
+    "more": "Weitere Bereiche",
+    "privacy": "Datenschutz",
+    "tables": "Tabellen"
   },
   "login": {
     "title": "Willkommen zurück",
@@ -374,7 +377,8 @@
     "tomorrow": "Morgen",
     "no_tours_day": "Keine Touren.",
     "unload_at": "Abladen {from}–{to}",
-    "more": "… und {n} weitere"
+    "more": "… und {n} weitere",
+    "inactive": "Noch ohne Inhalt"
   },
   "orders": {
     "status": {
@@ -621,10 +625,11 @@
     "path_end": "Weg: Ende",
     "pickup_proof": "Abholnachweis",
     "damage": "Schaden",
-    "other": "Sonstiges"
+    "other": "Sonstiges",
+    "generated": "KI-Bild (erzeugt)"
   },
   "inbox": {
-    "description": "Fügen Sie Nachrichten von Kunden ein (E-Mail, Chat, abgetippte Sprachnachricht) und hängen Sie Fotos an. Die KI erzeugt daraus einen Entwurf, den Sie prüfen und bestätigen.",
+    "description": "Kopieren Sie Nachrichten von Kunden einfach hierher – Text und Fotos zusammen (E-Mail, Chat, abgetippte Sprachnachricht). Die KI ordnet die Fotos selbst zu, erzeugt einen Entwurf und meldet sich, wenn etwas fehlt.",
     "drafts": "Entwürfe",
     "open": "Offen",
     "status": {
@@ -647,8 +652,8 @@
     "to_check": "{n} Felder prüfen",
     "new_message": "Neue Nachricht",
     "source_label": "Quelle",
-    "paste_hint": "Nachricht einfügen; Fotos über „Fotos anhängen“.",
-    "placeholder": "Nachricht hier einfügen …",
+    "paste_hint": "Text und Fotos einfach einfügen (Strg+V) oder hineinziehen – Sie müssen nichts angeben.",
+    "placeholder": "Nachricht mit Fotos hier einfügen …",
     "add_photos": "Fotos anhängen",
     "analyse": "Auswerten",
     "sections": {
@@ -703,7 +708,18 @@
     "no_plants": "Keine Pflanzen erkannt.",
     "original": "Originalnachricht",
     "missing": "Fehlende Angaben",
-    "follow_up": "Vorschlag für eine Rückfrage"
+    "follow_up": "Nachricht an den Kunden",
+    "auto_sort_hint": "{n} Fotos – die KI erkennt selbst, was zu sehen ist und zu welcher Pflanze es gehört.",
+    "store_contact": "Kontaktdaten übernehmen",
+    "contact_not_stored": "Telefon und E-Mail werden nicht gespeichert (Einstellung „Kontaktdaten der Kunden speichern“). Haken setzen, wenn Sie sie für diesen Kunden möchten.",
+    "photo_plant": "Pflanze {n}",
+    "photo_path": "Weg",
+    "sorted_by_ai": "von der KI zugeordnet",
+    "make_share_link": "Kunden-Link erzeugen",
+    "copy_share_link": "Kunden-Link kopieren",
+    "mark_sent": "Abgeschickt",
+    "sent": "abgeschickt",
+    "request_done": "Als abgeschickt markiert"
   },
   "species": {
     "admin_description": "Interne Wissensbasis mit Standardwerten je Pflanzenart. Betriebe sehen sie nicht: Die KI bestimmt Art und Eigenschaften jeder Pflanze und speichert sie an der Pflanze; was sie offen lässt, kommt von hier.",
@@ -1855,5 +1871,97 @@
     "vehicles_unloading": "{n} Fahrzeug(e) beim Abladen",
     "max_parallel": "höchstens {n} Fahrzeuge gleichzeitig beim Abladen",
     "no_measurements": "Noch keine Messungen aus der Fahrer-App (Ankunft bis Eingeladen)."
+  },
+  "notifications": {
+    "title": "Benachrichtigungen",
+    "title_n": "Benachrichtigungen ({n} ungelesen)",
+    "empty": "Keine offenen Benachrichtigungen.",
+    "read_all": "Alle gelesen",
+    "copy_message": "Nachricht kopieren",
+    "done": "Erledigt"
+  },
+  "share": {
+    "title": "Fotos und Standort teilen",
+    "invalid": "Dieser Link ist ungültig oder abgelaufen.",
+    "intro": "Damit {tenant} die Abholung Ihrer Kübelpflanzen gut planen kann, schicken Sie hier einfach Fotos und teilen Ihren Standort. Ein Konto brauchen Sie nicht.",
+    "needed": "Das fehlt uns noch",
+    "how": "Tipp: jede Pflanze ganz im Bild, von vorn und von der Seite, mit einem A4-Blatt am Stamm als Maßstab; den Topf aus der Nähe; den Weg vom Stellplatz bis zur Straße mit jeder Tür und Treppe.",
+    "consent_title": "Einverständnis",
+    "accept": "Einverstanden",
+    "thanks": "Danke!",
+    "photos": "Fotos",
+    "photos_hint": "Wählen Sie Fotos aus oder machen Sie neue mit der Kamera.",
+    "uploads_so_far": "Bisher {n} Fotos geschickt – Sie können jederzeit weitere schicken.",
+    "choose_photos": "Fotos auswählen",
+    "uploaded": "{n} Fotos geschickt. Vielen Dank!",
+    "location": "Standort",
+    "location_hint": "Stehen Sie bei den Pflanzen? Dann teilen Sie Ihren Standort, damit das Team Sie sicher findet.",
+    "location_done": "Standort geteilt – Sie können ihn jederzeit neu teilen.",
+    "note": "Hinweis für das Team (optional)",
+    "note_placeholder": "z. B. Einfahrt hinten, Tor links",
+    "share_location": "Standort teilen",
+    "location_saved": "Standort gespeichert. Vielen Dank!",
+    "no_geolocation": "Ihr Gerät kann den Standort nicht bestimmen.",
+    "location_denied": "Der Standort wurde nicht freigegeben.",
+    "footer": "Ihre Fotos und Ihr Standort werden nur für die Planung der Abholung verwendet."
+  },
+  "privacy_page": {
+    "description": "Welche Daten über Ihre Kunden gespeichert sind, wofür und wie lange. Die App löscht automatisch nach den Fristen unten.",
+    "customers": "Kunden",
+    "addresses": "{n} Adressen, {geo} mit Koordinaten",
+    "contacts": "Mit Kontaktdaten",
+    "contacts_sub": "{phone} mit Telefon, {email} mit E-Mail",
+    "photos": "Fotos",
+    "photos_sub": "{n} älter als {days} Tage",
+    "drafts": "Original-Nachrichten",
+    "drafts_sub": "werden nach {days} Tagen geleert · {links} aktive Kunden-Links",
+    "what_title": "Was gespeichert wird",
+    "data": "Daten",
+    "why": "Wofür",
+    "until": "Wie lange",
+    "rows": {
+      "name": {
+        "data": "Name des Kunden",
+        "why": "Zuordnung von Auftrag und Tour",
+        "until": "bis {customer_days} Tage nach dem letzten Auftrag"
+      },
+      "address": {
+        "data": "Adresse, Zugangshinweise",
+        "why": "Tourenplanung, Navigation des Teams",
+        "until": "wie der Kunde"
+      },
+      "contact": {
+        "data": "Telefon, E-Mail",
+        "why": "nur wenn Sie es möchten – z. B. damit das Team anrufen kann",
+        "until": "{contact}"
+      },
+      "photos": {
+        "data": "Fotos von Pflanzen und Weg",
+        "why": "Maße, Gewicht, Teamgröße, Ladeplan",
+        "until": "{photo_days} Tage nach Abschluss des Auftrags; Standortdaten werden beim Hochladen entfernt"
+      },
+      "messages": {
+        "data": "Original-Nachrichten im Posteingang",
+        "why": "Prüfen des Entwurfs",
+        "until": "{draft_days} Tage nach Bestätigen oder Verwerfen"
+      },
+      "location": {
+        "data": "Geteilter Standort (Kunden-Link)",
+        "why": "Das Team findet den Stellplatz",
+        "until": "wird zur Adresse; der Link verfällt 30 Tage nach Ablauf"
+      },
+      "invoices": {
+        "data": "Rechnungen (nur mit Modul)",
+        "why": "gesetzliche Aufbewahrungspflicht",
+        "until": "{years} Jahre"
+      }
+    },
+    "contact_on": "wie der Kunde (Einstellung: speichern)",
+    "contact_off": "werden nicht übernommen (nur von Hand eingetragene bleiben)",
+    "clean_now": "Jetzt aufräumen",
+    "cleaned": "Aufgeräumt: {photos} Fotos, {customers} Kunden, {drafts} Nachrichten gelöscht.",
+    "remove_contacts": "Alle Kontaktdaten entfernen",
+    "remove_contacts_q": "Telefon und E-Mail von {n} Kunden löschen?",
+    "contacts_removed": "Kontaktdaten von {n} Kunden entfernt."
   }
 }

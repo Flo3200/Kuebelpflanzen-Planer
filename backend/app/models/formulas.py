@@ -88,3 +88,28 @@ class Quote(IdMixin, TimestampMixin, TenantMixin, Base):
     file_id: Mapped[uuid.UUID | None] = mapped_column(Uuid)
     status: Mapped[str] = mapped_column(String(15), default="created")
     with_drive_estimate: Mapped[bool] = mapped_column(Boolean, default=True)
+
+
+class FormulaDebate(IdMixin, TimestampMixin, OptionalTenantMixin, Base):
+    """Two AI models discuss a formula in rounds; the final proposal is checked against measurements.
+
+    rounds:   [{"speaker": "a"|"b", "model": label, "text": ..., "formula": {...} | None}, ...]
+    proposal: {"expressions": [...], "parameters": {...}, "summary": ...} (validated by the parser)
+    evaluation: errors of the current and the proposed formula on the measurements
+    """
+
+    __tablename__ = "formula_debates"
+
+    formula_key: Mapped[str] = mapped_column(String(30), default="time")
+    question: Mapped[str | None] = mapped_column(Text)
+    model_a_id: Mapped[uuid.UUID | None] = mapped_column(Uuid)
+    model_b_id: Mapped[uuid.UUID | None] = mapped_column(Uuid)
+    n_rounds: Mapped[int] = mapped_column(Integer, default=2)
+    status: Mapped[str] = mapped_column(String(12), default="new")  # new | running | done | failed
+    rounds: Mapped[list[Any]] = mapped_column(default=list)
+    proposal: Mapped[dict[str, Any]] = mapped_column(default=dict)
+    evaluation: Mapped[dict[str, Any]] = mapped_column(default=dict)
+    error: Mapped[str | None] = mapped_column(Text)
+    job_id: Mapped[uuid.UUID | None] = mapped_column(Uuid)
+    created_by: Mapped[uuid.UUID | None] = mapped_column(Uuid)
+    adopted_version_id: Mapped[uuid.UUID | None] = mapped_column(Uuid)

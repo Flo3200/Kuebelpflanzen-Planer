@@ -74,6 +74,9 @@ class Team(IdMixin, TimestampMixin, SoftDeleteMixin, TenantMixin, Base):
     valid_to: Mapped[date | None] = mapped_column(Date, info={"group": "validity"})
     active: Mapped[bool] = mapped_column(Boolean, default=True, info={"group": "master", "list": True})
     notes: Mapped[str | None] = mapped_column(Text, info={"advanced": True, "group": "master"})
+    # spontaneous team for one day (created by message, voice or the quick form)
+    ad_hoc: Mapped[bool] = mapped_column(Boolean, default=False, info={"readonly": True, "list": True})
+    source_text: Mapped[str | None] = mapped_column(Text, info={"hidden": True})
 
     def valid_on(self, day: date) -> bool:
         if self.valid_from and day < self.valid_from:

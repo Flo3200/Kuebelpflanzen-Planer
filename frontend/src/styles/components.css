@@ -927,3 +927,116 @@ table.table {
   border-radius: var(--radius-sm);
   font-size: var(--fs-sm, 0.9rem);
 }
+
+/* ---- round 2: paste zone of the inbox, notification bell ------------------------------- */
+.paste-zone {
+  border-radius: var(--radius-md);
+  transition: box-shadow 0.15s;
+}
+.paste-zone.dragging {
+  box-shadow: 0 0 0 2px var(--accent);
+  background: var(--accent-soft);
+}
+.paste-thumbs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+  gap: var(--space-2);
+}
+.paste-thumbs figure {
+  position: relative;
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--surface-2);
+}
+.paste-thumbs img {
+  display: block;
+  width: 100%;
+  height: 92px;
+  object-fit: cover;
+}
+.paste-thumbs figure button {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background: var(--surface);
+  min-width: 26px;
+  padding: 0 6px;
+}
+.bell {
+  position: relative;
+}
+.bell .btn.icon {
+  position: relative;
+}
+.bell-count {
+  position: absolute;
+  top: 0;
+  right: 0;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: var(--radius-pill);
+  background: var(--terra-500);
+  color: #fff;
+  font-size: 11px;
+  line-height: 18px;
+  font-weight: 600;
+}
+.bell-panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  width: min(420px, calc(100vw - 24px));
+  max-height: 70vh;
+  overflow: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  z-index: 40;
+}
+.bell-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.bell-list li {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.bell-list li.unread {
+  background: var(--accent-soft);
+}
+.bell-message {
+  white-space: pre-wrap;
+  font-family: inherit;
+  margin: 6px 0 0;
+  max-height: 120px;
+  overflow: auto;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+.sidebar .nav-more {
+  margin-top: var(--space-4);
+  border-top: 1px solid color-mix(in srgb, currentColor 15%, transparent);
+  padding-top: var(--space-2);
+}
+.sidebar .nav-more-toggle {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+.dash-inactive {
+  margin-top: var(--space-6);
+}
+.dash-inactive .card {
+  opacity: 0.75;
+}

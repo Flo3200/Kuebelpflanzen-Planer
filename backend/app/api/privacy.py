@@ -73,3 +73,23 @@ def retention(data: RetentionIn, actor: CurrentActor, db: DB) -> dict[str, Any]:
     if data.sync:
         job = run_now(db, job)
     return {"job_id": job.id, "status": job.status, "result": job.result, "error": job.error}
+
+
+@router.get("/api/privacy/overview")
+def privacy_overview(actor: CurrentActor, db: DB) -> dict[str, Any]:
+    """What personal data is stored and when it is deleted."""
+    actor.require("customers.read")
+    from app.privacy.service import overview
+
+    return overview(db, actor.require_tenant())
+
+
+@router.post("/api/privacy/remove-contacts")
+def remove_contacts(actor: CurrentActor, db: DB) -> dict[str, Any]:
+    """Remove phone and e-mail of all customers of the tenant."""
+    actor.require("tenant.settings")
+    tid = actor.require_tenant()
+    confirm_if_agent(db, actor, "delete:contacts", {"tenant_id": str(tid)})
+    from app.privacy.service import remove_contact_data
+
+    return {"customers": remove_contact_data(db, actor, tid)}

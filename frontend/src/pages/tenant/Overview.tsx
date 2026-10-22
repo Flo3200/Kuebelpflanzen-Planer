@@ -69,6 +69,41 @@ export function TenantOverviewPage() {
   const c = charts.data;
   const name = me?.user?.name?.split(" ")[0] ?? me?.label ?? "";
   const drafts = (L?.open_drafts.orders ?? 0) + (L?.open_drafts.vehicles ?? 0);
+  const unplannedCard = L && (
+    <Card key="unplanned" title={t("dashboard.unplanned_title")} actions={<Link to="/betrieb/planung">{t("nav.planning")}</Link>}>
+      {L.unplanned.length === 0 && <p className="muted small">{t("dashboard.all_planned")}</p>}
+      <div className="stack" style={{ gap: 8 }}>
+        {L.unplanned.map((u) => (
+          <div key={u.order_id}>
+            <div className="row between">
+              <Link to={`/betrieb/auftraege/${u.order_id}`}>
+                {u.number} {u.customer ? `· ${u.customer}` : ""}
+              </Link>
+              <Badge tone="amber">{reasonText(u.reason)}</Badge>
+            </div>
+            {u.hints?.[0] && <div className="xs muted">→ {hintText(u.hints[0])}</div>}
+          </div>
+        ))}
+        {L.unplanned_total > L.unplanned.length && <div className="xs muted">{t("dashboard.more", { n: L.unplanned_total - L.unplanned.length })}</div>}
+      </div>
+    </Card>
+  );
+  const cards = L
+    ? [
+        { active: L.today.tours.length > 0, node: <DayCard key="today" title={t("dashboard.today")} day={L.today} /> },
+        { active: L.tomorrow.tours.length > 0, node: <DayCard key="tomorrow" title={t("dashboard.tomorrow")} day={L.tomorrow} /> },
+        { active: L.unplanned_total > 0, node: unplannedCard },
+      ]
+    : [];
+  const charts_ = c
+    ? [
+        { active: c.timeline.length > 0, node: <TourTimelineChart key="timeline" day={c.day} days={c.tour_days} onDay={setDay} tours={c.timeline} unload={c.unload} /> },
+        { active: c.utilisation.some((u: any) => u.staff_used || u.vehicles_used), node: <UtilisationChart key="util" data={c.utilisation} /> },
+        { active: c.costs.some((x: any) => x.cost > 0), node: <CostPerDayChart key="cost" data={c.costs} /> },
+        { active: c.costs.some((x: any) => x.cost_per_plant != null), node: <CostPerPlantChart key="cpp" data={c.costs} /> },
+        { active: c.accuracy.length > 0, node: <AccuracyChart key="acc" data={c.accuracy} /> },
+      ]
+    : [];
   return (
     <>
       <div className="hero">
@@ -110,34 +145,26 @@ export function TenantOverviewPage() {
       )}
       {L && (
         <div className="grid cols-3" style={{ marginBottom: 24, alignItems: "start" }}>
-          <DayCard title={t("dashboard.today")} day={L.today} />
-          <DayCard title={t("dashboard.tomorrow")} day={L.tomorrow} />
-          <Card title={t("dashboard.unplanned_title")} actions={<Link to="/betrieb/planung">{t("nav.planning")}</Link>}>
-            {L.unplanned.length === 0 && <p className="muted small">{t("dashboard.all_planned")}</p>}
-            <div className="stack" style={{ gap: 8 }}>
-              {L.unplanned.map((u) => (
-                <div key={u.order_id}>
-                  <div className="row between">
-                    <Link to={`/betrieb/auftraege/${u.order_id}`}>
-                      {u.number} {u.customer ? `· ${u.customer}` : ""}
-                    </Link>
-                    <Badge tone="amber">{reasonText(u.reason)}</Badge>
-                  </div>
-                  {u.hints?.[0] && <div className="xs muted">→ {hintText(u.hints[0])}</div>}
-                </div>
-              ))}
-              {L.unplanned_total > L.unplanned.length && <div className="xs muted">{t("dashboard.more", { n: L.unplanned_total - L.unplanned.length })}</div>}
-            </div>
-          </Card>
+          {cards.filter((x) => x.active).map((x) => x.node)}
         </div>
       )}
-      {c && (
+      {c && charts_.some((x) => x.active) && (
         <div className="grid cols-2" style={{ alignItems: "start" }}>
-          <TourTimelineChart day={c.day} days={c.tour_days} onDay={setDay} tours={c.timeline} unload={c.unload} />
-          <UtilisationChart data={c.utilisation} />
-          <CostPerDayChart data={c.costs} />
-          <CostPerPlantChart data={c.costs} />
-          <AccuracyChart data={c.accuracy} />
+          {charts_.filter((x) => x.active).map((x) => x.node)}
+        </div>
+      )}
+      {/* inactive things (nothing to show yet) are listed at the very bottom */}
+      {(cards.some((x) => !x.active) || charts_.some((x) => !x.active)) && (
+        <div className="dash-inactive">
+          <div className="xs muted" style={{ textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>
+            {t("dashboard.inactive")}
+          </div>
+          <div className="grid cols-3" style={{ alignItems: "start" }}>
+            {cards.filter((x) => !x.active).map((x) => x.node)}
+          </div>
+          <div className="grid cols-2" style={{ alignItems: "start", marginTop: 16 }}>
+            {charts_.filter((x) => !x.active).map((x) => x.node)}
+          </div>
         </div>
       )}
       {mod("customer_billing") && d?.revenue_quoted != null && (

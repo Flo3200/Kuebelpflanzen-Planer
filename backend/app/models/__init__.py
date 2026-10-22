@@ -8,6 +8,7 @@ from app.models import (  # noqa: F401
     fleet,
     formulas,
     masterdata,
+    notify,
     orders,
     packing,
     planning,

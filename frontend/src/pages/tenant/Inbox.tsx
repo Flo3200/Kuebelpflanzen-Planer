@@ -5,7 +5,8 @@ import { api } from "../../api/client";
 import { Badge, Card, Confidence, Empty, ErrorBox, PageHeader, Spinner, useToast } from "../../components/ui";
 import { fmtDate, t } from "../../i18n";
 import { JobStatus, useJob } from "../common/Jobs";
-import { PHOTO_KINDS, PhotoThumb } from "./Photos";
+import { PhotoThumb } from "./Photos";
+import { useAuth } from "../../auth/auth";
 
 const STATUS_TONE: Record<string, "green" | "amber" | "red" | "blue" | undefined> = {
   processing: "blue",
@@ -67,10 +68,24 @@ export function InboxPage() {
 function Composer({ onCreated }: { onCreated: (d: any) => void }) {
   const [text, setText] = useState("");
   const [source, setSource] = useState("email");
-  const [files, setFiles] = useState<{ file: File; kind: string }[]>([]);
+  const [files, setFiles] = useState<{ file: File; url: string }[]>([]);
   const [busy, setBusy] = useState(false);
+  const [drag, setDrag] = useState(false);
   const [error, setError] = useState<unknown>(null);
   const input = useRef<HTMLInputElement>(null);
+  useEffect(() => () => files.forEach((f) => URL.revokeObjectURL(f.url)), [files]);
+  const addFiles = (list: File[]) => {
+    const images = list.filter((f) => f.type.startsWith("image/"));
+    if (images.length) setFiles((prev) => [...prev, ...images.map((file) => ({ file, url: URL.createObjectURL(file) }))]);
+  };
+  // text and photos are pasted together (e.g. a whole chat or e-mail); the AI sorts the photos itself
+  const onPaste = (e: React.ClipboardEvent) => {
+    const pasted = Array.from(e.clipboardData.files ?? []);
+    if (pasted.length) {
+      addFiles(pasted);
+      if (!e.clipboardData.getData("text")) e.preventDefault();
+    }
+  };
   const submit = async () => {
     setBusy(true);
     setError(null);
@@ -78,10 +93,7 @@ function Composer({ onCreated }: { onCreated: (d: any) => void }) {
       const form = new FormData();
       form.append("text", text);
       form.append("source_kind", source);
-      files.forEach((f) => {
-        form.append("files", f.file);
-        form.append("kinds", f.kind);
-      });
+      files.forEach((f) => form.append("files", f.file));
       const d = await api.upload("/api/drafts", form);
       setText("");
       setFiles([]);
@@ -94,7 +106,19 @@ function Composer({ onCreated }: { onCreated: (d: any) => void }) {
   };
   return (
     <Card title={t("inbox.new_message")}>
-      <div className="stack">
+      <div
+        className={`stack paste-zone ${drag ? "dragging" : ""}`}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDrag(true);
+        }}
+        onDragLeave={() => setDrag(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDrag(false);
+          addFiles(Array.from(e.dataTransfer.files ?? []));
+        }}
+      >
         <div className="row">
           <select className="input" style={{ width: 200 }} value={source} onChange={(e) => setSource(e.target.value)} aria-label={t("inbox.source_label")}>
             {["email", "text", "voice"].map((s) => (
@@ -105,34 +129,20 @@ function Composer({ onCreated }: { onCreated: (d: any) => void }) {
           </select>
           <span className="small muted">{t("inbox.paste_hint")}</span>
         </div>
-        <textarea className="input" rows={7} value={text} onChange={(e) => setText(e.target.value)} placeholder={t("inbox.placeholder")} aria-label={t("inbox.new_message")} />
+        <textarea className="input" rows={7} value={text} onChange={(e) => setText(e.target.value)} onPaste={onPaste} placeholder={t("inbox.placeholder")} aria-label={t("inbox.new_message")} />
         {files.length > 0 && (
-          <div className="stack" style={{ gap: 6 }}>
+          <div className="paste-thumbs" aria-label={t("orders.photos")}>
             {files.map((f, i) => (
-              <div className="row" key={i}>
-                <span className="small" style={{ minWidth: 200 }}>
-                  {f.file.name}
-                </span>
-                <select
-                  className="input"
-                  style={{ width: 260 }}
-                  value={f.kind}
-                  onChange={(e) => setFiles(files.map((x, j) => (j === i ? { ...x, kind: e.target.value } : x)))}
-                  aria-label={t("photos.kind")}
-                >
-                  {PHOTO_KINDS.map((k) => (
-                    <option key={k} value={k}>
-                      {t(`photo_kinds.${k}`)}
-                    </option>
-                  ))}
-                </select>
-                <button className="btn small ghost" onClick={() => setFiles(files.filter((_, j) => j !== i))}>
-                  {t("common.remove")}
+              <figure key={f.url}>
+                <img src={f.url} alt={f.file.name} />
+                <button className="btn small ghost" onClick={() => setFiles(files.filter((_, j) => j !== i))} aria-label={`${t("common.remove")}: ${f.file.name}`}>
+                  ×
                 </button>
-              </div>
+              </figure>
             ))}
           </div>
         )}
+        {files.length > 0 && <div className="xs muted">{t("inbox.auto_sort_hint", { n: files.length })}</div>}
         <ErrorBox error={error} />
         <div className="row between">
           <div>
@@ -143,9 +153,8 @@ function Composer({ onCreated }: { onCreated: (d: any) => void }) {
               multiple
               hidden
               onChange={(e) => {
-                const added = Array.from(e.target.files ?? []).map((file, i) => ({ file, kind: PHOTO_KINDS[Math.min(files.length + i, 3)] }));
+                addFiles(Array.from(e.target.files ?? []));
                 e.target.value = "";
-                setFiles([...files, ...added]);
               }}
             />
             <button className="btn ghost" onClick={() => input.current?.click()}>
@@ -222,9 +231,14 @@ export function DraftReviewPage() {
   const minConf = threshold.data?.values?.find((v: any) => v.key === "photos.min_confidence")?.value ?? 0.6;
   const [ex, setEx] = useState<any>(null);
   const [error, setError] = useState<unknown>(null);
+  const [storeContact, setStoreContact] = useState<boolean | null>(null);
+  const { mod } = useAuth();
   useEffect(() => {
     if (q.data?.extracted && Object.keys(q.data.extracted).length) setEx(structuredClone(q.data.extracted));
   }, [q.data?.status, q.data?.extracted]);
+  useEffect(() => {
+    if (q.data && storeContact === null) setStoreContact(Boolean(q.data.store_contact_default));
+  }, [q.data, storeContact]);
 
   if (q.isLoading) return <Spinner />;
   if (q.error) return <ErrorBox error={q.error} />;
@@ -240,7 +254,7 @@ export function DraftReviewPage() {
   const confirm = async () => {
     setError(null);
     try {
-      const r = await api.post(`/api/drafts/${id}/confirm`, { extracted: ex });
+      const r = await api.post(`/api/drafts/${id}/confirm`, { extracted: ex, store_contact: Boolean(storeContact) });
       qc.invalidateQueries({ queryKey: ["drafts"] });
       toast({ text: t("inbox.confirmed", { number: r.order_number }) });
       navigate(`/betrieb/auftraege/${r.order_id}`);
@@ -297,7 +311,19 @@ export function DraftReviewPage() {
           <div className="stack lg">
             {review.size > 0 && editable && <div className="alert warn">{t("inbox.review_hint", { n: review.size })}</div>}
             {SECTIONS.map((sec) => (
-              <Card key={sec.key} title={t(`inbox.sections.${sec.key}`)}>
+              <Card
+                key={sec.key}
+                title={t(`inbox.sections.${sec.key}`)}
+                actions={
+                  sec.key === "customer" && (
+                    <label className="row small" style={{ gap: 6 }}>
+                      <input type="checkbox" checked={Boolean(storeContact)} onChange={(e) => setStoreContact(e.target.checked)} disabled={!editable} />
+                      {t("inbox.store_contact")}
+                    </label>
+                  )
+                }
+              >
+                {sec.key === "customer" && !storeContact && <p className="xs muted" style={{ marginTop: 0 }}>{t("inbox.contact_not_stored")}</p>}
                 <div className="form-grid">
                   {sec.fields.map(([f, kind]) => (
                     <ValueField
@@ -363,11 +389,19 @@ export function DraftReviewPage() {
                 {d.source_text}
               </pre>
             </Card>
+            <CustomerRequest draft={d} share={mod("share")} onChange={() => qc.invalidateQueries({ queryKey: ["draft", id] })} />
             {(d.photos ?? []).length > 0 && (
               <Card title={t("orders.photos")}>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 8 }}>
                   {d.photos.map((p: any) => (
-                    <PhotoThumb key={p.id} photo={p} />
+                    <div key={p.id} className="stack" style={{ gap: 4 }}>
+                      <PhotoThumb photo={p} />
+                      {p.ai_results?.sorted && (
+                        <span className="xs muted" title={p.ai_results.sorted.description ?? undefined}>
+                          {p.ai_results.sorted.plant ? t("inbox.photo_plant", { n: p.ai_results.sorted.plant }) : t("inbox.photo_path")} · {t("inbox.sorted_by_ai")}
+                        </span>
+                      )}
+                    </div>
                   ))}
                 </div>
                 {d.photo_check?.feedback?.length > 0 && (
@@ -388,23 +422,66 @@ export function DraftReviewPage() {
                 </ul>
               </Card>
             )}
-            {d.follow_up && (
-              <Card
-                title={t("inbox.follow_up")}
-                actions={
-                  <button className="btn small secondary" onClick={() => navigator.clipboard.writeText(d.follow_up).then(() => toast({ text: t("common.copied") }))}>
-                    {t("common.copy")}
-                  </button>
-                }
-              >
-                <pre className="small" style={{ whiteSpace: "pre-wrap", fontFamily: "inherit", margin: 0 }}>
-                  {d.follow_up}
-                </pre>
-              </Card>
-            )}
+
           </div>
         </div>
       )}
     </>
+  );
+}
+
+/** Message to the customer for the missing photos/details (written by the AI), with the customer link. */
+function CustomerRequest({ draft, share, onChange }: { draft: any; share: boolean; onChange: () => void }) {
+  const toast = useToast();
+  const [link, setLink] = useState<string | null>(null);
+  const n = draft.notification;
+  const message: string | null = draft.follow_up ?? n?.message ?? null;
+  if (!message && !share) return null;
+  const copy = (text: string) => navigator.clipboard.writeText(text).then(() => toast({ text: t("common.copied") }));
+  const makeLink = async () => {
+    const r = await api.post<any>(`/api/drafts/${draft.id}/share-link`);
+    setLink(r.url);
+  };
+  const done = async () => {
+    await api.post(`/api/notifications/${n.id}/done`);
+    toast({ text: t("inbox.request_done") });
+    onChange();
+  };
+  const shareUrl = link ?? n?.data?.share_url ?? null;
+  return (
+    <Card
+      title={t("inbox.follow_up")}
+      actions={
+        message && (
+          <button className="btn small secondary" onClick={() => copy(message)}>
+            {t("common.copy")}
+          </button>
+        )
+      }
+    >
+      {message && (
+        <pre className="small" style={{ whiteSpace: "pre-wrap", fontFamily: "inherit", margin: 0 }}>
+          {message}
+        </pre>
+      )}
+      <div className="row" style={{ marginTop: 12, flexWrap: "wrap" }}>
+        {share && !shareUrl && (
+          <button className="btn small ghost" onClick={makeLink}>
+            {t("inbox.make_share_link")}
+          </button>
+        )}
+        {shareUrl && (
+          <button className="btn small ghost" onClick={() => copy(shareUrl)} title={shareUrl}>
+            {t("inbox.copy_share_link")}
+          </button>
+        )}
+        {n && !n.done && (
+          <button className="btn small ghost" onClick={done}>
+            {t("inbox.mark_sent")}
+          </button>
+        )}
+        {n?.done && <Badge tone="green">{t("inbox.sent")}</Badge>}
+      </div>
+    </Card>
   );
 }

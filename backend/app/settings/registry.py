@@ -40,6 +40,14 @@ AI_FUNCTIONS = (
     "vehicle_photo",
     "vehicle_chat",
     "load_layout",
+    # round 2
+    "photo_sort",
+    "follow_up",
+    "plant_image",
+    "voice_command",
+    "transcribe",
+    "team_parse",
+    "formula_debate",
 )
 
 
@@ -72,6 +80,7 @@ SETTINGS: tuple[SettingDef, ...] = (
     _s("modules.customer_billing", "bool", False, "modules", important=True),
     _s("modules.portal", "bool", False, "modules", important=True),
     _s("modules.payments", "bool", False, "modules", important=True),
+    _s("modules.share", "bool", False, "modules", important=True),
     # --- general -------------------------------------------------------------
     _s("general.season_start_month", "int", 9, "general", unit="Monat", min=1, max=12),
     _s("general.currency", "enum", "EUR", "general", choices=("EUR", "CHF")),
@@ -389,6 +398,7 @@ SETTINGS: tuple[SettingDef, ...] = (
     _s("planning.pack_retry_limit", "int", 4, "planning", unit="", min=0, max=20),
     _s("planning.capacity_shrink", "float", 0.9, "planning", unit="×", min=0.5, max=0.99),
     _s("planning.form_teams", "enum", "auto", "planning", choices=("auto", "fixed")),
+    _s("planning.abort_enabled", "bool", False, "planning", important=True),
     # staged optimisation: fastest route -> team composition variants -> search experiments -> final
     _s("planning.strategy", "enum", "staged", "planning", choices=("staged", "single"), important=True),
     _s("planning.team_size_default", "int", 2, "planning", unit="Pers.", min=1, max=8),
@@ -438,6 +448,11 @@ SETTINGS: tuple[SettingDef, ...] = (
     _s("privacy.photo_retention_days", "int", 240, "privacy", unit="Tage", min=7, max=3650),
     _s("privacy.customer_retention_days", "int", 1095, "privacy", unit="Tage", min=30, max=3650),
     _s("privacy.invoice_retention_years", "int", 10, "privacy", levels=P, unit="Jahre", min=6, max=15),
+    _s("privacy.store_contact", "bool", False, "privacy", important=True),
+    _s("privacy.draft_text_days", "int", 60, "privacy", unit="Tage", min=1, max=3650),
+    # --- notifications and customer share link (round 2) ---------------------------------
+    _s("notify.missing_photos", "bool", True, "notify", important=True),
+    _s("share.link_days", "int", 30, "notify", unit="Tage", min=1, max=365, module="share"),
     # --- AI ---------------------------------------------------------------------------
     *[_s(f"ai.model.{fn}", "str", "", "ai", choices_source="ai_models") for fn in AI_FUNCTIONS],
     _s("ai.fallback_model", "str", "", "ai", choices_source="ai_models"),
@@ -446,6 +461,10 @@ SETTINGS: tuple[SettingDef, ...] = (
     _s("ai.warn_pct", "float", 80.0, "ai", unit="%", min=1, max=100),
     _s("ai.max_retries", "int", 2, "ai", unit="", min=0, max=5),
     _s("ai.usd_to_eur", "float", 0.92, "ai", levels=P, unit="€/$", min=0.1, max=10),
+    _s("ai.plant_images", "enum", "missing", "ai", choices=("off", "missing"), important=True),
+    _s("ai.image_price_eur", "float", 0.04, "ai", levels=P, unit="€", min=0, max=5),
+    _s("voice.enabled", "bool", True, "ai", important=True),
+    _s("voice.transcription", "enum", "auto", "ai", choices=("auto", "ai", "browser")),
     # --- driver app ----------------------------------------------------------------
     _s("driver.per_plant_events", "bool", False, "driver", important=True),
     _s("driver.require_pickup_photo", "bool", True, "driver"),

@@ -1,6 +1,7 @@
 // Navigation of the owner/dispatcher app and the admin app. Items are shown if the user has the
-// permission and the optional module of the item is on.
-export type NavItem = { to: string; label: string; perm?: string; end?: boolean; module?: string };
+// permission and the optional module of the item is on. Rarely used items (rare) are listed at the very
+// bottom of the menu under "Weitere Bereiche", collapsed (wish of the owner: inactive things go down).
+export type NavItem = { to: string; label: string; perm?: string; end?: boolean; module?: string; rare?: boolean };
 export type NavSection = { label?: string; items: NavItem[] };
 
 export const TENANT_NAV: NavSection[] = [
@@ -9,37 +10,38 @@ export const TENANT_NAV: NavSection[] = [
     label: "nav.section_intake",
     items: [
       { to: "/betrieb/posteingang", label: "nav.inbox", perm: "drafts.write" },
-      { to: "/betrieb/kunden", label: "nav.customers", perm: "customers.read" },
       { to: "/betrieb/auftraege", label: "nav.orders", perm: "orders.read" },
-    ],
-  },
-  {
-    label: "nav.section_resources",
-    items: [
-      { to: "/betrieb/personal", label: "nav.staff", perm: "staff.read" },
-      { to: "/betrieb/teams", label: "nav.teams", perm: "staff.read" },
-      { to: "/betrieb/fahrzeuge", label: "nav.vehicles", perm: "fleet.read" },
-      { to: "/betrieb/module", label: "nav.modules", perm: "fleet.read" },
-      { to: "/betrieb/hilfsmittel", label: "nav.equipment", perm: "fleet.read" },
-      { to: "/betrieb/verfuegbarkeit", label: "nav.availability", perm: "staff.read" },
-      { to: "/betrieb/lager", label: "nav.storage", perm: "tenant.view", module: "storage" },
+      { to: "/betrieb/tabellen", label: "nav.tables", perm: "orders.read" },
+      { to: "/betrieb/kunden", label: "nav.customers", perm: "customers.read", rare: true },
     ],
   },
   {
     label: "nav.section_planning",
     items: [
       { to: "/betrieb/planung", label: "nav.planning", perm: "planning.read" },
-      { to: "/betrieb/szenarien", label: "nav.scenarios", perm: "scenarios.run" },
       { to: "/betrieb/meldungen", label: "nav.deviations", perm: "orders.read" },
+      { to: "/betrieb/szenarien", label: "nav.scenarios", perm: "scenarios.run", rare: true },
+    ],
+  },
+  {
+    label: "nav.section_resources",
+    items: [
+      { to: "/betrieb/teams", label: "nav.teams", perm: "staff.read" },
+      { to: "/betrieb/personal", label: "nav.staff", perm: "staff.read" },
+      { to: "/betrieb/fahrzeuge", label: "nav.vehicles", perm: "fleet.read" },
+      { to: "/betrieb/verfuegbarkeit", label: "nav.availability", perm: "staff.read" },
+      { to: "/betrieb/module", label: "nav.modules", perm: "fleet.read", rare: true },
+      { to: "/betrieb/hilfsmittel", label: "nav.equipment", perm: "fleet.read", rare: true },
+      { to: "/betrieb/lager", label: "nav.storage", perm: "tenant.view", module: "storage", rare: true },
     ],
   },
   {
     label: "nav.section_analysis",
     items: [
       { to: "/betrieb/kosten", label: "nav.costs", perm: "tenant.view" },
-      { to: "/betrieb/preise", label: "nav.pricing", perm: "orders.read", module: "customer_billing" },
-      { to: "/betrieb/formeln", label: "nav.formulas", perm: "formulas.write" },
-      { to: "/betrieb/modell", label: "nav.model", perm: "planning.read" },
+      { to: "/betrieb/preise", label: "nav.pricing", perm: "orders.read", module: "customer_billing", rare: true },
+      { to: "/betrieb/formeln", label: "nav.formulas", perm: "formulas.write", rare: true },
+      { to: "/betrieb/modell", label: "nav.model", perm: "planning.read", rare: true },
     ],
   },
   {
@@ -47,12 +49,13 @@ export const TENANT_NAV: NavSection[] = [
     items: [
       { to: "/betrieb/einstellungen", label: "nav.settings", perm: "tenant.settings" },
       { to: "/betrieb/assistent", label: "nav.assistant", perm: "ai.use" },
-      { to: "/betrieb/ki", label: "nav.ai_tenant", perm: "ai.use" },
       { to: "/betrieb/benutzer", label: "nav.users", perm: "tenant.users" },
-      { to: "/betrieb/agenten", label: "nav.agents", perm: "tenant.agents" },
-      { to: "/betrieb/abrechnung", label: "nav.billing", perm: "tenant.billing" },
-      { to: "/betrieb/auftraege-im-hintergrund", label: "nav.jobs", perm: "tenant.view" },
-      { to: "/betrieb/protokoll", label: "nav.audit", perm: "audit.read" },
+      { to: "/betrieb/datenschutz", label: "nav.privacy", perm: "customers.read", rare: true },
+      { to: "/betrieb/ki", label: "nav.ai_tenant", perm: "ai.use", rare: true },
+      { to: "/betrieb/agenten", label: "nav.agents", perm: "tenant.agents", rare: true },
+      { to: "/betrieb/abrechnung", label: "nav.billing", perm: "tenant.billing", rare: true },
+      { to: "/betrieb/auftraege-im-hintergrund", label: "nav.jobs", perm: "tenant.view", rare: true },
+      { to: "/betrieb/protokoll", label: "nav.audit", perm: "audit.read", rare: true },
     ],
   },
 ];

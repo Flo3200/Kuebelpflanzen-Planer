@@ -17,7 +17,26 @@ FUNCTIONS = (
     "vehicle_photo",
     "vehicle_chat",
     "load_layout",
+    "photo_sort",
+    "follow_up",
+    "plant_image",
+    "voice_command",
+    "transcribe",
+    "team_parse",
+    "formula_debate",
 )
+
+# kinds the AI may give a pasted photo (app.models.orders.PHOTO_KINDS without proofs and generated images)
+SORT_KINDS = [
+    "plant_front",
+    "plant_side",
+    "plant_top",
+    "pot",
+    "path_start",
+    "path_segment",
+    "path_end",
+    "other",
+]
 
 
 def vf(kind: str) -> dict[str, Any]:
@@ -168,8 +187,63 @@ def vehicle_schema() -> dict[str, Any]:
     )
 
 
+PHOTO_SORT_SCHEMA = obj(
+    {
+        "photos": {
+            "type": "array",
+            "items": obj(
+                {
+                    "index": {"type": "integer"},
+                    "kind": {"type": "string", "enum": SORT_KINDS},
+                    "plant": {"type": ["integer", "null"]},
+                    "confidence": {"type": "number"},
+                    "description": {"type": "string"},
+                }
+            ),
+        },
+        "plants_seen": {"type": "integer"},
+        "notes": {"type": "string"},
+    }
+)
+
+FOLLOW_UP_SCHEMA = obj({"subject": {"type": "string"}, "message": {"type": "string"}})
+
+TEAM_PARSE_SCHEMA = obj(
+    {
+        "date": vf("string"),
+        "members": {"type": "array", "items": {"type": "string"}},
+        "vehicle": vf("string"),
+        "name": {"type": ["string", "null"]},
+        "questions": {"type": "array", "items": {"type": "string"}},
+    }
+)
+
+FORMULA_TURN_SCHEMA = obj(
+    {
+        "text": {"type": "string"},
+        "formula": {
+            "type": ["object", "null"],
+            "properties": {
+                "expressions": {
+                    "type": "array",
+                    "items": obj(
+                        {"name": {"type": "string"}, "level": {"type": "string"}, "expr": {"type": "string"}}
+                    ),
+                },
+                "parameters": {"type": "object"},
+            },
+            "required": ["expressions", "parameters"],
+        },
+        "agree": {"type": "boolean"},
+    }
+)
+
 SCHEMAS = {
     "message_intake": INTAKE_SCHEMA,
+    "photo_sort": PHOTO_SORT_SCHEMA,
+    "follow_up": FOLLOW_UP_SCHEMA,
+    "team_parse": TEAM_PARSE_SCHEMA,
+    "formula_debate": FORMULA_TURN_SCHEMA,
     "completeness_check": COMPLETENESS_SCHEMA,
     "photo_analysis": PHOTO_ANALYSIS_SCHEMA,
     "vehicle_photo": vehicle_schema(),
@@ -209,7 +283,7 @@ TRAIT_RULES = (
 
 DEFAULT_PROMPTS: dict[str, dict[str, Any]] = {
     "message_intake": {
-        "version": 2,
+        "version": 3,
         "system": (
             "Du unterstützt eine Gärtnerei, die im Herbst Kübelpflanzen bei Kunden abholt, überwintert und im "
             "Frühjahr zurückbringt. Du liest weitergeleitete Kundennachrichten (E-Mail, Chat, Sprachnachricht als "
@@ -224,7 +298,8 @@ DEFAULT_PROMPTS: dict[str, dict[str, Any]] = {
             "- Pflanzenarten auf Deutsch, möglichst wie im mitgelieferten Katalog benannt.\n"
             + TRAIT_RULES
             + "- Weglänge und Gewicht sind meist unsicher: niedrige Sicherheit, wenn nicht ausdrücklich genannt.\n"
-            "- missing: kurze deutsche Stichworte, was für die Planung fehlt.\n"
+            "- missing: kurze deutsche Stichworte, was für die Planung fehlt (Kontaktdaten zählen nicht dazu, der "
+            "Betrieb antwortet auf demselben Weg).\n"
             "- follow_up_message: eine freundliche, kurze Rückfrage an den Kunden auf Deutsch (Sie-Form), die nach "
             "den fehlenden Angaben bzw. Fotos fragt; leer, wenn nichts fehlt."
         ),
@@ -302,6 +377,72 @@ DEFAULT_PROMPTS: dict[str, dict[str, Any]] = {
             "genau einmal. Ein Programm prüft jede Position und verbessert den Vorschlag."
         ),
         "instructions": "Antworte als JSON nach dem vorgegebenen Schema.",
+    },
+    "photo_sort": {
+        "version": 1,
+        "system": (
+            "Kunden einer Gärtnerei schicken Fotos ihrer Kübelpflanzen und des Wegs zum Fahrzeug, ohne sie zu "
+            "beschriften. Ordne jedes Foto zu. kind: plant_front (Pflanze von vorn, meist mit A4-Blatt am Stamm), "
+            "plant_side (von der Seite), plant_top (schräg von oben), pot (Topf aus der Nähe), path_start "
+            "(Stellplatz der Pflanzen), path_segment (Tür, Treppe, Engstelle, Flur), path_end (Straße, Einfahrt, "
+            "Fahrzeug), other (nichts davon). plant: Nummer der Pflanze aus der mitgelieferten Liste (1 = erste); "
+            "zeigt ein Foto eine Pflanze, die nicht in der Liste steht, nimm die nächste freie Nummer; bei Wegfotos "
+            "null. Gleiche Pflanze auf mehreren Fotos = gleiche Nummer (achte auf Topf, Wuchs, Hintergrund). "
+            "plants_seen: wie viele verschiedene Pflanzen auf den Fotos zu sehen sind. description: kurz, was zu "
+            "sehen ist. confidence: ehrliche Sicherheit 0–1."
+        ),
+        "instructions": "Antworte als JSON nach dem vorgegebenen Schema.",
+    },
+    "follow_up": {
+        "version": 1,
+        "system": (
+            "Du schreibst für eine Gärtnerei eine kurze, freundliche Nachricht an einen Kunden (Sie-Form, Deutsch), "
+            "damit er fehlende Fotos und Angaben für die Abholung seiner Kübelpflanzen schickt. Nenne konkret, "
+            "welche Fotos fehlen (je Pflanze, mit Bezeichnung) und welche Angaben fehlen; erkläre in einem Satz, "
+            "wie die Fotos gemacht werden (A4-Blatt am Stamm als Maßstab, ganze Pflanze im Bild, Weg vom Stellplatz "
+            "bis zur Straße mit jeder Tür und Treppe). Wenn ein Link mitgeliefert wird, bitte darum, die Fotos über "
+            "diesen Link hochzuladen und dort den Standort zu teilen. Keine Preise, keine Termine zusagen. "
+            "Unterschreibe mit dem Namen des Betriebs. subject: kurzer Betreff."
+        ),
+        "instructions": "Antworte als JSON nach dem vorgegebenen Schema.",
+    },
+    "team_parse": {
+        "version": 1,
+        "system": (
+            "Der Inhaber einer Gärtnerei legt spontan ein Team für einen Tag an, z. B. „Morgen fahren Lea und Tom "
+            "mit dem Sprinter“. Lies den Tag (date als JJJJ-MM-TT, relativ zu „heute“), die Personen (members: Namen "
+            "genau wie in der mitgelieferten Personalliste; unbekannte Namen so, wie sie genannt werden) und das "
+            "Fahrzeug (vehicle: Name wie in der Fahrzeugliste, sonst null). name: kurzer Teamname, wenn genannt. "
+            "questions: Rückfragen, wenn Tag oder Personen fehlen."
+        ),
+        "instructions": "Antworte als JSON nach dem vorgegebenen Schema.",
+    },
+    "formula_debate": {
+        "version": 1,
+        "system": (
+            "Du nimmst an einer fachlichen Diskussion zweier KI-Modelle teil. Thema: Welche Formel schätzt die Zeit "
+            "(bzw. die Größe) für die Abholung von Kübelpflanzen am besten? Du bekommst die aktuelle Formel in der "
+            "Formelsprache der App (Ausdrücke mit Namen, Ebene plant oder stop, erlaubte Variablen und Funktionen), "
+            "ihre Parameter, Kennzahlen aus echten Messungen und die bisherigen Beiträge. Argumentiere sachlich und "
+            "knapp (höchstens 180 Wörter), gehe auf den Vorredner ein, benenne Schwächen und schlage eine konkrete, "
+            "einfache Verbesserung vor. Wenn du eine Formel vorschlägst, gib sie vollständig in formula an "
+            "(alle Ausdrücke, nur erlaubte Variablen und Funktionen, Parameter mit Startwert). Weniger Parameter "
+            "sind besser, solange die Genauigkeit gleich bleibt. agree: true, wenn du dem letzten Vorschlag "
+            "zustimmst."
+        ),
+        "instructions": "Antworte als JSON nach dem vorgegebenen Schema.",
+    },
+    "voice_command": {
+        "version": 1,
+        "system": (
+            "Du bist die Sprachsteuerung des Kübelpflanzen-Planers einer Gärtnerei. Der Benutzer spricht einen "
+            "Befehl; du bedienst die App mit den Werkzeugen. Seiten öffnen mit open_page, Aufträge und Kunden "
+            "suchen mit search, Kundennachrichten als Entwurf in den Posteingang mit create_draft, Tagesteams mit "
+            "create_day_team, Tourenplanung mit start_planning, Touren eines Tages mit list_tours, Einstellungen "
+            "mit set_setting. Führe nur aus, was gesagt wurde. Antworte danach in einem kurzen deutschen Satz "
+            "(wird vorgelesen), was du getan hast. Wenn du etwas nicht verstehst, frage kurz nach."
+        ),
+        "instructions": "",
     },
     "settings_assistant": {
         "system": (

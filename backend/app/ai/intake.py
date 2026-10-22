@@ -45,21 +45,132 @@ def _images(db: Session, photos: list[Photo], limit: int = 12) -> list[AIImage]:
         scale = ""
         if p.a4 and p.a4.get("detected") and p.a4.get("cm_per_px"):
             scale = f", A4 erkannt: {p.a4['cm_per_px']} cm/Pixel"
+        kind = "noch nicht zugeordnet" if _unsorted(p) else labels.get(p.kind, p.kind)
+        plant_no = _plant_no(p)
         out.append(
             AIImage(
                 data=data,
                 media_type=stored.content_type,
-                label=f"Bild {i}: {labels.get(p.kind, p.kind)}{scale}",
+                label=f"Bild {i}: {kind}{f', Pflanze {plant_no}' if plant_no else ''}{scale}",
             )
         )
     return out
 
 
+def _unsorted(p: Photo) -> bool:
+    """Pasted without a kind and not yet sorted by the AI."""
+    ai_results = p.ai_results or {}
+    return bool(ai_results.get("auto")) and "sorted" not in ai_results
+
+
+def _plant_no(p: Photo) -> int | None:
+    """Number of the plant (1-based, order of the draft's plant list) the AI assigned the photo to."""
+    sorted_ = (p.ai_results or {}).get("sorted") or {}
+    n = sorted_.get("plant")
+    return int(n) if isinstance(n, int) and n > 0 else None
+
+
 def _photo_context(photos: list[Photo]) -> list[dict[str, Any]]:
     return [
-        {"kind": p.kind, "quality": p.quality, "a4": p.a4, "width": p.width_px, "height": p.height_px}
+        {
+            "kind": p.kind,
+            "plant": _plant_no(p),
+            "quality": p.quality,
+            "a4": p.a4,
+            "width": p.width_px,
+            "height": p.height_px,
+        }
         for p in photos
     ]
+
+
+def _plant_names(plants: list[dict[str, Any]]) -> list[str]:
+    out = []
+    for i, p in enumerate(plants, start=1):
+        name = _value(p.get("species")) or _value(p.get("label")) or "Pflanze"
+        count = _value(p.get("count")) or 1
+        out.append(
+            f"{name}{f' ({count} Stück)' if count and int(count) > 1 else ''}" if name else f"Pflanze {i}"
+        )
+    return out
+
+
+def sort_photos(
+    db: Session,
+    tenant_id: uuid.UUID,
+    photos: list[Photo],
+    plants: list[dict[str, Any]],
+    job_id: uuid.UUID | None = None,
+) -> dict[str, Any]:
+    """AI assigns pasted photos: kind (front, side, pot, path …) and the plant they show."""
+    from app.ai.functions import SORT_KINDS
+
+    names = _plant_names(plants)
+    text = (
+        "Pflanzen laut Nachricht:\n"
+        + ("\n".join(f"Pflanze {i}: {n}" for i, n in enumerate(names, start=1)) or "keine genannt")
+        + "\n\nFotos (lokale Prüfung):\n"
+        + "\n".join(
+            f"Bild {i}: {p.width_px}×{p.height_px} px, A4-Blatt {'erkannt' if p.a4_detected else 'nicht erkannt'}"
+            for i, p in enumerate(photos, start=1)
+        )
+    )
+    context = {"photos": _photo_context(photos), "plants": names}
+    resp, _ = ai.call(
+        db, tenant_id, "photo_sort", text, images=_images(db, photos), context=context, job_id=job_id
+    )
+    result = resp.data or {}
+    for item in result.get("photos") or []:
+        idx = int(item.get("index") or 0) - 1
+        if not 0 <= idx < len(photos):
+            continue
+        p = photos[idx]
+        kind = item.get("kind")
+        if kind in SORT_KINDS:
+            p.kind = kind
+        plant = item.get("plant")
+        p.ai_results = {
+            **(p.ai_results or {}),
+            "sorted": {
+                "kind": kind,
+                "plant": int(plant) if isinstance(plant, int) and not kind.startswith("path") else None,
+                "confidence": item.get("confidence"),
+                "description": item.get("description"),
+            },
+        }
+    for p in photos:  # photos the AI skipped keep their place, but count as sorted
+        if _unsorted(p):
+            p.ai_results = {**(p.ai_results or {}), "sorted": {"kind": p.kind, "plant": None}}
+    db.flush()
+    return result
+
+
+def _add_plants_from_photos(extracted: dict[str, Any], photos: list[Photo]) -> None:
+    """Plants that only appear on photos (not in the text) get their own entry."""
+    plants = extracted.setdefault("plants", [])
+    highest = max((_plant_no(p) or 0 for p in photos), default=0)
+    while len(plants) < highest:
+        n = len(plants) + 1
+        plants.append(
+            {
+                "label": {"value": f"Pflanze {n} (nur auf Fotos)", "confidence": 0.5},
+                "species": {"value": None, "confidence": 0},
+                "count": {"value": 1, "confidence": 0.6},
+                **{
+                    k: {"value": None, "confidence": 0}
+                    for k in (
+                        "pot_diameter_cm",
+                        "pot_height_cm",
+                        "total_height_cm",
+                        "crown_width_cm",
+                        "weight_kg",
+                        *knowledge.AI_TRAITS,
+                        "location",
+                        "notes",
+                    )
+                },
+            }
+        )
 
 
 def species_names(db: Session, tenant_id: uuid.UUID) -> list[str]:
@@ -166,10 +277,14 @@ def process_draft(
     )
     extracted = resp.data
     photo_check: dict[str, Any] = {}
+    if any(_unsorted(p) for p in photos):
+        sort_photos(db, tenant_id, photos, extracted.get("plants") or [], job_id=job_id)
+        _add_plants_from_photos(extracted, photos)
     if photos:
-        photo_check = completeness(db, tenant_id, photos, job_id=job_id)
-        analysis = analyse_photos(db, tenant_id, photos, job_id=job_id)
-        _merge_analysis(extracted, analysis)
+        photo_check = completeness(
+            db, tenant_id, photos, job_id=job_id, plant_names=_plant_names(extracted.get("plants") or [])
+        )
+        _analyse_into(db, tenant_id, extracted, photos, job_id)
     threshold = float(resolver.get("photos.min_confidence"))
     conf = flatten_confidence(extracted)
     # species properties are background values (knowledge base as fallback), not review fields
@@ -194,7 +309,132 @@ def process_draft(
     draft.status = "review"
     draft.error = None
     db.flush()
+    _request_missing(db, tenant_id, draft, resolver, job_id)
     return draft
+
+
+def _analyse_into(
+    db: Session,
+    tenant_id: uuid.UUID,
+    extracted: dict[str, Any],
+    photos: list[Photo],
+    job_id: uuid.UUID | None,
+) -> None:
+    """Photo analysis per plant (photos the AI assigned to it) and once for the path photos."""
+    plants = extracted.get("plants") or []
+    groups: dict[int, list[Photo]] = {}
+    for p in photos:
+        n = _plant_no(p)
+        if n and not p.kind.startswith("path"):
+            groups.setdefault(n, []).append(p)
+    path_photos = [p for p in photos if p.kind.startswith("path")]
+    if not groups:
+        # kinds given by hand, no plant numbers: one analysis, plant values only for a single plant
+        analysis = analyse_photos(db, tenant_id, photos, job_id=job_id)
+        if len(plants) == 1:
+            _merge_plant(plants[0], analysis.get("plant") or {})
+        _merge_path(extracted, analysis.get("path") or {})
+        return
+    first = True
+    for n, group in sorted(groups.items()):
+        analysis = analyse_photos(db, tenant_id, group + (path_photos if first else []), job_id=job_id)
+        if n <= len(plants):
+            _merge_plant(plants[n - 1], analysis.get("plant") or {})
+        if first:
+            _merge_path(extracted, analysis.get("path") or {})
+        first = False
+
+
+def _contact_wanted(resolver: SettingsResolver) -> bool:
+    return bool(resolver.get("privacy.store_contact"))
+
+
+def _request_missing(
+    db: Session,
+    tenant_id: uuid.UUID,
+    draft: Draft,
+    resolver: SettingsResolver,
+    job_id: uuid.UUID | None,
+) -> None:
+    """If photos or details are missing: the AI writes the message to the customer, the office gets a
+    notification with it (and, with the share module, a personal upload link for the customer)."""
+    from app.i18n import t
+    from app.notify.service import close_for_draft, create_share_link, notify, share_enabled
+
+    ex = draft.extracted or {}
+    missing = [m for m in ex.get("missing") or [] if "kontakt" not in m.lower()]
+    feedback = list((draft.photo_check or {}).get("feedback") or [])
+    if not draft.photo_check and not db.scalar(select(Photo.id).where(Photo.draft_id == draft.id).limit(1)):
+        feedback = feedback or ["Es wurden noch keine Fotos geschickt."]
+    if not (missing or feedback):
+        close_for_draft(db, draft.id, "photos_missing")
+        return
+    if not resolver.get("notify.missing_photos"):
+        return
+    from app.models.notify import Notification
+
+    previous = db.scalar(
+        select(Notification)
+        .where(Notification.draft_id == draft.id, Notification.kind == "photos_missing")
+        .order_by(Notification.created_at.desc())
+        .limit(1)
+    )
+    link = (previous.data or {}).get("share_url") if previous else None
+    if link is None and share_enabled(db, tenant_id):
+        _, link = create_share_link(db, tenant_id, draft_id=draft.id)
+    try:
+        message = write_follow_up(db, tenant_id, ex, missing, feedback, link, job_id)
+    except AppError:
+        message = draft.follow_up  # AI not reachable: keep the message from the intake
+    if message:
+        draft.follow_up = message
+    who = _value((ex.get("customer") or {}).get("name")) or (draft.source_text or "")[:40] or "Entwurf"
+    notify(
+        db,
+        tenant_id,
+        "photos_missing",
+        t("notifications.photos_missing", who=who),
+        body=t("notifications.photos_missing_body"),
+        message=draft.follow_up,
+        link=f"/betrieb/posteingang/{draft.id}",
+        draft_id=draft.id,
+        data={"missing": missing, "feedback": feedback, "share_url": link},
+    )
+
+
+def write_follow_up(
+    db: Session,
+    tenant_id: uuid.UUID,
+    extracted: dict[str, Any],
+    missing: list[str],
+    feedback: list[str],
+    link: str | None,
+    job_id: uuid.UUID | None = None,
+) -> str:
+    """The AI formulates the request for the missing photos and details (function follow_up)."""
+    from app.models.core import Tenant
+
+    tenant = db.get(Tenant, tenant_id)
+    name = _value((extracted.get("customer") or {}).get("name"))
+    plants = _plant_names(extracted.get("plants") or [])
+    text = (
+        f"Betrieb: {tenant.name if tenant else ''}\n"
+        f"Kunde: {name or 'Name unbekannt'}\n"
+        f"Pflanzen: {'; '.join(f'Pflanze {i}: {n}' for i, n in enumerate(plants, start=1)) or 'noch keine'}\n"
+        f"Fehlende Angaben: {'; '.join(missing) or 'keine'}\n"
+        f"Fehlende oder mangelhafte Fotos: {'; '.join(feedback) or 'keine'}\n"
+        f"Link zum Hochladen: {link or 'keiner'}"
+    )
+    context = {
+        "tenant": tenant.name if tenant else "",
+        "customer": name,
+        "plants": plants,
+        "missing": missing,
+        "feedback": feedback,
+        "link": link,
+    }
+    resp, _ = ai.call(db, tenant_id, "follow_up", text, context=context, job_id=job_id)
+    return str((resp.data or {}).get("message") or "").strip()
 
 
 def _is_set(extracted: dict[str, Any], path: str) -> bool:
@@ -209,30 +449,28 @@ def _is_set(extracted: dict[str, Any], path: str) -> bool:
     return _value(node) is not None
 
 
-def _merge_analysis(extracted: dict[str, Any], analysis: dict[str, Any]) -> None:
-    """Fill values from photo analysis where the message gave nothing (or less confidence)."""
-    plants = extracted.get("plants") or []
-    pa = analysis.get("plant") or {}
-    if len(plants) == 1:
-        target = plants[0]
-        mapping = {
-            "total_height_cm": "total_height_cm",
-            "crown_width_cm": "crown_width_cm",
-            "pot_diameter_cm": "pot_diameter_cm",
-            "pot_height_cm": "pot_height_cm",
-            "weight_kg": "weight_kg",
-            "species": "species",
-            **{t: t for t in knowledge.AI_TRAITS},
-        }
-        for src, dst in mapping.items():
-            new = pa.get(src) or {}
-            old = target.get(dst) or {"value": None, "confidence": 0}
-            if new.get("value") is not None and (
-                old.get("value") is None or new.get("confidence", 0) > old.get("confidence", 0)
-            ):
-                target[dst] = new
+def _merge_plant(target: dict[str, Any], pa: dict[str, Any]) -> None:
+    """Fill a draft plant with values from photo analysis where the message gave nothing (or less)."""
+    for field in (
+        "total_height_cm",
+        "crown_width_cm",
+        "pot_diameter_cm",
+        "pot_height_cm",
+        "weight_kg",
+        "species",
+        *knowledge.AI_TRAITS,
+    ):
+        new = pa.get(field) or {}
+        old = target.get(field) or {"value": None, "confidence": 0}
+        if new.get("value") is not None and (
+            old.get("value") is None or new.get("confidence", 0) > old.get("confidence", 0)
+        ):
+            target[field] = new
+
+
+def _merge_path(extracted: dict[str, Any], analysis_path: dict[str, Any]) -> None:
     path = extracted.get("path") or {}
-    for k, new in (analysis.get("path") or {}).items():
+    for k, new in analysis_path.items():
         if (
             k in path
             and new.get("value") is not None
@@ -242,18 +480,40 @@ def _merge_analysis(extracted: dict[str, Any], analysis: dict[str, Any]) -> None
 
 
 def completeness(
-    db: Session, tenant_id: uuid.UUID, photos: list[Photo], job_id: uuid.UUID | None = None, plants: int = 1
+    db: Session,
+    tenant_id: uuid.UUID,
+    photos: list[Photo],
+    job_id: uuid.UUID | None = None,
+    plant_names: list[str] | None = None,
 ) -> dict[str, Any]:
     resolver = SettingsResolver(db, tenant_id)
     required = list(resolver.get("photos.plant_set")) + list(resolver.get("photos.path_set"))
     required = [k for k in required if k != "path_segment"]
     labels = kind_labels()
-    context = {"photos": _photo_context(photos), "required_kinds": required, "kind_labels": labels}
+    plant_names = plant_names or []
+    context = {
+        "photos": _photo_context(photos),
+        "required_kinds": required,
+        "kind_labels": labels,
+        "plants": plant_names,
+    }
+    per_plant = any(_plant_no(p) for p in photos)
     text = (
-        "Erwartete Fotoarten: " + ", ".join(labels.get(k, k) for k in required) + "\n"
-        "Lokale Bildprüfung (Schärfe, Belichtung, A4-Erkennung) je Foto:\n"
+        "Erwartete Fotoarten"
+        + (" je Pflanze" if per_plant else "")
+        + ": "
+        + ", ".join(labels.get(k, k) for k in required)
+        + "\n"
+        + (
+            "Pflanzen: " + "; ".join(f"Pflanze {i}: {n}" for i, n in enumerate(plant_names, start=1)) + "\n"
+            if plant_names
+            else ""
+        )
+        + "Lokale Bildprüfung (Schärfe, Belichtung, A4-Erkennung) je Foto:\n"
         + "\n".join(
-            f"Bild {i}: {labels.get(p.kind, p.kind)}; scharf={p.quality.get('sharp')}; belichtung_ok={p.quality.get('exposure_ok')}; "
+            f"Bild {i}: {labels.get(p.kind, p.kind)}"
+            + (f", Pflanze {_plant_no(p)}" if _plant_no(p) else "")
+            + f"; scharf={p.quality.get('sharp')}; belichtung_ok={p.quality.get('exposure_ok')}; "
             f"A4={'ja' if p.a4_detected else 'nein'}"
             for i, p in enumerate(photos, start=1)
         )
@@ -281,7 +541,7 @@ def analyse_photos(
         db, tenant_id, "photo_analysis", text, images=_images(db, photos), context=context, job_id=job_id
     )
     for p in photos:
-        p.ai_results = {"analysis": resp.data, "at": datetime.now(UTC).isoformat()}
+        p.ai_results = {**(p.ai_results or {}), "analysis": resp.data, "at": datetime.now(UTC).isoformat()}
     return resp.data
 
 
@@ -360,6 +620,25 @@ def _segments_from_path(path: dict[str, Any]) -> list[dict[str, Any]]:
     return segments
 
 
+def _find_customer_by_address(
+    db: Session, tenant_id: uuid.UUID, name: str, street: str, plz: str
+) -> Customer | None:
+    """Same name at the same address: the customer is known even without contact data."""
+    return db.scalar(
+        select(Customer)
+        .join(Address, Address.customer_id == Customer.id)
+        .where(
+            Customer.tenant_id == tenant_id,
+            Customer.deleted_at.is_(None),
+            Address.deleted_at.is_(None),
+            func.lower(Customer.name) == name.lower(),
+            func.lower(Address.street) == street.lower(),
+            Address.postal_code == plz,
+        )
+        .limit(1)
+    )
+
+
 def _find_customer(
     db: Session, tenant_id: uuid.UUID, email: str | None, phone: str | None
 ) -> Customer | None:
@@ -385,13 +664,18 @@ def confirm_draft(
     draft: Draft,
     extracted: dict[str, Any] | None = None,
     order_status: str = "confirmed",
+    store_contact: bool | None = None,
 ) -> dict[str, Any]:
+    """store_contact: take phone and e-mail into the customer (None = setting privacy.store_contact)."""
     from app.api.orders import create_path, create_plant, new_order
 
     if draft.status not in ("review", "new", "failed"):
         raise AppError("errors.draft_not_pending")
     tid = actor.require_tenant()
-    threshold = float(SettingsResolver(db, tid).get("photos.min_confidence"))
+    resolver = SettingsResolver(db, tid)
+    threshold = float(resolver.get("photos.min_confidence"))
+    if store_contact is None:
+        store_contact = _contact_wanted(resolver)
     data = extracted if extracted is not None else draft.extracted
     c, a, o = data.get("customer") or {}, data.get("address") or {}, data.get("order") or {}
     name = _value(c.get("name"))
@@ -399,11 +683,14 @@ def confirm_draft(
     if not name or not street or not plz or not city:
         raise AppError("errors.validation")
     customer = _find_customer(db, tid, _value(c.get("email")), _value(c.get("phone")))
+    if customer is None:
+        customer = _find_customer_by_address(db, tid, name, street, plz)
     created_customer = customer is None
     if customer is None:
         customer = Customer(tenant_id=tid, name=name, source="ai_draft")
         db.add(customer)
-    for field in ("company", "email", "phone"):
+    # contact data only if the owner wants it (setting or switch in the draft)
+    for field in ("company", "email", "phone") if store_contact else ("company",):
         if _value(c.get(field)) and not getattr(customer, field):
             setattr(customer, field, _value(c.get(field)))
     if draft.photo_check or draft.source_kind in ("email", "text"):
@@ -436,6 +723,12 @@ def confirm_draft(
     from app.api.orders import _geocode_hook
 
     _geocode_hook(db, actor, address, True)
+    from app.models.notify import ShareLink
+
+    for link in db.scalars(select(ShareLink).where(ShareLink.draft_id == draft.id)):
+        if link.location:  # the customer shared the location through the customer link
+            address.lat, address.lon = link.location["lat"], link.location["lon"]
+            address.geocode_source = "customer"
 
     def as_date(x: Any) -> date | None:
         try:
@@ -470,7 +763,8 @@ def confirm_draft(
         confidence={k: (v or {}).get("confidence") for k, v in path_data.items() if isinstance(v, dict)},
     )
     plants_created: list[Plant] = []
-    for p in data.get("plants") or []:
+    first_of_entry: dict[int, Plant] = {}  # plant number in the draft (1-based) -> first created plant
+    for entry_no, p in enumerate(data.get("plants") or [], start=1):
         count = int(_value(p.get("count")) or 1)
         values = {
             "label": _value(p.get("label")),
@@ -492,11 +786,15 @@ def confirm_draft(
                 db, actor, order, vals, confidence=conf, path_id=path.id, traits=p, threshold=threshold
             )
             plants_created.append(plant)
-    # move the photos from the draft to the order (and to the plant if there is exactly one)
+            first_of_entry.setdefault(entry_no, plant)
+    # move the photos from the draft to the order and to the plant the AI assigned them to
+    # (or to the only plant)
     for photo in db.scalars(select(Photo).where(Photo.draft_id == draft.id)):
         photo.order_id = order.id
         if photo.kind.startswith("path"):
             photo.path_id = path.id
+        elif _plant_no(photo) in first_of_entry:
+            photo.plant_id = first_of_entry[_plant_no(photo)].id
         elif len(plants_created) == 1:
             photo.plant_id = plants_created[0].id
     draft.status = "confirmed"
@@ -506,6 +804,10 @@ def confirm_draft(
     draft.order_id = order.id
     if extracted is not None:
         draft.extracted = extracted
+    from app.models.notify import Notification
+
+    for n in db.scalars(select(Notification).where(Notification.draft_id == draft.id)):
+        n.order_id = order.id
     audit.record(
         db,
         actor,
