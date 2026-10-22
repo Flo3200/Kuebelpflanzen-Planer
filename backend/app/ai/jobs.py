@@ -170,3 +170,30 @@ def plant_images_job(ctx: JobContext) -> dict:
     return {
         "images": generate_for_order(ctx.db, order, job_id=ctx.job_id, force=bool(ctx.payload.get("force")))
     }
+
+
+@handler("ai.formula_debate")
+def formula_debate_job(ctx: JobContext) -> dict:
+    """Two AI models discuss a formula in turns; the proposal is checked against the measurements."""
+    from app.formula.debate import run_debate
+    from app.models.formulas import FormulaDebate
+
+    debate = ctx.db.get(FormulaDebate, uuid.UUID(ctx.payload["debate_id"]))
+    debate.status = "running"
+    ctx.db.flush()
+    try:
+        run_debate(ctx.db, debate, ctx.progress)
+    except AppError as exc:
+        debate.status = "failed"
+        debate.error = exc.code
+        ctx.db.commit()
+        raise
+    return {"rounds": len(debate.rounds), "valid": bool((debate.proposal or {}).get("valid"))}
+
+
+@handler("ai.smoketest")
+def smoketest_job(ctx: JobContext) -> dict:
+    """Every AI function once with the model set for it (admin, test day with real keys)."""
+    from app.ai.smoketest import run_smoketest
+
+    return run_smoketest(ctx.db, ctx.progress)

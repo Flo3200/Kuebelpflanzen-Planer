@@ -98,9 +98,13 @@ Wichtige Gruppen:
   gewogen), kippbar, empfindlich, sichern, Unverträglichkeiten, benötigte Hilfsmittel.
 - **Wege**: Abschnitte (eben, Treppe, Rampe, Tür, Aufzug, Engstelle) mit Länge, Stufen,
   Breite, Belag und Steigung – sie bestimmen Tragezeit und Teamgröße.
-- **Posteingang**: Nachricht einfügen oder weiterleiten, Fotos dazu. Die KI erstellt einen
-  Entwurf; jeder Wert hat eine Sicherheit. Unsichere Werte sind markiert. Erst nach Bestätigung
-  entstehen echte Daten.
+- **Posteingang**: Nachricht mit Fotos einfach hineinkopieren (Strg+V oder Ziehen) – Angaben zu
+  den Fotos sind nicht nötig: Die KI erkennt, was jedes Foto zeigt und zu welcher Pflanze es gehört
+  („Fotos zuordnen“), und erstellt einen Entwurf; jeder Wert hat eine Sicherheit. Unsichere Werte
+  sind markiert. Erst nach Bestätigung entstehen echte Daten. Fehlen Fotos oder Angaben, formuliert
+  die KI eine Nachricht an den Kunden und es erscheint eine **Benachrichtigung** (Glocke oben).
+- **Kontaktdaten** (Telefon, E-Mail) übernimmt die App nur, wenn der Betrieb das möchte
+  (`privacy.store_contact` oder Haken „Kontaktdaten übernehmen“ im Entwurf).
 - **Foto-Set**: Pro Pflanze frontal und seitlich mit A4-Blatt als Maßstab, schräg von oben, Topf;
   für den Weg eine lückenlose Bildfolge. Die KI prüft Vollständigkeit und schätzt Maße.
 
@@ -113,6 +117,39 @@ Pflanze. Was die KI offen lässt oder nur unsicher weiß, kommt aus der internen
 (Standardwerte je Art, gepflegt vom Admin), dazu die Werte für die Gewichtsschätzung (Erde, Krone,
 Stamm). Solche Werte sind „geschätzt“ markiert; ein Mensch kann jeden Wert an der Pflanze ändern.
 Gewichtsschätzung, Ladeplanung (Kippgefahr), Frostregel und Kalibrierung lesen nur die Pflanze.
+
+## Benachrichtigungen und Kunden-Link
+
+Die Glocke oben zeigt, was das Büro tun sollte: fehlende Fotos mit fertiger Nachricht an den Kunden
+(kopieren, abschicken, „Erledigt“), Fotos oder Standort vom Kunden, vorzeitig beendete Touren und
+neue Tagesteams. Mit dem Modul **Kunden-Link** (`modules.share`) bekommt der Kunde einen persönlichen
+Link ohne Konto: Er sieht, was noch fehlt, lädt Fotos hoch (nach Einwilligung) und teilt seinen
+Standort; der Link steht automatisch in der Nachfrage. Neue Fotos werden sofort von der KI
+ausgewertet, der geteilte Standort wird zur Adresse.
+
+## Pflanzenbilder und Tabellen
+
+Jede Pflanze ist als Bild zu sehen – in der Pflanzenliste, in den Tabellen und in der Fahrer-App.
+Gibt es kein Foto, erzeugt die KI ein Bild aus Art und Maßen (`ai.model.plant_image`, Einstellung
+`ai.plant_images`), deutlich als „KI-Bild“ markiert; ohne Bildmodell zeichnet die App die Pflanze.
+Unter **Tabellen** gibt es Übersichten wie in einer Tabellenkalkulation: Pflanzen, Aufträge, Kunden
+und Tourenstopps, Spalten per Häkchen (z. B. Adressen, Pflanzenbilder, Pflanzennamen), sortieren,
+filtern, gruppieren, mit Doppelklick ändern und als Excel-Datei exportieren.
+
+## Sprachsteuerung
+
+Das Mikrofon oben auf jeder Seite (`voice.enabled`): antippen, sprechen, nochmals antippen. Die KI
+(`ai.model.voice_command`, z. B. ChatGPT oder Claude) öffnet Seiten („Öffne die Planung“), sucht
+(„Suche Sommer“), legt Kundennachrichten als Entwurf an („Neue Nachricht: …“), legt Tagesteams an
+(„Morgen fahren Lea und Tom mit dem Sprinter“), nennt Touren („Welche Touren sind morgen?“), startet
+die Planung und ändert Einstellungen. Die Antwort wird vorgelesen. Spracherkennung über ein
+OpenAI-Modell oder den Browser (`voice.transcription`). Befehle lassen sich auch tippen.
+
+## Datenschutz-Seite
+
+Unter „Weitere Bereiche → Datenschutz“: wie viele Kunden, Kontaktdaten, Fotos und Nachrichten
+gespeichert sind, wofür und wie lange; „Jetzt aufräumen“ und „Alle Kontaktdaten entfernen“.
+Original-Nachrichten werden nach `privacy.draft_text_days` geleert.
 
 ## Zeitmodell und Formeln
 
@@ -171,6 +208,10 @@ Anhänger**.
 
 ## Tourenplanung
 
+**Touren vorzeitig beenden** (`planning.abort_enabled`, Standard aus): zusätzlich zum Puffer kann
+das Team eine Tour in der Fahrer-App mit Grund beenden; nicht begonnene Stopps gehen zurück in die
+Planung, das Büro bekommt eine Benachrichtigung. Die Planung markiert Stopps als „verschiebbar“.
+
 Die Planung bündelt bestätigte Aufträge über mehrere Tage. Jede Einheit ist Tag × Fahrzeug
 (mit Anhänger) × Team. Beachtet werden: Verfügbarkeit von Personal und Fahrzeugen,
 Führerscheinklassen, Arbeitszeit und Pausen nach Arbeitszeitgesetz, Überstunden, Kundenzeitfenster
@@ -188,6 +229,12 @@ der schnellsten Route, alle Teams mit 2 bzw. 3 Personen); (3) gezielte Experimen
 Suchverfahren; (4) die beste Variante bekommt die restliche Zeit. Unter „So wurde optimiert“ zeigt
 jeder Plan die Stufen mit Kosten, nicht eingeplanten Aufträgen und Tagen. Mit festen Teams gibt es
 nur eine Teameinteilung; Szenarien rechnen in einem Lauf, damit sie vergleichbar bleiben.
+
+### Spontan-Teams
+
+„Teams → Spontan-Team“: ein Satz wie „Morgen fahren Lea und Tom mit dem Sprinter“ (oder per
+Sprachsteuerung). Die KI liest Tag, Personen und Fahrzeug, der Betrieb prüft kurz, die App legt ein
+**Tagesteam** an (gilt nur an diesem Tag). Die Planung nutzt es wie ein festes Team.
 
 ### Feste Teams
 
@@ -263,13 +310,18 @@ Parameter der Zeitformel und die Geschwindigkeit je Person neu (robust gegen Aus
 regularisiert zum bisherigen Wert, mit Kreuzvalidierung). Das Ergebnis ist ein **Vorschlag**:
 Fehler vorher und nachher, Diagramm „vorhergesagt gegen gemessen“, Fehler nach Merkmal,
 Planungspuffer. Übernommen wird erst nach Entscheidung (neue Formelversion, rücknehmbar).
+**KI-Diskussion** (Formeleditor): zwei KI-Modelle, z. B. ChatGPT und Claude, diskutieren abwechselnd
+über die Formel mit den Messwerten; der gemeinsame Vorschlag wird geprüft, an den Messungen bewertet
+und nur auf Knopfdruck als neue Formelversion übernommen.
 **Experimentmodus**: Ein einstellbarer Anteil der Stopps bekommt bewusst ein größeres Team, damit
 der Effekt der Teamgröße gelernt werden kann – nie kleiner als nötig.
 
 ## KI-Funktionen
 
-Nachrichtenerfassung, Foto-Vollständigkeitsprüfung, Foto-Auswertung, Einstellungs-KI und
-Unterstützung. Für jede Funktion ist das Modell einstellbar, dazu ein Ersatzmodell. Ein Betrieb
+Nachrichtenerfassung, Fotos zuordnen, Foto-Vollständigkeitsprüfung, Foto-Auswertung, Nachfrage an
+den Kunden, Pflanzenbild, Sprachsteuerung und Spracherkennung, Spontan-Team, Formel-Diskussion,
+Fahrzeug per Chat/Foto, Ladeanordnung, Einstellungs-KI und Unterstützung. Der **KI-Funktionstest**
+(Admin → KI → Funktionstest) prüft jede Funktion einmal mit ihrem Modell. Für jede Funktion ist das Modell einstellbar, dazu ein Ersatzmodell. Ein Betrieb
 nutzt den Plattform-Schlüssel (Abrechnung über den Admin) oder einen eigenen (BYOK). Jeder Aufruf
 wird mit Tokens und Kosten erfasst; ein Ausgabenlimit warnt und sperrt. Ohne Schlüssel arbeitet
 ein Testmodell mit einfachen Regeln.

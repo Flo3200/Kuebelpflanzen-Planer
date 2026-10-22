@@ -55,6 +55,46 @@ SEED = [
     {"provider": {"name": "OpenAI", "kind": "openai", "active": False}, "models": []},
 ]
 
+# OpenAI models for round 2 (ChatGPT for voice control and discussions, image generation, speech to
+# text). Added to the OpenAI provider once; the admin enters the key and switches the provider on.
+OPENAI_MODELS = [
+    {
+        "model_name": "gpt-5",
+        "label": "ChatGPT (GPT-5)",
+        "input_price_per_mtok": 1.25,
+        "output_price_per_mtok": 10.0,
+        "supports_vision": True,
+        "supports_tools": True,
+    },
+    {
+        "model_name": "gpt-image-1",
+        "label": "OpenAI Bildgenerierung (gpt-image-1)",
+        "input_price_per_mtok": 0,
+        "output_price_per_mtok": 0,
+        "supports_vision": False,
+        "supports_tools": False,
+    },
+    {
+        "model_name": "gpt-4o-transcribe",
+        "label": "OpenAI Spracherkennung (gpt-4o-transcribe)",
+        "input_price_per_mtok": 0,
+        "output_price_per_mtok": 0,
+        "supports_vision": False,
+        "supports_tools": False,
+    },
+]
+
+
+def seed_openai_models(db: Session) -> None:
+    provider = db.scalar(select(AIProvider).where(AIProvider.kind == "openai").limit(1))
+    if provider is None:
+        return
+    have = set(db.scalars(select(AIModel.model_name).where(AIModel.provider_id == provider.id)))
+    for m in OPENAI_MODELS:
+        if m["model_name"] not in have:
+            db.add(AIModel(provider_id=provider.id, price_currency="USD", **m))
+    db.flush()
+
 
 def seed_ai(db: Session) -> None:
     if db.scalar(select(AIProvider.id).limit(1)) is None:
@@ -64,6 +104,7 @@ def seed_ai(db: Session) -> None:
             db.flush()
             for m in entry["models"]:
                 db.add(AIModel(provider_id=provider.id, price_currency="USD", **m))
+    seed_openai_models(db)
     for function, prompt in DEFAULT_PROMPTS.items():
         # a newer default prompt becomes a new global version; versions the admin made stay and win
         # while they are newer, older ones remain in the history (prompts are versioned, never edited)

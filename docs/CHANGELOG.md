@@ -421,3 +421,54 @@ Vorschlag wird nie ungeprüft übernommen, Modi „KI als Start“ und „Vergle
 - Die Pausenregel übergab OR-Tools die Servicezeiten nach Knoten statt nach internem Index; OR-Tools
   las dadurch über das Listenende hinaus (falsche Pausenlage, gelegentlich Absturz des Servers).
   Behoben (D32).
+
+## Verbesserungsrunde 2 (2026-10-22)
+
+Wunschliste und Auslegung in `docs/AUFTRAG_RUNDE2.md` (Rückfragen waren nicht gewünscht).
+
+**Umgesetzt**
+- **I – Posteingang:** Text und Fotos zusammen einfügen (Strg+V, Ziehen, Auswahl), keine Angaben zu
+  den Fotos nötig. Neue KI-Aufgabe „Fotos zuordnen“ (`ai.model.photo_sort`): Art jedes Fotos und
+  welche Pflanze es zeigt; Pflanzen, die nur auf Fotos vorkommen, werden ergänzt; Foto-Auswertung je
+  Pflanze; nach dem Bestätigen hängen die Fotos an der richtigen Pflanze. Fehlen Fotos oder Angaben,
+  formuliert die KI die Nachricht an den Kunden (`ai.model.follow_up`) und es entsteht eine
+  **Benachrichtigung** (Glocke oben) zum Kopieren und Abhaken (`notify.missing_photos`).
+- **J – Kundendaten:** Kontaktdaten nur mit `privacy.store_contact` (Standard aus) oder Haken
+  „Kontaktdaten übernehmen“ im Entwurf; Kunden werden ohne Kontaktdaten über Name + Adresse
+  wiedererkannt. Original-Nachrichten bearbeiteter Entwürfe werden nach `privacy.draft_text_days`
+  (60 Tage) geleert. Seite „Datenschutz“: was gespeichert ist, wofür, wie lange; „Jetzt aufräumen“;
+  „Alle Kontaktdaten entfernen“.
+- **K – Inaktives nach unten:** Menü mit „Weitere Bereiche“ ganz unten (eingeklappt): Kunden,
+  Szenarien, Module, Hilfsmittel, Lager, Preise, Formeln, Modellqualität, Datenschutz, KI, Agenten,
+  Abrechnung, Hintergrund, Protokoll. Übersicht: Kacheln und Graphen ohne Inhalt stehen unten.
+- **O – Pflanzenbilder:** Jede Pflanze als Bild in Pflanzenliste, Tabellen und Fahrer-App: echtes Foto
+  zuerst, sonst **KI-Bild** (`ai.model.plant_image`, z. B. gpt-image-1; nur Art und Maße, deutlich
+  markiert); ohne Bildmodell zeichnet die App die Pflanze maßstäblich. Nach dem Bestätigen eines
+  Entwurfs automatisch (`ai.plant_images`).
+- **P – Tabellen:** Pflanzen, Aufträge, Kunden, Tourenstopps; Spalten per Häkchen (Adressen,
+  Pflanzenbilder, Pflanzennamen …), sortieren, filtern, gruppieren mit Summen, Doppelklick zum
+  Ändern, Export Excel/CSV, Ansicht wird gemerkt. Neue Abhängigkeit `openpyxl`.
+- **M – Spontan-Teams:** Satz wie „Morgen fahren Lea und Tom mit dem Sprinter“ (getippt, gesprochen)
+  → KI liest Tag, Personen, Fahrzeug (`ai.model.team_parse`) → Tagesteam (`teams.ad_hoc`), das die
+  Planung in beiden Teammodi nutzt; Schnellformular auf der Seite Teams.
+- **L – Sprachsteuerung:** Mikrofon oben auf jeder Seite; Spracherkennung per OpenAI
+  (`ai.model.transcribe`) oder Browser; Modell mit Werkzeugen (`ai.model.voice_command`, ChatGPT oder
+  Claude) öffnet Seiten, sucht, legt Entwürfe und Tagesteams an, nennt Touren, startet die Planung,
+  ändert Einstellungen; Antwort wird vorgelesen. OpenAI-Anbieter kann jetzt Werkzeug-Chat,
+  Bildgenerierung und Transkription; OpenAI-Modelle sind vorbereitet (Anbieter aus).
+- **Q – Kunden-Link (Modul, Standard aus):** persönlicher Link ohne Konto, Fotos hochladen und
+  Standort teilen (mit Einwilligung); landet im Entwurf, die KI wertet neu aus, Benachrichtigung;
+  der Link steht automatisch in der Nachfrage an den Kunden.
+- **R – Touren vorzeitig beenden** (`planning.abort_enabled`, Standard aus): Fahrer-App beendet eine
+  Tour mit Grund; nicht begonnene Stopps zurück in die Planung, Benachrichtigung, Neuplanen-Hinweis;
+  die Planung markiert verschiebbare Stopps.
+- **N – Formel-Diskussion:** Formeleditor → „KI-Diskussion“: zwei Modelle diskutieren in Runden mit den
+  Messwerten; Vorschlag wird geprüft, mit Start- und angepassten Werten an den Messungen bewertet und
+  auf Knopfdruck als neue Formelversion übernommen. Claudes Startbeitrag: `docs/FORMEL_DISKUSSION.md`.
+- **S – KI-Funktionstest:** Admin → KI → Funktionstest testet jede KI-Funktion mit ihrem Modell;
+  Checkliste `docs/KI_TEST_FREITAG.md`.
+
+**Tests:** 8 neue Testdateien (`test_round2_*.py`, 20 Tests): Fotos zuordnen und Pflanzen zuweisen,
+Benachrichtigung, Kontaktdaten, Kunden-Link, Datenschutz-Aufräumen, KI-Bilder, Tabellen und Export,
+Spontan-Teams in der Planung, Sprachbefehle, Tour-Abbruch, Formel-Diskussion mit Übernahme,
+Funktionstest.

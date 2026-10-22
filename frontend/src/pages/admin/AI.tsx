@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../api/client";
 import { Badge, Card, ErrorBox, Modal, PageHeader, Spinner, Tabs, useToast } from "../../components/ui";
 import { fmtDate, fmtMoney, fmtNumber, t, tMaybe } from "../../i18n";
+import { JobStatus, useJob } from "../common/Jobs";
 
 const EVAL_FUNCTIONS = ["photo_analysis", "vehicle_photo", "vehicle_chat"];
 const EVAL_TRUTH: Record<string, string> = {
@@ -12,7 +13,7 @@ const EVAL_TRUTH: Record<string, string> = {
 };
 
 export function AdminAIPage() {
-  const [tab, setTab] = useState<"models" | "prompts" | "usage" | "eval">("models");
+  const [tab, setTab] = useState<"models" | "prompts" | "usage" | "eval" | "smoke">("models");
   return (
     <>
       <PageHeader title={t("ai.title")} description={t("ai.description")} />
@@ -24,13 +25,65 @@ export function AdminAIPage() {
           { key: "prompts", label: t("ai.tab_prompts") },
           { key: "usage", label: t("ai.tab_usage") },
           { key: "eval", label: t("ai.tab_eval") },
+          { key: "smoke", label: t("ai.tab_smoke") },
         ]}
       />
       {tab === "models" && <ProvidersAndModels />}
       {tab === "prompts" && <PromptEditor />}
       {tab === "usage" && <UsageTable admin />}
       {tab === "eval" && <EvalTool />}
+      {tab === "smoke" && <SmokeTest />}
     </>
+  );
+}
+
+/** KI-Funktionstest: every AI function once with the model set for it (test day with real keys). */
+function SmokeTest() {
+  const [jobId, setJobId] = useState<string | null>(null);
+  const [result, setResult] = useState<any>(null);
+  const job = useJob(jobId);
+  const res = result ?? job.data?.result;
+  const run = async () => {
+    setResult(null);
+    const r = await api.post<any>("/api/admin/ai/smoketest", { sync: false });
+    setJobId(r.job_id);
+  };
+  return (
+    <Card title={t("ai.smoke_title")} actions={<button className="btn" onClick={run}>{t("ai.smoke_run")}</button>}>
+      <p className="small muted" style={{ marginTop: 0 }}>{t("ai.smoke_help")}</p>
+      {job.data && !res && <JobStatus job={job.data} />}
+      {res && (
+        <>
+          <p className="small">
+            {t("ai.smoke_summary", { ok: res.ok, failed: res.failed })}
+          </p>
+          <div className="table-wrap">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>{t("ai.smoke_function")}</th>
+                  <th>{t("ai.smoke_model")}</th>
+                  <th>{t("common.status")}</th>
+                  <th className="num">{t("ai.smoke_ms")}</th>
+                  <th>{t("ai.smoke_result")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {res.rows.map((r: any) => (
+                  <tr key={r.function}>
+                    <td>{tMaybe(`ai.functions.${r.function}`) ?? r.function}</td>
+                    <td className="small">{r.model}</td>
+                    <td>{r.ok ? <Badge tone="green">OK</Badge> : <Badge tone="red">{t("common.error")}</Badge>}</td>
+                    <td className="num">{r.ms}</td>
+                    <td className="xs" style={{ maxWidth: 420, whiteSpace: "normal" }}>{r.error ?? r.preview}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+    </Card>
   );
 }
 

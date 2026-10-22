@@ -776,7 +776,15 @@
       "settings_assistant": "Einstellungs-KI",
       "support_agent": "Unterstützungs-Agent",
       "vehicle_photo": "Fahrzeug aus Laderaum-Foto",
-      "vehicle_chat": "Fahrzeug per Chat"
+      "vehicle_chat": "Fahrzeug per Chat",
+      "photo_sort": "Fotos zuordnen",
+      "follow_up": "Nachfrage formulieren",
+      "plant_image": "Pflanzenbild erzeugen",
+      "voice_command": "Sprachsteuerung",
+      "transcribe": "Spracherkennung",
+      "team_parse": "Spontan-Team aus Nachricht",
+      "formula_debate": "Formel-Diskussion",
+      "load_layout": "Ladeanordnung"
     },
     "system_prompt": "Systemanweisung",
     "instructions": "Zusatzanweisung",
@@ -818,7 +826,16 @@
     "byok_text": "Mit eigenem Schlüssel laufen KI-Aufrufe über Ihr Konto beim Anbieter; der KI-Verbrauch wird dann nicht über die Plattform abgerechnet. Ob eigene Schlüssel genutzt werden, legt der Plattformbetreiber fest (Einstellung „API-Schlüssel“).",
     "eval_function": "KI-Funktion des Testsatzes",
     "eval_message": "Nachricht (wie im Chat)",
-    "eval_note": "Angaben zu den Fotos (optional)"
+    "eval_note": "Angaben zu den Fotos (optional)",
+    "tab_smoke": "Funktionstest",
+    "smoke_title": "KI-Funktionstest",
+    "smoke_help": "Testet jede KI-Funktion einmal mit dem dafür eingestellten Modell und einem erfundenen Beispiel (keine Kundendaten): Nachrichten, Fotos, Nachfrage, Spontan-Team, Fahrzeug, Formel-Diskussion, Sprachsteuerung, Einstellungs-KI, Pflanzenbild und Spracherkennung. Kostet mit echten Modellen wenige Cent.",
+    "smoke_run": "Alle KI-Funktionen testen",
+    "smoke_summary": "{ok} Funktionen in Ordnung, {failed} mit Fehler oder Hinweis.",
+    "smoke_function": "Funktion",
+    "smoke_model": "Modell",
+    "smoke_ms": "Dauer (ms)",
+    "smoke_result": "Ergebnis"
   },
   "formulas": {
     "title": "Formeln",
@@ -2033,5 +2050,33 @@
     "ex3": "Neue Nachricht: Frau Sommer hat zwei Oleander, Hauptstraße 12 in Stuttgart",
     "ex4": "Welche Touren sind heute?",
     "ex5": "Suche Sommer"
+  },
+  "debate": {
+    "title": "KI-Diskussion: Welche Formel ist die beste?",
+    "intro": "Zwei KI-Modelle (z. B. ChatGPT und Claude) diskutieren abwechselnd über diese Formel – mit Ihren echten Messwerten. Am Ende steht ein gemeinsamer Vorschlag, den die App prüft und an den Messungen bewertet. Übernommen wird nur, wenn Sie es wollen (als neue, rücknehmbare Formelversion).",
+    "model_a": "Teilnehmer 1",
+    "model_b": "Teilnehmer 2",
+    "rounds": "Länge",
+    "rounds_n": "{n} Runden ({turns} Beiträge)",
+    "question": "Frage an die Runde (optional)",
+    "question_placeholder": "z. B. Brauchen wir eine eigene Zeit je Treppenstufe?",
+    "privacy": "Die Modelle bekommen nur Formel, Kennzahlen und Fehler – keine Kundendaten.",
+    "start": "Diskussion starten",
+    "running": "Die Modelle diskutieren …",
+    "agrees": "stimmt zu",
+    "proposal": "Ergebnis: gemeinsamer Vorschlag",
+    "eval_on": "Geprüft an {n} Messungen",
+    "mae": "Ø Fehler (min)",
+    "mape": "Ø Fehler (%)",
+    "bias": "Verzerrung (min)",
+    "current": "Aktuelle Formel",
+    "current_fitted": "Aktuelle Formel, Werte angepasst",
+    "proposed_start": "Vorschlag mit Startwerten",
+    "proposed_fitted": "Vorschlag, Werte angepasst",
+    "no_measurements": "Noch keine Messungen – der Vorschlag ist gültig, aber noch nicht an echten Zeiten geprüft.",
+    "adopt": "Als neue Formelversion übernehmen",
+    "is_adopted": "übernommen",
+    "adopted": "Neue Formelversion {v} ist aktiv (rücknehmbar über die Versionen).",
+    "invalid": "Der Vorschlag ist keine gültige Formel"
   }
 }

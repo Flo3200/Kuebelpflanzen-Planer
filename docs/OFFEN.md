@@ -1,5 +1,17 @@
 # Offene Punkte / noch zu programmieren
 
+## Stand nach Verbesserungsrunde 2 (2026-10-22)
+
+Umgesetzt laut `docs/AUFTRAG_RUNDE2.md` (Pakete I–S). Noch offen bzw. zu besprechen:
+- **Kundenliste:** liegt jetzt unten unter „Weitere Bereiche“; ob sie ganz entfallen soll, ist noch
+  zu klären („über die wir auch nochmal nachdenken müssen“).
+- **KI-Test am Freitag (2026-10-23):** Schlüssel eintragen, Checkliste `docs/KI_TEST_FREITAG.md`.
+- **Formel-Diskussion** mit echten Modellen führen, sobald Messungen vorliegen
+  (`docs/FORMEL_DISKUSSION.md`).
+- **B2C-Ausbau:** Kunden-Link (Fotos, Standort) ist der erste Schritt; eigene Endkunden-App offen.
+- **Lagersoftware:** Modul vorhanden (aus), keine Erweiterung in dieser Runde.
+- Punkt 8 der ersten Liste weiterhin ungeklärt.
+
 Stand 2026-10-18. Gesammelt aus dem Gespräch mit der Produktinhaberin bzw. dem Produktinhaber.
 
 ## Stand nach der Verbesserungsrunde (2026-10-18)

@@ -202,3 +202,18 @@ abgeschaltet, Tabellen bleiben, Migrationen sind umkehrbar.
 - Keine Programmierung: Checkliste für den Produktinhaber (API-Schlüssel und Ausgabenlimit,
   Rechnungssteller, Einwilligungstext, Zwei-Faktor-Pflicht, Inhaber-Passwort, Hosting) und die
   Rückfrage zu Punkt 8 aus `OFFEN.md` (vor Paket A gestellt).
+
+## Verbesserungsrunde 2 (2026-10-22)
+
+Auftrag und Auslegung: `docs/AUFTRAG_RUNDE2.md`. Reihenfolge I → J/K → O/P → M/L → R → N/S.
+- **I** Posteingang: einfügen ohne Angaben, Fotos zuordnen (KI), Benachrichtigung mit Nachricht.
+  *Abnahme:* Fotos landen bei der richtigen Pflanze; fehlende Fotos erzeugen genau eine Benachrichtigung.
+- **J** Kontaktdaten nur auf Wunsch, Fristen, Datenschutz-Seite. *Abnahme:* Standard ohne Kontaktdaten.
+- **K** Inaktives nach unten (Menü, Übersicht).
+- **O** Pflanzenbilder (Foto, sonst KI-Bild). *Abnahme:* jede Pflanze hat ein Bild, KI-Bilder markiert.
+- **P** Tabellen mit Spaltenauswahl, Bearbeiten, Export.
+- **M** Spontan-Teams aus einem Satz. *Abnahme:* Planung nutzt das Tagesteam.
+- **L** Sprachsteuerung (ChatGPT/Claude mit Werkzeugen). *Abnahme:* Befehle mit dem Testmodell.
+- **Q** Kunden-Link (Modul). **R** Touren vorzeitig beenden (Schalter).
+- **N** Formel-Diskussion zweier Modelle. *Abnahme:* gültiger, bewerteter, übernehmbarer Vorschlag.
+- **S** KI-Funktionstest und Checkliste für den Testtag.

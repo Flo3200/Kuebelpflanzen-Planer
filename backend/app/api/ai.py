@@ -630,3 +630,19 @@ def run_eval(set_id: uuid.UUID, data: EvalRunIn, actor: CurrentActor, db: DB) ->
             db.refresh(run)
         out.append({"id": run.id, "status": run.status, "metrics": run.metrics})
     return out
+
+
+class SmoketestIn(BaseModel):
+    sync: bool = False
+
+
+@router.post("/api/admin/ai/smoketest")
+def smoketest(data: SmoketestIn, actor: CurrentActor, db: DB) -> dict[str, Any]:
+    """KI-Funktionstest: runs every AI function once with its model (background job)."""
+    actor.require("platform.ai")
+    from app.jobs.queue import enqueue, run_now
+
+    job = enqueue(db, "ai.smoketest", {}, tenant_id=None, created_by=actor.user_id)
+    if data.sync:
+        job = run_now(db, job)
+    return {"job_id": job.id, "status": job.status, "result": job.result, "error": job.error}

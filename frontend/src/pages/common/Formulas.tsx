@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, ApiError } from "../../api/client";
+import { FormulaDebateCard } from "./FormulaDebate";
 import { useAuth } from "../../auth/auth";
 import { Badge, Card, ConfirmButton, ErrorBox, PageHeader, Segmented, Spinner, useToast } from "../../components/ui";
 import { fmtDate, fmtMinutes, fmtNumber, t } from "../../i18n";
@@ -260,6 +261,9 @@ export function FormulasPage() {
             <VariablesReference variables={q.data.variables[key]} functions={q.data.functions} />
           </div>
         )}
+      </div>
+      <div style={{ marginTop: 24 }}>
+        <FormulaDebateCard formulaKey={key} />
       </div>
     </>
   );

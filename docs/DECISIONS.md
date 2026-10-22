@@ -437,3 +437,64 @@ erscheinen nur mit dem Modul. Nichts wurde gelöscht.
   Absturz) und um einen Platz verschoben (Pausen orientierten sich an der Servicezeit des falschen
   Stopps). Jetzt wird die Liste über alle Indizes mit `IndexToNode` gebaut. Der Fehler bestand seit
   Phase 4; die mehrstufige Optimierung machte ihn durch mehr Solver-Läufe sichtbarer.
+
+## D33 – Runde 2: Kontaktdaten und Datenbestand
+- Kontaktdaten (Telefon, E-Mail) sind für Planung und Touren nicht nötig; der Betrieb antwortet auf
+  dem Weg, auf dem die Nachricht kam. Deshalb Standard **nicht speichern** (`privacy.store_contact`),
+  pro Entwurf zuschaltbar; von Hand eingetragene Daten bleiben. Die KI fragt Kontaktdaten nicht mehr
+  als „fehlend“ nach (Prompt Version 3).
+- Wiedererkennen ohne Kontaktdaten: gleicher Name an gleicher Straße und PLZ.
+- Datenbestand: Name/Adresse (Planung) bis `privacy.customer_retention_days` nach letzter Aktivität,
+  Fotos `privacy.photo_retention_days` nach Abschluss, Original-Nachrichten `privacy.draft_text_days`
+  (neu, 60 Tage), Kunden-Links 30 Tage nach Ablauf, erledigte Benachrichtigungen nach 90 Tagen,
+  Rechnungen gesetzliche Frist. Übersicht auf der Seite „Datenschutz“.
+
+## D34 – Fotos ohne Angaben, Benachrichtigungen
+- Eingefügte Fotos ohne Art werden von der KI zugeordnet (`photo_sort`), mit Art **und Pflanzennummer**;
+  die Foto-Auswertung läuft danach je Pflanze statt einmal für alle. Von Hand angegebene Arten bleiben
+  wie bisher (alter Ablauf).
+- Benachrichtigungen sind eine eigene Tabelle (`notifications`), je Entwurf und Art höchstens eine
+  offene (erneutes Auswerten aktualisiert sie). Die Nachricht an den Kunden formuliert eine eigene
+  KI-Aufgabe (`follow_up`), damit fehlende Fotos je Pflanze konkret benannt werden.
+
+## D35 – Pflanzenbilder
+- Echte Fotos haben immer Vorrang. KI-Bilder sind als Fotoart `generated` gespeichert, überall als
+  „KI-Bild“ markiert und werden nie als Beleg verwendet (nicht in der Fahrer-Fotoliste, nicht im Export).
+- Das Bildmodell bekommt nur Art und Maße (Datenschutz). Ohne Bildmodell zeichnet die App selbst
+  (maßstäblich, Farbe nach Art), damit Büro und Fahrer immer ein Bild sehen.
+
+## D36 – Sprachsteuerung
+- Werkzeuge statt freier Aktionen: Seite öffnen, suchen, Entwurf, Tagesteam, Touren, Planung,
+  Einstellung. Nichts Löschendes und nichts Abrechnungsrelevantes; jede Änderung im Protokoll
+  (Quelle „voice“). Das Modell bekommt nur den Befehl und die Ergebnisse, die es abfragt.
+- Spracherkennung: mit OpenAI-Modell auf dem Server (Aufnahme wird nicht gespeichert), sonst im
+  Browser. Hinweis: Chrome schickt die Aufnahme dafür an Google – wer das nicht möchte, stellt
+  `voice.transcription = ai` ein.
+- ChatGPT (Wunsch des Produktinhabers) und Claude sind gleichwertig einstellbar.
+
+## D37 – Spontan-Teams
+- Ein Tagesteam ist ein normales festes Team mit Gültigkeit genau eines Tages und Kennzeichen
+  `ad_hoc`. So nutzt die Planung es ohne Sonderlogik – im Modus „fest“ und im Modus „automatisch“
+  (feste Teams zuerst). Unbekannte Namen werden gemeldet, nicht angelegt.
+
+## D38 – Tabellen
+- Eine Zeile je Pflanze/Auftrag/Kunde/Stopp mit allen Spalten vom Server; Auswahl, Sortieren, Filtern,
+  Gruppieren im Browser (gemerkt pro Gerät). Bearbeiten läuft über die normalen Endpunkte (Prüfung,
+  Protokoll, Neuschätzung wie im Formular). Bilder werden nicht exportiert.
+
+## D39 – Touren vorzeitig beenden
+- Standard aus (Wunsch: „sollte man aktivieren“). Nur Stopps, die noch nicht begonnen haben, gehen
+  zurück; begonnene beendet das Team normal. Verschiebbar ist ein Stopp ohne festen Termin, dessen
+  spätestes Datum nach dem Tourtag liegt. Online-Funktion (das Büro muss es sofort wissen).
+
+## D40 – Formel-Diskussion
+- Zwei Modelle abwechselnd, höchstens 4 Runden; nur Formel, Variablen und Fehlerkennzahlen gehen an
+  die Modelle. Der Vorschlag wird vom Formel-Parser geprüft und an den Messungen bewertet (Startwerte
+  und angepasste Werte, im Vergleich zur angepassten aktuellen Formel). **Nie automatisch übernehmen.**
+- D30 („keine LLM-Experimente“) betraf das Optimieren der Touren über externe Dienste; der neue Wunsch
+  nach „sehr intensivem Einsatz von LLMs“ wird mit Datensparsamkeit je Aufgabe umgesetzt.
+
+## D41 – Kunden-Link
+- Modul (Standard aus, wie der Kundenzugang). Kein Konto, ein Link pro Entwurf oder Auftrag, nur der
+  Hash des Tokens in `share_links`; die vollständige Adresse steht in der Benachrichtigung des Betriebs,
+  damit dieselbe Adresse wiederverwendet wird. Hochladen erst nach Einwilligung, höchstens 60 Fotos.
