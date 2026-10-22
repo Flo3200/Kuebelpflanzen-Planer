@@ -15,6 +15,7 @@ import { ScenariosPage } from "./pages/tenant/Scenarios";
 import { CostsPage } from "./pages/tenant/Costs";
 import { ModulesPage } from "./pages/tenant/Modules";
 import { PrivacyPage } from "./pages/tenant/Privacy";
+import { TablesPage } from "./pages/tenant/Tables";
 import { DraftReviewPage, InboxPage } from "./pages/tenant/Inbox";
 import { CustomerDetailPage, CustomersPage, OrderDetailPage, OrdersPage } from "./pages/tenant/Orders";
 import { AvailabilityPage, EquipmentPage, StaffPage, StoragePage, TeamsPage, VehiclesPage } from "./pages/tenant/Resources";
@@ -48,6 +49,7 @@ export function tenantRoutes() {
     <Route key="billing" path="abrechnung" element={<TenantBillingPage />} />,
     <Route key="assistant" path="assistent" element={<AssistantPage />} />,
     <Route key="privacy" path="datenschutz" element={<PrivacyPage />} />,
+    <Route key="tables" path="tabellen" element={<TablesPage />} />,
     ...extraTenantRoutes(),
   ];
 }

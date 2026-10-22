@@ -1984,5 +1984,56 @@
   },
   "share": {
     "default_consent": "Ich bin damit einverstanden, dass die Gärtnerei meine Fotos und meinen Standort nur für die Planung der Abholung verwendet. Standortdaten werden aus den Fotos entfernt; die Fotos werden nach der Saison gelöscht."
+  },
+  "tables": {
+    "sources": {
+      "plants": "Pflanzen",
+      "orders": "Aufträge",
+      "customers": "Kunden",
+      "stops": "Tourenstopps"
+    },
+    "columns": {
+      "image": "Bild",
+      "plant_images": "Pflanzenbilder",
+      "number": "Nr.",
+      "species_name": "Pflanze",
+      "label": "Bezeichnung",
+      "customer": "Kunde",
+      "street": "Straße",
+      "postal_code": "PLZ",
+      "city": "Ort",
+      "order_number": "Auftrag",
+      "order_status": "Auftragsstatus",
+      "total_height_cm": "Höhe (cm)",
+      "pot_diameter_cm": "Topf Ø (cm)",
+      "crown_width_cm": "Krone (cm)",
+      "weight_kg": "Gewicht (kg)",
+      "weight_measured_kg": "Gewogen (kg)",
+      "can_tilt": "kippbar",
+      "frost_sensitive": "frostempfindlich",
+      "sensitive": "empfindlich",
+      "team_size": "Personen",
+      "tour_date": "Tourtag",
+      "vehicle": "Fahrzeug",
+      "notes": "Notizen",
+      "status": "Status",
+      "direction": "Richtung",
+      "n_plants": "Pflanzen",
+      "plant_names": "Pflanzennamen",
+      "earliest_date": "Frühestens",
+      "latest_date": "Spätestens",
+      "duration_min": "Dauer vor Ort (min)",
+      "name": "Name",
+      "company": "Firma",
+      "phone": "Telefon",
+      "email": "E-Mail",
+      "access_notes": "Zugang",
+      "n_orders": "Aufträge",
+      "last_activity_at": "Letzte Aktivität",
+      "team": "Team",
+      "position": "Stopp",
+      "arrival": "Ankunft",
+      "predicted_min": "Dauer (min)"
+    }
   }
 }

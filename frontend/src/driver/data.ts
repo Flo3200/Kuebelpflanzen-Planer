@@ -25,6 +25,8 @@ export interface DPlant {
   notes: string | null;
   storage?: string | null;
   photos: { id: string; url: string; kind: string }[];
+  /** picture of the plant: real photo or AI image (generated) when there is no photo */
+  image?: { url: string; generated: boolean } | null;
 }
 
 export interface DStop {

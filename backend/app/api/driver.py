@@ -66,7 +66,7 @@ def me(actor: CurrentActor, db: DB) -> dict[str, Any]:
 
 
 def _photos(db, **where) -> list[dict[str, Any]]:
-    q = select(Photo)
+    q = select(Photo).where(Photo.kind != "generated")
     for k, v in where.items():
         q = q.where(getattr(Photo, k) == v)
     return [
@@ -83,6 +83,8 @@ def _storage_name(db, area_id) -> str | None:
 
 
 def stop_package(db, stop: TourStop) -> dict[str, Any]:
+    from app.ai.images import plant_image
+
     order = db.get(PickupOrder, stop.order_id)
     customer = db.get(Customer, order.customer_id) if order else None
     address = db.get(Address, order.address_id) if order else None
@@ -115,6 +117,7 @@ def stop_package(db, stop: TourStop) -> dict[str, Any]:
                 "notes": p.notes,
                 "storage": _storage_name(db, p.storage_area_id) if storage_on else None,
                 "photos": _photos(db, plant_id=p.id),
+                "image": plant_image(db, p),
             }
         )
     paths = []

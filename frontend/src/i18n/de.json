@@ -585,7 +585,11 @@
     "sensitive": "empfindlich",
     "frost": "frostempfindlich",
     "secure": "sichern",
-    "plant": "Pflanze"
+    "plant": "Pflanze",
+    "make_images": "Bilder erzeugen",
+    "new_images": "KI-Bilder neu erzeugen",
+    "images_hint": "Pflanzen ohne Foto bekommen ein KI-Bild aus Art und Maßen (deutlich als KI-Bild markiert).",
+    "image": "Bild"
   },
   "paths": {
     "none": "Noch kein Weg erfasst",
@@ -1309,7 +1313,8 @@
     "load_from_storage": "Rücklieferung: vor der Abfahrt im Lager beladen – zuerst, was zuletzt ausgeliefert wird.",
     "unload_title": "Abladen am Betrieb",
     "unload_planned": "geplant {from}–{to}",
-    "unload_since": "seit {at}"
+    "unload_since": "seit {at}",
+    "ai_image": "KI-Bild"
   },
   "model": {
     "title": "Modellqualität",
@@ -1963,5 +1968,24 @@
     "remove_contacts": "Alle Kontaktdaten entfernen",
     "remove_contacts_q": "Telefon und E-Mail von {n} Kunden löschen?",
     "contacts_removed": "Kontaktdaten von {n} Kunden entfernt."
+  },
+  "tables": {
+    "description": "Übersichten wie in einer Tabellenkalkulation: Spalten anklicken, sortieren, filtern, gruppieren. Doppelklick auf eine Zelle ändert den Wert; Export als Excel-Datei.",
+    "sources": {
+      "plants": "Pflanzen",
+      "orders": "Aufträge",
+      "customers": "Kunden",
+      "stops": "Tourenstopps"
+    },
+    "source": "Datenquelle",
+    "columns": "Spalten ({n})",
+    "choose_columns": "Spalten auswählen",
+    "group_by": "Gruppieren nach",
+    "no_group": "Nicht gruppieren",
+    "export_xlsx": "Als Excel",
+    "empty": "Keine Einträge",
+    "total": "Summe",
+    "edit_hint": "Doppelklick zum Ändern",
+    "generated": "KI-Bild: kein Foto vorhanden, aus Art und Maßen erzeugt"
   }
 }

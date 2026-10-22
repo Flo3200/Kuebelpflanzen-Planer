@@ -349,3 +349,29 @@
 .driver-app .btn {
   min-height: 48px;
 }
+.d-plant-img {
+  position: relative;
+  flex: 0 0 auto;
+  width: 84px;
+  height: 104px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #e9e5da;
+}
+.d-plant-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.d-plant-img span {
+  position: absolute;
+  left: 4px;
+  bottom: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(30, 50, 34, 0.85);
+  color: #fff;
+}

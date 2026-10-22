@@ -10,6 +10,7 @@ import { fmtMinutes, fmtMoney, fmtNumber, t } from "../../i18n";
 import { JobStatus, useJob } from "../common/Jobs";
 import { EstimateDetails } from "./Estimate";
 import { PhotoGallery } from "./Photos";
+import { Thumb } from "../../components/PlantImage";
 
 const STATUS_TONE: Record<string, "green" | "amber" | "red" | "blue" | "terra" | undefined> = {
   draft: "amber",
@@ -514,6 +515,17 @@ function EstimateTab({ orderId, estimate, onChange }: { orderId: string; estimat
 function PlantsTab({ orderId, plants, paths, onChange }: { orderId: string; plants: any[]; paths: any[]; onChange: () => void }) {
   const [editing, setEditing] = useState<any | null>(null);
   const [adding, setAdding] = useState(false);
+  const [imgBusy, setImgBusy] = useState(false);
+  const makeImages = async () => {
+    setImgBusy(true);
+    try {
+      // without photo: an AI image; with "new images" all AI images are drawn again (real photos stay)
+      await api.post(`/api/orders/${orderId}/plant-images`, { sync: true, force: !plants.some((p) => !p.image) });
+      onChange();
+    } finally {
+      setImgBusy(false);
+    }
+  };
   const meta = useEntityMeta("plant");
   const byName = new Map((meta.data?.fields ?? []).map((f) => [f.name, f]));
   const cell = (p: any, field: string) => {
@@ -530,9 +542,16 @@ function PlantsTab({ orderId, plants, paths, onChange }: { orderId: string; plan
     <div className="stack">
       <div className="row between">
         <span className="small muted">{t("plants.estimated_hint")}</span>
-        <button className="btn" onClick={() => setAdding(true)}>
-          {t("plants.add")}
-        </button>
+        <div className="row" style={{ gap: 8 }}>
+          {plants.length > 0 && (
+            <button className="btn ghost" onClick={makeImages} disabled={imgBusy} title={t("plants.images_hint")}>
+              {imgBusy ? t("common.loading") : plants.some((p) => !p.image) ? t("plants.make_images") : t("plants.new_images")}
+            </button>
+          )}
+          <button className="btn" onClick={() => setAdding(true)}>
+            {t("plants.add")}
+          </button>
+        </div>
       </div>
       {plants.length === 0 && <Empty title={t("plants.none")} />}
       {plants.length > 0 && (
@@ -540,6 +559,7 @@ function PlantsTab({ orderId, plants, paths, onChange }: { orderId: string; plan
           <table className="table">
             <thead>
               <tr>
+                <th>{t("plants.image")}</th>
                 <th>{t("plants.number")}</th>
                 <th>{t("plants.species")}</th>
                 <th className="num">{t("plants.height")}</th>
@@ -553,6 +573,9 @@ function PlantsTab({ orderId, plants, paths, onChange }: { orderId: string; plan
             <tbody>
               {plants.map((p) => (
                 <tr key={p.id} className="clickable" onClick={() => setEditing(p)}>
+                  <td>
+                    <Thumb img={p.image} size={56} />
+                  </td>
                   <td className="num">#{p.number}</td>
                   <td>
                     {p.species_name ?? t("common.unknown")}

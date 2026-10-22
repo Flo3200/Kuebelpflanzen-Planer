@@ -314,13 +314,15 @@ def order_detail(db: Session, actor: Actor, order: PickupOrder) -> dict[str, Any
             .order_by(Photo.kind, Photo.position)
         )
     )
+    from app.ai.images import images_for
     from app.api.files import photo_dict
 
+    images = images_for(db, plants)
     return {
         "order": row_dict(ORDER, order) | {"estimate": order.estimate},
         "customer": row_dict(CUSTOMER, customer) if customer else None,
         "address": row_dict(ADDRESS, address) if address else None,
-        "plants": [plant_dict(p) for p in plants],
+        "plants": [plant_dict(p) | {"image": images.get(p.id)} for p in plants],
         "paths": [
             {
                 **row_dict(PATH, p),

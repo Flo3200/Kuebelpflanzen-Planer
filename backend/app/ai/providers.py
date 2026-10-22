@@ -179,6 +179,16 @@ class AnthropicProvider:
             refused=refused,
         )
 
+    def generate_image(
+        self, model_name: str, prompt: str, api_key: str | None, options: dict[str, Any]
+    ) -> bytes:
+        raise ProviderError("Anthropic models do not generate images")
+
+    def transcribe(
+        self, model_name: str, audio: bytes, filename: str, api_key: str | None, options: dict[str, Any]
+    ) -> str:
+        raise ProviderError("Anthropic models do not transcribe audio")
+
     def chat(self, model_name, system, messages, tools, api_key, options) -> ChatTurn:
         import anthropic
 
@@ -273,8 +283,135 @@ class OpenAIProvider:
             duration_ms=int((time.monotonic() - started) * 1000),
         )
 
+    def generate_image(
+        self, model_name: str, prompt: str, api_key: str | None, options: dict[str, Any]
+    ) -> bytes:
+        """Image generation (e.g. gpt-image-1); returns PNG/JPEG bytes."""
+        import openai
+
+        client = self._client(api_key)
+        kwargs: dict[str, Any] = {
+            "model": model_name,
+            "prompt": prompt,
+            "n": 1,
+            "size": options.get("size", "1024x1024"),
+        }
+        if model_name.startswith("dall-e"):
+            kwargs["response_format"] = "b64_json"
+        try:
+            resp = client.images.generate(**kwargs)
+        except (openai.APIConnectionError, openai.RateLimitError, openai.InternalServerError) as exc:
+            raise ProviderError(str(exc)) from exc
+        except openai.APIStatusError as exc:
+            raise ProviderError(f"{exc.status_code}: {exc.message}") from exc
+        item = resp.data[0]
+        if getattr(item, "b64_json", None):
+            return base64.b64decode(item.b64_json)
+        if getattr(item, "url", None):
+            import httpx
+
+            return httpx.get(item.url, timeout=60).content
+        raise ProviderError("no image in the answer")
+
+    def transcribe(
+        self, model_name: str, audio: bytes, filename: str, api_key: str | None, options: dict[str, Any]
+    ) -> str:
+        """Speech to text (e.g. gpt-4o-transcribe, whisper-1)."""
+        import openai
+
+        client = self._client(api_key)
+        try:
+            resp = client.audio.transcriptions.create(
+                model=model_name, file=(filename, audio), language=options.get("language", "de")
+            )
+        except (openai.APIConnectionError, openai.RateLimitError, openai.InternalServerError) as exc:
+            raise ProviderError(str(exc)) from exc
+        except openai.APIStatusError as exc:
+            raise ProviderError(f"{exc.status_code}: {exc.message}") from exc
+        return getattr(resp, "text", "") or ""
+
     def chat(self, model_name, system, messages, tools, api_key, options) -> ChatTurn:
-        raise ProviderError("tool chat is implemented for Anthropic and the fake provider")
+        """Tool chat with the Chat Completions API (ChatGPT). Messages and tools come in the Anthropic
+        format used inside the app and are translated here."""
+        import openai
+
+        client = self._client(api_key)
+        oa_messages: list[dict[str, Any]] = [{"role": "system", "content": system}]
+        for m in messages:
+            content = m["content"]
+            if isinstance(content, str):
+                oa_messages.append({"role": m["role"], "content": content})
+                continue
+            if m["role"] == "assistant":
+                text = "".join(b.get("text", "") for b in content if b.get("type") == "text")
+                calls = [
+                    {
+                        "id": b["id"],
+                        "type": "function",
+                        "function": {"name": b["name"], "arguments": json.dumps(b.get("input") or {})},
+                    }
+                    for b in content
+                    if b.get("type") == "tool_use"
+                ]
+                msg: dict[str, Any] = {"role": "assistant", "content": text or None}
+                if calls:
+                    msg["tool_calls"] = calls
+                oa_messages.append(msg)
+            else:
+                for b in content:
+                    if b.get("type") == "tool_result":
+                        oa_messages.append(
+                            {
+                                "role": "tool",
+                                "tool_call_id": b["tool_use_id"],
+                                "content": str(b.get("content", "")),
+                            }
+                        )
+                    elif b.get("type") == "text":
+                        oa_messages.append({"role": "user", "content": b.get("text", "")})
+        oa_tools = [
+            {
+                "type": "function",
+                "function": {
+                    "name": t["name"],
+                    "description": t["description"],
+                    "parameters": t["input_schema"],
+                },
+            }
+            for t in tools
+        ]
+        try:
+            resp = client.chat.completions.create(
+                model=model_name,
+                messages=oa_messages,
+                tools=oa_tools or openai.NOT_GIVEN,
+                max_completion_tokens=options.get("max_tokens", 4000),
+            )
+        except (openai.APIConnectionError, openai.RateLimitError, openai.InternalServerError) as exc:
+            raise ProviderError(str(exc)) from exc
+        except openai.APIStatusError as exc:
+            raise ProviderError(f"{exc.status_code}: {exc.message}") from exc
+        choice = resp.choices[0]
+        calls = []
+        raw: list[dict[str, Any]] = []
+        if choice.message.content:
+            raw.append({"type": "text", "text": choice.message.content})
+        for c in choice.message.tool_calls or []:
+            try:
+                args = json.loads(c.function.arguments or "{}")
+            except json.JSONDecodeError:
+                args = {}
+            calls.append({"id": c.id, "name": c.function.name, "input": args})
+            raw.append({"type": "tool_use", "id": c.id, "name": c.function.name, "input": args})
+        usage = resp.usage
+        return ChatTurn(
+            text=choice.message.content or "",
+            tool_calls=calls,
+            raw_content=raw,
+            input_tokens=usage.prompt_tokens if usage else 0,
+            output_tokens=usage.completion_tokens if usage else 0,
+            stop_reason="tool_use" if calls else choice.finish_reason,
+        )
 
 
 # ---------------------------------------------------------------------------------- registry

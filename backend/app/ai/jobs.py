@@ -156,3 +156,17 @@ def eval_run_job(ctx: JobContext) -> dict:
     run.items = details
     run.status = "done"
     return run.metrics
+
+
+@handler("ai.plant_images")
+def plant_images_job(ctx: JobContext) -> dict:
+    """AI images for the plants of an order that have no photo (or new ones with force)."""
+    from app.ai.images import generate_for_order
+
+    order = ctx.db.get(PickupOrder, uuid.UUID(ctx.payload["order_id"]))
+    if order is None:
+        return {"images": 0}
+    ctx.progress(0.2, "Pflanzenbilder werden erzeugt …")
+    return {
+        "images": generate_for_order(ctx.db, order, job_id=ctx.job_id, force=bool(ctx.payload.get("force")))
+    }

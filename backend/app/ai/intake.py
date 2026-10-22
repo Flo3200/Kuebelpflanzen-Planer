@@ -824,6 +824,10 @@ def confirm_draft(
         refresh_order_estimate(db, order)
     except ModuleNotFoundError:
         pass
+    if resolver.get("ai.plant_images") != "off":
+        from app.jobs.queue import enqueue
+
+        enqueue(db, "ai.plant_images", {"order_id": str(order.id)}, tenant_id=tid, created_by=actor.user_id)
     return {
         "customer_id": customer.id,
         "customer_created": created_customer,

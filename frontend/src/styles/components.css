@@ -1040,3 +1040,85 @@ table.table {
 .dash-inactive .card {
   opacity: 0.75;
 }
+/* ---- round 2: tables, plant pictures ---------------------------------------------------- */
+.thumb {
+  position: relative;
+  display: inline-block;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  vertical-align: middle;
+  flex: 0 0 auto;
+}
+.thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.thumb.empty {
+  background: repeating-linear-gradient(45deg, var(--surface-2), var(--surface-2) 6px, var(--surface-3) 6px, var(--surface-3) 12px);
+}
+.thumb-ai {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 2px 4px;
+  border-radius: var(--radius-pill);
+  background: var(--forest-700);
+  color: #fff;
+}
+.col-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border);
+  font-size: var(--fs-sm);
+  cursor: pointer;
+  user-select: none;
+}
+.col-chip.on {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+.col-chip input {
+  margin: 0;
+}
+.sheet .table td,
+.sheet .table th {
+  white-space: nowrap;
+}
+.sheet .table td.editable {
+  cursor: cell;
+}
+.sheet .table td.editable:hover {
+  box-shadow: inset 0 0 0 1px var(--border-strong);
+}
+.sheet .table td .input {
+  min-width: 90px;
+  padding: 2px 6px;
+}
+.th-sort {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.group-row td {
+  background: var(--surface-2);
+}
+.sum-row td {
+  border-top: 1px solid var(--border-strong);
+}
+.sum-row.total td {
+  font-weight: 600;
+}

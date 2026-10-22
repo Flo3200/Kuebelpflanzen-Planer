@@ -529,6 +529,12 @@ function StopScreen() {
       {stop.plants.map((pl) => (
         <div key={pl.id} className="d-card plant">
           <div className="d-plant-head">
+            {pl.image ? (
+              <a className="d-plant-img" href={pl.image.url} target="_blank" rel="noreferrer">
+                <img src={pl.image.url} alt="" loading="lazy" />
+                {pl.image.generated && <span>{t("driverapp.ai_image")}</span>}
+              </a>
+            ) : null}
             <span className="d-num">#{pl.number}</span>
             <div>
               <div className="d-card-title">{pl.name || pl.label}</div>

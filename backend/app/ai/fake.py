@@ -132,6 +132,21 @@ class FakeProvider:
             duration_ms=int((time.monotonic() - started) * 1000),
         )
 
+    def generate_image(
+        self, model_name: str, prompt: str, api_key: str | None, options: dict[str, Any]
+    ) -> bytes:
+        from app.ai.images import render_plant
+
+        return render_plant(options["info"])
+
+    def transcribe(
+        self, model_name: str, audio: bytes, filename: str, api_key: str | None, options: dict[str, Any]
+    ) -> str:
+        """The test model cannot listen; the browser's speech recognition is used instead."""
+        from app.ai.providers import ProviderError
+
+        raise ProviderError("the test model has no speech recognition")
+
     # ------------------------------------------------------------------------- intake
 
     def _intake(self, request: AIRequest) -> dict[str, Any]:
