@@ -1122,3 +1122,39 @@ table.table {
 .sum-row.total td {
   font-weight: 600;
 }
+/* ---- round 2: voice control ------------------------------------------------------------- */
+.voice {
+  position: relative;
+}
+.voice .btn.icon.voice-on {
+  background: var(--terra-500);
+  color: #fff;
+  animation: voice-pulse 1.2s ease-in-out infinite;
+}
+@keyframes voice-pulse {
+  50% {
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--terra-500) 25%, transparent);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .voice .btn.icon.voice-on {
+    animation: none;
+  }
+}
+.voice-panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  width: min(380px, calc(100vw - 24px));
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  z-index: 40;
+}
+.voice-reply {
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--accent-soft);
+}

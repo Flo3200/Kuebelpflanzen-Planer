@@ -1741,7 +1741,17 @@
   },
   "teams": {
     "weekdays_all": "alle Arbeitstage",
-    "valid": "Zeitraum"
+    "valid": "Zeitraum",
+    "spontaneous": "Spontan-Team",
+    "spontaneous_help": "Schreiben oder diktieren Sie einfach, wer wann womit fährt. Die KI erkennt Tag, Personen und Fahrzeug; prüfen Sie kurz und legen Sie das Team für diesen einen Tag an.",
+    "spontaneous_text": "Wer fährt wann womit?",
+    "spontaneous_placeholder": "z. B. Morgen fahren Lea und Tom mit dem Sprinter",
+    "understand": "Verstehen",
+    "unknown_people": "Nicht im Personal gefunden: {names}",
+    "members": "Mitglieder",
+    "create_day_team": "Tagesteam anlegen",
+    "spontaneous_created": "Team „{name}“ angelegt",
+    "vehicle": "Fahrzeug"
   },
   "costs": {
     "title": "Eigene Kostenpositionen",
@@ -1987,5 +1997,24 @@
     "total": "Summe",
     "edit_hint": "Doppelklick zum Ändern",
     "generated": "KI-Bild: kein Foto vorhanden, aus Art und Maßen erzeugt"
+  },
+  "voice": {
+    "title": "Sprachsteuerung",
+    "start": "Sprachsteuerung: sprechen",
+    "stop": "Aufnahme beenden",
+    "hint": "Mikrofon antippen und sprechen, nochmals antippen zum Beenden.",
+    "listening": "Ich höre zu …",
+    "thinking": "Wird ausgeführt …",
+    "no_mic": "Dieser Browser erkennt keine Sprache – tippen Sie den Befehl.",
+    "mic_denied": "Das Mikrofon ist nicht freigegeben.",
+    "not_heard": "Ich habe nichts verstanden.",
+    "type_placeholder": "Befehl tippen …",
+    "send": "Ausführen",
+    "examples_title": "Beispiele",
+    "ex1": "Öffne die Planung",
+    "ex2": "Morgen fahren Lea und Tom mit dem Sprinter",
+    "ex3": "Neue Nachricht: Frau Sommer hat zwei Oleander, Hauptstraße 12 in Stuttgart",
+    "ex4": "Welche Touren sind heute?",
+    "ex5": "Suche Sommer"
   }
 }

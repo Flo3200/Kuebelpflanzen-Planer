@@ -6,6 +6,7 @@ import { useAuth } from "../auth/auth";
 import { t } from "../i18n";
 import type { NavItem, NavSection } from "./nav";
 import { NotificationBell } from "./Notifications";
+import { VoiceControl } from "./VoiceControl";
 import { ThemeToggle } from "./ThemeToggle";
 
 function LeafMark() {
@@ -125,6 +126,7 @@ export function AppShell({ nav }: { nav: NavSection[] }) {
             )}
           </div>
           <div className="row" style={{ gap: 4 }}>
+            {me?.tenant && has("ai.use") && <VoiceControl />}
             {me?.tenant && has("tenant.view") && <NotificationBell />}
             <ThemeToggle />
           </div>

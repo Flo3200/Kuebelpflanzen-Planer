@@ -1026,6 +1026,10 @@
       },
       "valid_to": {
         "label": "Gültig bis"
+      },
+      "ad_hoc": {
+        "label": "Tagesteam",
+        "help": "Spontan für einen Tag angelegt (per Satz, Sprache oder Schnellformular)."
       }
     },
     "vehicle": {

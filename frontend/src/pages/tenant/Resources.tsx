@@ -29,17 +29,20 @@ export function StaffPage() {
 }
 
 export function TeamsPage() {
+  const [spontaneous, setSpontaneous] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
   const staff = useQuery({ queryKey: ["fk", "staff"], queryFn: () => api.get<any[]>("/api/staff") });
   const vehicles = useQuery({ queryKey: ["fk", "vehicle"], queryFn: () => api.get<any[]>("/api/vehicles") });
   const names = new Map((staff.data ?? []).map((s) => [s.id, s.name]));
   const vnames = new Map((vehicles.data ?? []).map((v) => [v.id, v.name]));
   return (
+    <>
     <ResourcePage
       entity="team"
       url="/api/teams"
       title={t("resources.teams")}
       description={t("resources.teams_description")}
-      columns={["name", "member_ids", "vehicle_id", "weekdays", "valid_from", "active"]}
+      columns={["name", "member_ids", "vehicle_id", "weekdays", "valid_from", "active", "ad_hoc"]}
       formFields={["name", "member_ids", "vehicle_id", "weekdays", "valid_from", "valid_to", "active", "notes"]}
       labels={{ valid_from: t("teams.valid") }}
       render={{
@@ -49,11 +52,124 @@ export function TeamsPage() {
         valid_from: (r) => (r.valid_from || r.valid_to ? `${r.valid_from ? fmtDate(r.valid_from) : "…"} – ${r.valid_to ? fmtDate(r.valid_to) : "…"}` : <span className="faint">–</span>),
       }}
       headerExtra={
-        <Link className="btn ghost" to="/betrieb/verfuegbarkeit">
-          {t("nav.availability")}
-        </Link>
+        <>
+          <button className="btn secondary" onClick={() => setSpontaneous(true)}>
+            {t("teams.spontaneous")}
+          </button>
+          <Link className="btn ghost" to="/betrieb/verfuegbarkeit">
+            {t("nav.availability")}
+          </Link>
+        </>
       }
+      key={refreshKey}
     />
+    {spontaneous && (
+      <SpontaneousTeam
+        staff={staff.data ?? []}
+        vehicles={vehicles.data ?? []}
+        onClose={() => setSpontaneous(false)}
+        onCreated={() => {
+          setSpontaneous(false);
+          setRefreshKey((k) => k + 1);
+        }}
+      />
+    )}
+    </>
+  );
+}
+
+/** A team for one day from a sentence ("Morgen fahren Lea und Tom mit dem Sprinter") or the quick form. */
+function SpontaneousTeam(props: { staff: any[]; vehicles: any[]; onClose: () => void; onCreated: () => void }) {
+  const toast = useToast();
+  const [text, setText] = useState("");
+  const [day, setDay] = useState("");
+  const [members, setMembers] = useState<string[]>([]);
+  const [vehicle, setVehicle] = useState("");
+  const [info, setInfo] = useState<{ unknown: string[]; questions: string[] } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<unknown>(null);
+  const understand = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      const p = await api.post<any>("/api/teams/spontaneous/parse", { text });
+      if (p.date) setDay(p.date);
+      if (p.member_ids.length) setMembers(p.member_ids);
+      if (p.vehicle_id) setVehicle(p.vehicle_id);
+      setInfo({ unknown: p.unknown, questions: p.questions });
+    } catch (e) {
+      setError(e);
+    } finally {
+      setBusy(false);
+    }
+  };
+  const create = async () => {
+    setError(null);
+    try {
+      const r = await api.post<any>("/api/teams/spontaneous", { text: text || null, date: day, member_ids: members, vehicle_id: vehicle || null });
+      toast({ text: t("teams.spontaneous_created", { name: r.name }) });
+      props.onCreated();
+    } catch (e) {
+      setError(e);
+    }
+  };
+  return (
+    <Modal title={t("teams.spontaneous")} onClose={props.onClose} wide>
+      <div className="stack">
+        <p className="small muted" style={{ margin: 0 }}>{t("teams.spontaneous_help")}</p>
+        <div className="row" style={{ alignItems: "flex-end" }}>
+          <div className="field" style={{ flex: 1 }}>
+            <label htmlFor="sp-text">{t("teams.spontaneous_text")}</label>
+            <input id="sp-text" className="input" value={text} onChange={(e) => setText(e.target.value)} placeholder={t("teams.spontaneous_placeholder")} onKeyDown={(e) => e.key === "Enter" && text.trim() && void understand()} />
+          </div>
+          <button className="btn secondary" disabled={busy || text.trim().length < 3} onClick={understand}>
+            {busy ? t("common.loading") : t("teams.understand")}
+          </button>
+        </div>
+        {info && (info.unknown.length > 0 || info.questions.length > 0) && (
+          <div className="alert warn small">
+            {info.unknown.length > 0 && <div>{t("teams.unknown_people", { names: info.unknown.join(", ") })}</div>}
+            {info.questions.map((q) => (
+              <div key={q}>{q}</div>
+            ))}
+          </div>
+        )}
+        <div className="form-grid">
+          <div className="field">
+            <label htmlFor="sp-day">{t("common.date")}</label>
+            <input id="sp-day" type="date" className="input" value={day} onChange={(e) => setDay(e.target.value)} />
+          </div>
+          <div className="field">
+            <label htmlFor="sp-vehicle">{t("teams.vehicle")}</label>
+            <select id="sp-vehicle" className="input" value={vehicle} onChange={(e) => setVehicle(e.target.value)}>
+              <option value="">–</option>
+              {props.vehicles.map((v) => (
+                <option key={v.id} value={v.id}>
+                  {v.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <div className="chip-list" role="group" aria-label={t("teams.members")}>
+          {props.staff.map((s) => (
+            <label key={s.id} className={`col-chip ${members.includes(s.id) ? "on" : ""}`}>
+              <input type="checkbox" checked={members.includes(s.id)} onChange={() => setMembers(members.includes(s.id) ? members.filter((x) => x !== s.id) : [...members, s.id])} />
+              {s.name}
+            </label>
+          ))}
+        </div>
+        <ErrorBox error={error} />
+        <div className="row between">
+          <button className="btn ghost" onClick={props.onClose}>
+            {t("common.cancel")}
+          </button>
+          <button className="btn" disabled={!day || members.length === 0} onClick={create}>
+            {t("teams.create_day_team")}
+          </button>
+        </div>
+      </div>
+    </Modal>
   );
 }
 

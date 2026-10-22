@@ -699,7 +699,12 @@ class FakeProvider:
     # ------------------------------------------------------------------------- chat (settings AI)
 
     def chat(self, model_name, system, messages, tools, api_key, options) -> ChatTurn:
-        """Very small intent parser: 'setze X auf Y', 'setze X zurück', 'was bedeutet X'."""
+        """Very small intent parser: 'setze X auf Y', 'setze X zurück', 'was bedeutet X'; with
+        options mode 'voice' also the voice commands (open pages, search, drafts, teams, tours)."""
+        if options.get("mode") == "voice":
+            turn = self._voice(messages, options)
+            if turn is not None:
+                return turn
         index: list[dict[str, str]] = options.get("settings_index", [])
         last = messages[-1]
         if (
@@ -801,3 +806,78 @@ class FakeProvider:
             raw_content=[],
             stop_reason="end_turn",
         )
+
+
+def _call(name: str, args: dict[str, Any]) -> ChatTurn:
+    return ChatTurn(
+        text="",
+        tool_calls=[{"id": f"fake-{name}", "name": name, "input": args}],
+        raw_content=[],
+        stop_reason="tool_use",
+    )
+
+
+def _voice_intent(text: str, pages: dict[str, list[str]]) -> ChatTurn | None:
+    """Voice commands of the test model (German phrasings)."""
+    low = text.lower().strip().rstrip(".!?")
+    m = re.match(
+        r"(?:neue nachricht|neuer auftrag|neue anfrage|notiere|kundennachricht)[:,]?\s*(.+)", low, re.S
+    )
+    if m:
+        return _call("create_draft", {"text": text.strip()[len(text.strip()) - len(m.group(1)) :]})
+    if re.search(r"\b(fahren|fährt|team)\b", low) and re.search(
+        r"\b(heute|morgen|übermorgen|montag|dienstag|mittwoch|donnerstag|freitag|samstag|\d{1,2}\.\d{1,2}\.)",
+        low,
+    ):
+        return _call("create_day_team", {"text": text.strip()})
+    m = re.search(r"touren\b.*\b(heute|morgen)|\b(heute|morgen)\b.*touren", low)
+    if m:
+        day = m.group(1) or m.group(2)
+        return _call("list_tours", {"day": "today" if day == "heute" else "tomorrow"})
+    if re.search(r"\b(plane|planen|planung starten|neu planen|plan erstellen)\b", low):
+        return _call("start_planning", {"start_date": None, "days": None})
+    m = re.match(
+        r"(?:suche|finde|such|wo ist)\s+(?:nach\s+|den\s+|die\s+|das\s+)?(?:auftrag\s+|kunde[n]?\s+)?(.+)",
+        low,
+    )
+    if m:
+        return _call("search", {"query": m.group(1).strip()})
+    if re.search(r"\b(öffne|zeige|zeig|geh|gehe|wechsle|bring|navigiere)\b", low) or len(low.split()) <= 2:
+        best, score = None, 0
+        for key, words in pages.items():
+            for w in words:
+                if re.search(r"\b" + re.escape(w) + r"\b", low) and len(w) > score:
+                    best, score = key, len(w)
+        if best:
+            return _call("open_page", {"page": best})
+    return None
+
+
+def _voice(self, messages, options) -> ChatTurn | None:
+    last = messages[-1]
+    if last["role"] == "user" and isinstance(last["content"], list):
+        results = [
+            b.get("content")
+            for b in last["content"]
+            if isinstance(b, dict) and b.get("type") == "tool_result"
+        ]
+        if results:
+            return ChatTurn(
+                text=" ".join(str(x) for x in results), tool_calls=[], raw_content=[], stop_reason="end_turn"
+            )
+    text = last["content"] if isinstance(last["content"], str) else ""
+    turn = _voice_intent(text, options.get("pages") or {})
+    if turn is not None:
+        return turn
+    if re.search(r"\b(setze|stelle|ändere)\b", text.lower()):
+        return None  # the settings parser of the test model handles it
+    return ChatTurn(
+        text="Das habe ich nicht verstanden. Sagen Sie zum Beispiel „Öffne die Planung“, „Morgen fahren Lea und "
+        "Tom mit dem Sprinter“ oder „Neue Nachricht: …“.",
+        tool_calls=[],
+        raw_content=[],
+        stop_reason="end_turn",
+    )
+
+
+FakeProvider._voice = _voice  # type: ignore[attr-defined]
