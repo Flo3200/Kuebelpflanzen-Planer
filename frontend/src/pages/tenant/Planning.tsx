@@ -549,6 +549,9 @@ function ToursList({ plan, onChange }: { plan: any; onChange: () => void }) {
                       <td>
                         <Link to={`/betrieb/auftraege/${s.order_id}`}>{s.number}</Link>
                         {s.experiment && <Badge tone="blue">{t("planning.experiment")}</Badge>}
+                        {s.movable && (
+                          <Badge title={t("planning.movable_help")}>↷ {t("planning.movable")}</Badge>
+                        )}
                       </td>
                       <td>{s.customer}</td>
                       <td className="small">{s.city}</td>

@@ -283,6 +283,14 @@ def plan_detail(db: Session, plan: Plan) -> dict[str, Any]:
                 **info.get(s.order_id, {"order_id": s.order_id}),
             }
         )
+    if SettingsResolver(db, plan.tenant_id).get("planning.abort_enabled"):
+        # stops that could be postponed if a tour has to end early (package R)
+        from app.field.abort import movable
+
+        day_of = {t.id: t.date for t in tours}
+        for tid_, rows in by_tour.items():
+            for row in rows:
+                row["movable"] = movable(db.get(PickupOrder, row["order_id"]), day_of[tid_])
     vehicles = {v.id: v.name for v in db.scalars(select(Vehicle).where(Vehicle.tenant_id == plan.tenant_id))}
     unassigned = [
         {**u, **{k: v for k, v in info.get(uuid.UUID(u["order_id"]), {}).items() if k != "order_id"}}

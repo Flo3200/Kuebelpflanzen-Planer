@@ -293,7 +293,7 @@ function BreakButton({ tour }: { tour: DTour }) {
 
 function TourScreen() {
   const tour = useTour();
-  const { day } = useDriver();
+  const { day, me } = useDriver();
   if (!tour) return <Missing />;
   const evs = tourEvents(tour, day.queued);
   const has = (k: string) => evs.some((e) => e.kind === k);
@@ -384,6 +384,70 @@ function TourScreen() {
       <div className="d-grid2">
         <button className="d-btn big" onClick={() => window.confirm(t("driverapp.end_confirm")) && void addEvent({ tour_id: tour.id, kind: "shift_end" })}>
           {t("driverapp.kinds.shift_end")}
+        </button>
+      </div>
+      {me.settings.abort_enabled && <AbortTour tour={tour} />}
+    </div>
+  );
+}
+
+const ABORT_REASONS = ["late", "vehicle", "weather", "illness", "customer", "other"] as const;
+
+/** End the tour early (setting "Touren vorzeitig beenden"): open stops go back to the office's planning. */
+function AbortTour({ tour }: { tour: DTour }) {
+  const { day } = useDriver();
+  const [open, setOpen] = useState(false);
+  const [reason, setReason] = useState<string>("late");
+  const [note, setNote] = useState("");
+  const [msg, setMsg] = useState<string | null>(null);
+  const open_ = tour.stops.filter((s) => s.status === "planned").length;
+  const send = async () => {
+    setMsg(null);
+    try {
+      const r = await api.post<{ skipped: unknown[] }>(`/api/driver/tours/${tour.id}/abort`, { reason, note: note || null });
+      setMsg(t("driverapp.abort_done", { n: r.skipped.length }));
+      setOpen(false);
+      await day.reload();
+    } catch (e) {
+      setMsg(navigator.onLine ? (e as Error).message : t("driverapp.abort_offline"));
+    }
+  };
+  if (!open)
+    return (
+      <>
+        {msg && <div className="d-alert">{msg}</div>}
+        {open_ > 0 && (
+          <button className="d-btn warn" onClick={() => setOpen(true)}>
+            {t("driverapp.abort")}
+          </button>
+        )}
+      </>
+    );
+  return (
+    <div className="d-card d-form">
+      <div className="d-card-title">{t("driverapp.abort")}</div>
+      <p className="d-muted">{t("driverapp.abort_help", { n: open_ })}</p>
+      <label>
+        {t("driverapp.abort_reason")}
+        <select value={reason} onChange={(e) => setReason(e.target.value)}>
+          {ABORT_REASONS.map((r) => (
+            <option key={r} value={r}>
+              {t(`driverapp.abort_reasons.${r}`)}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label>
+        {t("driverapp.abort_note")}
+        <input value={note} onChange={(e) => setNote(e.target.value)} />
+      </label>
+      {msg && <div className="d-alert">{msg}</div>}
+      <div className="d-grid2">
+        <button className="d-btn" onClick={() => setOpen(false)}>
+          {t("common.cancel")}
+        </button>
+        <button className="d-btn warn big" onClick={() => void send()}>
+          {t("driverapp.abort_confirm")}
         </button>
       </div>
     </div>

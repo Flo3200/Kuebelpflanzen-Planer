@@ -97,7 +97,7 @@ export interface DTour {
 export interface DriverMe {
   name: string;
   staff_id: string | null;
-  settings: { per_plant_events: boolean; require_pickup_photo: boolean; qr_module: boolean };
+  settings: { per_plant_events: boolean; require_pickup_photo: boolean; qr_module: boolean; abort_enabled?: boolean };
 }
 
 export interface DayPackage {

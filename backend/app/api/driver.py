@@ -61,6 +61,7 @@ def me(actor: CurrentActor, db: DB) -> dict[str, Any]:
             "per_plant_events": bool(r.get("driver.per_plant_events")),
             "require_pickup_photo": bool(r.get("driver.require_pickup_photo")),
             "qr_module": bool(r.get("driver.qr_module")),
+            "abort_enabled": bool(r.get("planning.abort_enabled")),
         },
     }
 
@@ -346,6 +347,23 @@ class DeviationIn(BaseModel):
     values: dict[str, Any] = Field(default_factory=dict)
     photo_client_ids: list[str] = Field(default_factory=list, max_length=10)
     at: datetime | None = None
+
+
+class AbortIn(BaseModel):
+    reason: str = Field(max_length=20)
+    note: str | None = Field(default=None, max_length=1000)
+
+
+@router.post("/tours/{tour_id}/abort")
+def abort(tour_id: uuid.UUID, data: AbortIn, actor: CurrentActor, db: DB) -> dict[str, Any]:
+    """End the tour early (setting planning.abort_enabled): open stops go back to planning."""
+    from app.field.abort import abort_tour
+
+    tour = db.get(Tour, tour_id)
+    if tour is None or not can_use_tour(actor, tour):
+        raise NotFound()
+    result = abort_tour(db, actor, tour, data.reason, data.note)
+    return {**result, "tour": tour_package(db, tour)}
 
 
 @router.post("/deviations", status_code=201)

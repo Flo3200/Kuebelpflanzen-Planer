@@ -1073,7 +1073,9 @@
         "TABU_SEARCH": "Tabu-Suche",
         "SIMULATED_ANNEALING": "Simuliertes Abkühlen"
       }
-    }
+    },
+    "movable": "verschiebbar",
+    "movable_help": "Kann verschoben werden, falls die Tour vorzeitig endet (kein fester Termin, spätestes Datum liegt später)."
   },
   "scenarios": {
     "description": "Rechnen Sie Varianten eines Plans und vergleichen Sie Dauer, Kosten und Grenzkosten zusätzlicher Ressourcen.",
@@ -1314,7 +1316,22 @@
     "unload_title": "Abladen am Betrieb",
     "unload_planned": "geplant {from}–{to}",
     "unload_since": "seit {at}",
-    "ai_image": "KI-Bild"
+    "ai_image": "KI-Bild",
+    "abort": "Tour vorzeitig beenden",
+    "abort_help": "Die {n} noch nicht begonnenen Stopps gehen zurück in die Planung; das Büro bekommt eine Meldung. Begonnene Stopps beenden Sie normal.",
+    "abort_reason": "Grund",
+    "abort_note": "Hinweis (optional)",
+    "abort_confirm": "Jetzt beenden",
+    "abort_done": "Tour beendet: {n} Stopps gehen zurück an das Büro.",
+    "abort_offline": "Ohne Netz geht das nicht – bitte das Büro anrufen.",
+    "abort_reasons": {
+      "late": "große Verspätung",
+      "vehicle": "Fahrzeugproblem",
+      "weather": "Wetter",
+      "illness": "Krankheit",
+      "customer": "Kunde nicht erreichbar",
+      "other": "Sonstiges"
+    }
   },
   "model": {
     "title": "Modellqualität",

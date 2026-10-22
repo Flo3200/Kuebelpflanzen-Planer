@@ -2039,5 +2039,13 @@
       "arrival": "Ankunft",
       "predicted_min": "Dauer (min)"
     }
+  },
+  "abort_reasons": {
+    "late": "große Verspätung",
+    "vehicle": "Fahrzeugproblem",
+    "weather": "Wetter",
+    "illness": "Krankheit",
+    "customer": "Kunde nicht erreichbar",
+    "other": "Sonstiges"
   }
 }
